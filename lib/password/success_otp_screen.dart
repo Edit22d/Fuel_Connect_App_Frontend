@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/screens/home_screen.dart';
+import '/auth/login_screen.dart';
 
 class SuccessOtpScreen extends StatelessWidget {
   const SuccessOtpScreen({super.key});
@@ -11,7 +11,7 @@ class SuccessOtpScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar
+            
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -43,7 +43,7 @@ class SuccessOtpScreen extends StatelessWidget {
                   children: [
                     const SizedBox(height: 40),
 
-                    // Success icon
+                    
                     Container(
                       width: 80,
                       height: 80,
@@ -94,7 +94,7 @@ class SuccessOtpScreen extends StatelessWidget {
 
                     const SizedBox(height: 36),
 
-                    // Wave image
+                   
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.asset(
@@ -121,7 +121,7 @@ class SuccessOtpScreen extends StatelessWidget {
 
                     const SizedBox(height: 58),
 
-                    // OK BUTTON
+                 
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -130,7 +130,7 @@ class SuccessOtpScreen extends StatelessWidget {
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const HomeScreen(),
+                              builder: (context) => const LoginScreen(),
                             ),
                             (route) => false,
                           );
@@ -154,7 +154,7 @@ class SuccessOtpScreen extends StatelessWidget {
                             child: Text(
                               'OK',
                               style: TextStyle(
-                                color: Colors.black,
+                                color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                                 letterSpacing: 1,
@@ -195,7 +195,7 @@ class SuccessOtpScreen extends StatelessWidget {
                           child: const Center(
                             child: Icon(
                               Icons.lock_outline,
-                              color: Colors.black,
+                              color: Colors.white,
                               size: 24,
                             ),
                           ),
@@ -215,7 +215,7 @@ class SuccessOtpScreen extends StatelessWidget {
   }
 }
 
-// Wave clipper
+
 class _WaveClipper extends CustomClipper<Path> {
   final double offset;
 

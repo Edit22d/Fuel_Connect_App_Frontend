@@ -41,7 +41,7 @@ class _OtpScreenState extends State<OtpScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar
+        
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -60,7 +60,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  // SECURE badge
+                  
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -99,7 +99,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   children: [
                     const SizedBox(height: 32),
 
-                    // Shield icon
+                    
                     Container(
                       width: 72,
                       height: 72,
@@ -127,7 +127,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                     const SizedBox(height: 28),
 
-                    // Title
+                  
                     const Text(
                       'OTP Verification',
                       style: TextStyle(
@@ -139,7 +139,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                     const SizedBox(height: 10),
 
-                    // Subtitle
+                   
                     const Text(
                       'Enter the OTP you received to',
                       style: TextStyle(
@@ -160,7 +160,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                     const SizedBox(height: 36),
 
-                    // OTP input fields
+                  
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(6, (index) {
@@ -202,7 +202,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Resend
+                  
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -229,7 +229,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                     const SizedBox(height: 8),
 
-                    // Cancel
+                    
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: const Text(
@@ -243,7 +243,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                     const SizedBox(height: 32),
 
-                       // Verify button
+                      
                     SizedBox(
                       width: double.infinity,
                       height: 50,

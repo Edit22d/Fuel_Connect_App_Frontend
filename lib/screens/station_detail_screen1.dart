@@ -73,7 +73,7 @@ class StationDetailScreen1 extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD4A017),
+                        color: const Color(0xFFC8A84B),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -102,7 +102,7 @@ class StationDetailScreen1 extends StatelessWidget {
                   // Address + rating
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Color(0xFFD4A017), size: 14),
+                      const Icon(Icons.location_on, color: Color(0xFFC8A84B), size: 14),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -110,7 +110,7 @@ class StationDetailScreen1 extends StatelessWidget {
                           style: TextStyle(color: Colors.grey[400], fontSize: 12),
                         ),
                       ),
-                      const Icon(Icons.star, color: Color(0xFFD4A017), size: 14),
+                      const Icon(Icons.star, color: Color(0xFFC8A84B), size: 14),
                       const SizedBox(width: 2),
                       Text('4.8', style: TextStyle(color: Colors.grey[300], fontSize: 12)),
                       const SizedBox(width: 8),
@@ -151,7 +151,7 @@ class StationDetailScreen1 extends StatelessWidget {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD4A017),
+                        backgroundColor: const Color(0xFFC8A84B),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onPressed: () => Navigator.push(
@@ -207,7 +207,7 @@ class _FuelOrderRow extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const PaymentScreen()),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD4A017),
+              backgroundColor: const Color(0xFFC8A84B),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -241,7 +241,7 @@ class _AmenityIcon extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFF2A2A2A)),
           ),
-          child: Icon(icon, color: const Color(0xFFD4A017), size: 22),
+          child: Icon(icon, color: const Color(0xFFC8A84B), size: 22),
         ),
         const SizedBox(height: 5),
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
@@ -287,11 +287,11 @@ class _BottomNav extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(items[i]['icon'] as IconData,
-                      color: active ? const Color(0xFFD4A017) : const Color(0xFF555555), size: 22),
+                      color: active ? const Color(0xFFC8A84B) : const Color(0xFF555555), size: 22),
                   const SizedBox(height: 4),
                   Text(items[i]['label'] as String,
                       style: TextStyle(
-                        color: active ? const Color(0xFFD4A017) : const Color(0xFF555555),
+                        color: active ? const Color(0xFFC8A84B) : const Color(0xFF555555),
                         fontSize: 10,
                         fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                       )),

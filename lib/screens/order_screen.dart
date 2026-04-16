@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'tracking_order_screen.dart';
+import '/screens/fuel_type_screen.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -26,7 +27,7 @@ class _OrderScreenState extends State<OrderScreen> {
       quantity: '92.5 Liters',
       price: 'UGX\n\$95.20',
       status: 'PENDING',
-      statusColor: Color(0xFFFFAA00),
+      statusColor: Color(0xFFC4963D),
       showTrackOrder: true,
     ),
     _OrderItem(
@@ -38,6 +39,19 @@ class _OrderScreenState extends State<OrderScreen> {
       statusColor: Color(0xFF00C853),
     ),
   ];
+
+  List<_OrderItem> get _filteredOrders {
+    switch (_selectedTab) {
+      case 1: 
+        return _orders.where((order) => order.status == 'PENDING').toList();
+      case 2: 
+        return _orders.where((order) => order.status == 'PENDING').toList();
+      case 3: 
+        return _orders.where((order) => order.status == 'DELIVERED').toList();
+      default: 
+        return _orders;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +88,8 @@ class _OrderScreenState extends State<OrderScreen> {
                 _buildTab('Ongoing', 1),
                 const SizedBox(width: 8),
                 _buildTab('Pending', 2),
+                const SizedBox(width: 8),
+                _buildTab('Delivered', 3),
               ],
             ),
           ),
@@ -81,9 +97,9 @@ class _OrderScreenState extends State<OrderScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _orders.length,
+              itemCount: _filteredOrders.length,
               itemBuilder: (context, index) {
-                return _buildOrderCard(_orders[index]);
+                return _buildOrderCard(_filteredOrders[index]);
               },
             ),
           ),
@@ -99,7 +115,7 @@ class _OrderScreenState extends State<OrderScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFAA00) : const Color(0xFF1E1E1E),
+          color: selected ? const Color(0xFFC4963D) : const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -136,7 +152,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.local_gas_station,
-                    color: Color(0xFFFFAA00), size: 22),
+                    color: Color(0xFFC4963D), size: 22),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -206,7 +222,7 @@ class _OrderScreenState extends State<OrderScreen> {
                     order.price,
                     textAlign: TextAlign.right,
                     style: const TextStyle(
-                      color: Color(0xFFFFAA00),
+                      color: Color(0xFFC4963D),
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
@@ -220,9 +236,16 @@ class _OrderScreenState extends State<OrderScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {},
+                onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TrackOrderScreen(),
+                        ),
+                      );
+                    },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFFFAA00)),
+                  side: const BorderSide(color: Color(0xFFC4963D)),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -230,7 +253,7 @@ class _OrderScreenState extends State<OrderScreen> {
                 child: const Text(
                   'TRACK ORDER',
                   style: TextStyle(
-                    color: Color(0xFFFFAA00),
+                    color: Color(0xFFC4963D),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,

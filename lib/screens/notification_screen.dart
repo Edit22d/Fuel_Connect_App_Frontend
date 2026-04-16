@@ -8,8 +8,7 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  int _selectedTab = 0; // 0=Recent, 1=Offers
-
+  int _selectedTab = 0; 
   final List<_NotifItem> _recentNotifs = const [
     _NotifItem(
       icon: Icons.local_shipping_outlined,
@@ -89,7 +88,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
       body: Column(
         children: [
-          // Tabs
+          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
@@ -106,14 +105,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                // RECENT section
+            
                 _sectionLabel('RECENT'),
                 const SizedBox(height: 8),
                 ..._recentNotifs.map((n) => _buildNotifCard(n)),
 
                 const SizedBox(height: 16),
 
-                // YESTERDAY section
+               
                 _sectionLabel('YESTERDAY'),
                 const SizedBox(height: 8),
                 ..._yesterdayNotifs.map((n) => _buildNotifCard(n)),

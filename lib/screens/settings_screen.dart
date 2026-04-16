@@ -41,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const SizedBox(height: 10),
 
-            // ── User card ──
+        
             Row(
               children: [
                 CircleAvatar(
@@ -77,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 28),
 
-            // ── PREFERENCES ──
+          
             _sectionLabel('PREFERENCES'),
             const SizedBox(height: 10),
 
@@ -101,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 28),
 
-            // ── ACCOUNT & SECURITY ──
+        
             _sectionLabel('ACCOUNT & SECURITY'),
             const SizedBox(height: 10),
 
@@ -113,13 +113,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 28),
 
-            // ── LOGOUT ──
+          
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFAA00),
+                  backgroundColor: const Color(0xFFC4963D),
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -240,7 +240,7 @@ class _AmberSwitch extends StatelessWidget {
         height: 24,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: value ? const Color(0xFFFFAA00) : const Color(0xFF333333),
+          color: value ? const Color(0xFFC4963D) : const Color(0xFF333333),
         ),
         child: Align(
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,

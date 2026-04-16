@@ -12,7 +12,7 @@ class PaymentSuccessScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
             
-            // ── Success Icon ────────────────────────────────────────
+        
             Container(
               width: 80,
               height: 80,
@@ -43,7 +43,7 @@ class PaymentSuccessScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            // ── Success Text ────────────────────────────────────────
+          
             const Text(
               'Payment Successful!',
               style: TextStyle(
@@ -55,7 +55,7 @@ class PaymentSuccessScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // ── Subtext ─────────────────────────────────────────────
+          
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 40),
               child: Text(
@@ -71,7 +71,6 @@ class PaymentSuccessScreen extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // ── Transaction ID ──────────────────────────────────────
             const Text(
               'Transaction ID: TXN-8273649201',
               style: TextStyle(
@@ -83,7 +82,7 @@ class PaymentSuccessScreen extends StatelessWidget {
 
             const Spacer(),
 
-            // ── View Receipt Button ────────────────────────────────
+          
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
@@ -113,7 +112,7 @@ class PaymentSuccessScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Back to Store Button ───────────────────────────────
+           
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(

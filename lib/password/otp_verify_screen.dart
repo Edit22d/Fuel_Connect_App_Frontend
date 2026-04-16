@@ -13,7 +13,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
 
-  // Pre-filled OTP digits shown in this "verifying" state
+ 
   final List<String> _otpDigits = ['4', '2', '9', '3', '1', '7'];
 
   @override
@@ -26,7 +26,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
     _fadeAnim =
         Tween<double>(begin: 0.4, end: 1.0).animate(_animController);
 
-    // Navigate to success after a brief delay (simulating verification)
+
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         Navigator.pushReplacement(
@@ -50,7 +50,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar
+            
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -82,7 +82,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                   children: [
                     const SizedBox(height: 32),
 
-                    // Animated shield icon
+                  
                     FadeTransition(
                       opacity: _fadeAnim,
                       child: Container(
@@ -113,7 +113,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
 
                     const SizedBox(height: 28),
 
-                    // Title
+                 
                     const Text(
                       'OTP Verification',
                       style: TextStyle(
@@ -125,7 +125,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
 
                     const SizedBox(height: 10),
 
-                    // Subtitle - different text from screen 2
+                  
                     const Text(
                       'A one time active 6 digit secure',
                       style: TextStyle(
@@ -145,7 +145,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
 
                     const SizedBox(height: 36),
 
-                    // OTP boxes - pre-filled
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(6, (index) {
@@ -176,7 +175,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
 
                     const SizedBox(height: 20),
 
-                    // Verifying indicator
+                    
                     FadeTransition(
                       opacity: _fadeAnim,
                       child: const Row(
@@ -206,7 +205,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
 
                     const SizedBox(height: 16),
 
-                    // Resend & Expiry info
+                    
                     const Text(
                       'Expiring in 3:49',
                       style: TextStyle(
@@ -229,7 +228,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
 
                     const SizedBox(height: 32),
 
-                    // NEXT button (disabled look since verifying)
+                    
                     SizedBox(
                       width: double.infinity,
                       height: 50,

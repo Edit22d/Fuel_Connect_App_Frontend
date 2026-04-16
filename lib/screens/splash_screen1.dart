@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '/screens/splash_screen2.dart';
 
+
+
 class SplashScreen1 extends StatelessWidget {
   const SplashScreen1({super.key});
 
@@ -31,7 +33,7 @@ class SplashScreen1 extends StatelessWidget {
               Center(
                 child: Image.asset(
                   'assets/images/logo.png',
-                  width: 250,
+                  width: 300,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -71,7 +73,7 @@ class SplashScreen1 extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC8922A),
+                      backgroundColor: const Color(0xFFC4963D),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -89,8 +91,8 @@ class SplashScreen1 extends StatelessWidget {
                   ),
                 ),
               ),
- 
               
+            
                const SizedBox(height: 40),
  
               // Bottom page indicator dots
@@ -101,7 +103,7 @@ class SplashScreen1 extends StatelessWidget {
                     width: 20,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFC8A84B),
+                      color: const Color(0xFFC4963D),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),

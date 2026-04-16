@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-              // PHONE label
+           
               const Text(
                 'PHONE',
                 style: TextStyle(
@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-              // Password input
+             
               _buildTextField(
                 controller: _passwordController,
                 hintText: '••••••••',
@@ -163,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 32),
 
-              // ── CHANGE 1: navigate to HomeScreen on tap ──
+              
               _YellowButton(
                 text: 'LOG IN',
                 onPressed: () {
@@ -178,7 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              // OR CONTINUE WITH divider
               Row(
                 children: [
                   Expanded(child: Divider(color: Colors.white.withOpacity(0.12))),
@@ -200,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
-              // Social buttons
+            
               Row(
                 children: [
                   Expanded(
@@ -223,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-              // Sign up
+              
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -260,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // TextField builder
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
@@ -316,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// ── Shared Widgets ──────────────────────────────
+
 
 class FuelConnectLogo extends StatelessWidget {
   const FuelConnectLogo({super.key});
@@ -395,7 +394,7 @@ class _PasswordFieldState extends State<_PasswordField> {
   }
 }
 
-// ── CHANGE 2: gold background + white text ──
+
 class _YellowButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -410,8 +409,8 @@ class _YellowButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC8A84B), // gold
-          foregroundColor: Colors.white,             // white text
+          backgroundColor: const Color(0xFFC8A84B), 
+          foregroundColor: Colors.white,             
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
         ),

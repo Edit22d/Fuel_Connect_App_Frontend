@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '/auth/login_screen.dart';
-import '/screens/home_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen2 extends StatelessWidget {
   const SplashScreen2({super.key});
@@ -67,7 +67,7 @@ class SplashScreen2 extends StatelessWidget {
                       TextSpan(
                         text: 'On\n',
                         style: TextStyle(
-                          color: Color(0xFFC8A84B),
+                          color: Color(0xFFC4963D),
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           height: 1.2,
@@ -114,12 +114,12 @@ class SplashScreen2 extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E1E1E),
                           borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: const Color(0xFFC8A84B)),
+                          border: Border.all(color: const Color(0xFFC4963D)),
                         ),
                         child: const Text(
                           'Premium Fuel',
                           style: TextStyle(
-                            color: Color(0xFFC8A84B),
+                            color: Color(0xFFC4963D),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -132,12 +132,12 @@ class SplashScreen2 extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E1E1E),
                           borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: const Color(0xFFC8A84B)),
+                          border: Border.all(color: const Color(0xFFC4963D)),
                         ),
                         child: const Text(
                           'Fast Delivery',
                           style: TextStyle(
-                            color: Color(0xFFC8A84B),
+                            color: Color(0xFFC4963D),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -165,7 +165,7 @@ class SplashScreen2 extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC8A84B),
+                      backgroundColor: const Color(0xFFC4963D),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -209,7 +209,7 @@ class SplashScreen2 extends StatelessWidget {
                         child: const Text(
                           'Log in',
                           style: TextStyle(
-                            color: Color(0xFFC8A84B),
+                            color: Color(0xFFC4963D),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),

@@ -56,7 +56,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             children: [
               const SizedBox(height: 16),
 
-              // Back arrow
+             
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const Icon(
@@ -68,7 +68,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 24),
 
-              // Logo centered
               Center(
                 child: Image.asset(
                   'assets/images/logo.png',
@@ -79,7 +78,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 28),
 
-              // Create Account heading
+             
               const Center(
                 child: Text(
                   'Create Account',
@@ -93,7 +92,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 8),
 
-              // Subtitle
+             
               const Center(
                 child: Text(
                   'Join the Fuel Connect network and\noptimise your performance',
@@ -108,7 +107,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 28),
 
-              // FULL NAME label
               _buildLabel('FULL NAME'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -119,7 +117,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 18),
 
-              // EMAIL ADDRESS label
               _buildLabel('EMAIL ADDRESS'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -131,7 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 18),
 
-              // PHONE NUMBER label
+              
               _buildLabel('PHONE NUMBER'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -143,7 +140,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 18),
 
-              // REFERRAL CODE (OPTIONAL) label
+           
               _buildLabel('PASSWORD'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -154,7 +151,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 18),
 
-              // PASSWORD label
+             
               _buildLabel('CONFIRM PASSWORD'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -180,7 +177,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 20),
 
-              // Terms & Privacy Policy checkbox row
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -300,7 +296,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               const SizedBox(height: 20),
 
-              // Already part of the fleet? Sign In
+            
               Center(
                 child: GestureDetector(
                   onTap: () {
@@ -384,7 +380,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 }
 
-// Terms Bottom Sheet Widget
+
 class _TermsBottomSheet extends StatefulWidget {
   final String type;
   final VoidCallback onAccept;
@@ -411,7 +407,7 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
       ),
       child: Column(
         children: [
-          // Drag handle
+        
           Container(
             margin: const EdgeInsets.only(top: 12),
             width: 40,
@@ -422,7 +418,7 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          // Title
+     
           Text(
             widget.type,
             style: const TextStyle(
@@ -438,7 +434,7 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
             color: Colors.white24,
           ),
           const SizedBox(height: 16),
-          // Scrollable content
+        
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification notification) {
@@ -619,7 +615,7 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
               ),
             ),
           ),
-          // Accept button
+        
           Padding(
             padding: const EdgeInsets.all(24),
             child: SizedBox(

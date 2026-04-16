@@ -11,13 +11,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _accountInfoExpanded = true; // open by default as seen in screenshot
+  bool _accountInfoExpanded = true; 
   
-  // Theme state
+ 
   bool _isDarkMode = true;
   String _selectedTheme = 'Dark Mode';
 
-  // Account info states for editing/deleting
+
   String _fullName = 'alex johnson';
   String _phoneNumber = '+256 700 000';
   String _email = 'alex.johnson@contact.com';
@@ -25,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic theme colors
+ 
     final bgColor = _isDarkMode ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5);
     final cardColor = _isDarkMode ? const Color(0xFF1A1A1A) : Colors.white;
     final textPrimary = _isDarkMode ? Colors.white : Colors.black87;
@@ -62,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const SizedBox(height: 10),
 
-            // ── Avatar + name + email ──
+          
             Center(
               child: Column(
                 children: [
@@ -81,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           width: 22,
                           height: 22,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFC8A84B),
+                            color: Color(0xFFC4963D),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.edit,
@@ -103,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(
                     'alex.johnson@email.com',
                     style: TextStyle(
-                      color: const Color(0xFFC8A84B),
+                      color: const Color(0xFFC4963D),
                       fontSize: 12,
                     ),
                   ),
@@ -113,11 +113,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 28),
 
-            // ── ACCOUNT SETTINGS ──
+            
             _sectionLabel('ACCOUNT SETTINGS', textSecondary),
             const SizedBox(height: 10),
 
-            // ── Account Info expandable/dropdown tile ──
+            
             GestureDetector(
               onTap: () =>
                   setState(() => _accountInfoExpanded = !_accountInfoExpanded),
@@ -132,11 +132,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header row
+             
                     Row(
                       children: [
                         const Icon(Icons.person_outline,
-                            color: Color(0xFFC8A84B), size: 20),
+                            color: Color(0xFFC4963D), size: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -157,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
 
-                    // Dropdown expanded content
+                  
                     AnimatedCrossFade(
                       firstChild: const SizedBox.shrink(),
                       secondChild: Column(
@@ -260,7 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 28),
 
-            // ── PREFERENCES ──
+            
             _sectionLabel('PREFERENCES', textSecondary),
             const SizedBox(height: 10),
 
@@ -297,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 28),
 
-            // ── THEME PREFERENCES ──
+          
             _sectionLabel('THEME PREFERENCES', textSecondary),
             const SizedBox(height: 10),
 
@@ -309,24 +309,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 10),
 
-            // ── Logout ──
+           
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {},
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFC8A84B)),
+                  side: const BorderSide(color: Color(0xFFC4963D)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                 ),
                 icon: const Icon(Icons.logout,
-                    color: Color(0xFFC8A84B), size: 18),
+                    color: Color(0xFFC4963D), size: 18),
                 label: const Text(
                   'Logout',
                   style: TextStyle(
-                    color: Color(0xFFC8A84B),
+                    color: Color(0xFFC4963D),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -357,10 +357,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             hintText: 'Enter new $field',
             hintStyle: TextStyle(color: _isDarkMode ? Colors.white38 : Colors.black38),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: const Color(0xFFC8A84B).withOpacity(0.5)),
+              borderSide: BorderSide(color: const Color(0xFFC4963D).withOpacity(0.5)),
             ),
             focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFC8A84B)),
+              borderSide: BorderSide(color: Color(0xFFC4963D)),
             ),
           ),
         ),
@@ -376,7 +376,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
               Navigator.pop(ctx);
             },
-            child: const Text('Save', style: TextStyle(color: Color(0xFFC8A84B), fontWeight: FontWeight.bold)),
+            child: const Text('Save', style: TextStyle(color: Color(0xFFC4963D), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -408,7 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Widget Builders ──
+
 
   Widget _sectionLabel(String label, Color color) {
     return Text(
@@ -462,7 +462,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onTap: onEdit,
           child: Icon(
             Icons.edit_outlined,
-            color: const Color(0xFFC8A84B).withOpacity(0.8),
+            color: const Color(0xFFC4963D).withOpacity(0.8),
             size: 18,
           ),
         ),
@@ -495,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFFC8A84B), size: 20),
+          Icon(icon, color: const Color(0xFFC4963D), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -528,7 +528,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Icon(
             _isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-            color: const Color(0xFFC8A84B),
+            color: const Color(0xFFC4963D),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -552,7 +552,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: _selectedTheme,
               underline: const SizedBox(),
               isDense: true,
-              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFC8A84B), size: 20),
+              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFC4963D), size: 20),
               dropdownColor: _isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
               borderRadius: BorderRadius.circular(8),
               style: TextStyle(

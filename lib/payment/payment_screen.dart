@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '/screens/home_screen.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -21,9 +21,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// PAYMENT SCREEN
-// ─────────────────────────────────────────────
+
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
 
@@ -32,12 +30,12 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  int _selectedPaymentIndex = 0; // 0=Card, 1=Mobile Money, 2=Airtel Money, 3=MTN Money, 4=Mobile Pay, 5=Cash
+  int _selectedPaymentIndex = 0; 
 
   void _showSuccessDialog() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.85),
+      barrierColor: Colors.white.withOpacity(0.85),
       builder: (_) => const PaymentSuccessDialog(),
     );
   }
@@ -57,7 +55,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top bar ──
+         
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -97,7 +95,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   children: [
                     const SizedBox(height: 8),
 
-                    // ── ORDER DETAILS card ──
+                
                     _SectionCard(
                       title: 'ORDER DETAILS',
                       child: Column(
@@ -144,7 +142,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── PAYMENT METHOD card ──
+                 
                     _SectionCard(
                       title: 'PAYMENT METHOD',
                       child: Column(
@@ -208,7 +206,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                     const SizedBox(height: 24),
 
-                    // ── Confirm button ──
+                  
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -219,7 +217,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         label: const Text(
                           'Confirm Payment',
                           style: TextStyle(
-                            color: Colors.black,
+                            color: Colors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.3,
@@ -237,7 +235,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                     const SizedBox(height: 12),
 
-                    // ── Simulate failure ──
+                  
                     Center(
                       child: GestureDetector(
                         onTap: _showFailedDialog,
@@ -264,10 +262,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 }
-
-// ─────────────────────────────────────────────
-// REUSABLE WIDGETS
-// ─────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final String title;
@@ -459,7 +453,7 @@ class _PaymentOption extends StatelessWidget {
               ),
               child: selected
                   ? const Icon(Icons.check,
-                      color: Colors.black, size: 11)
+                      color: Colors.white, size: 11)
                   : null,
             ),
           ],
@@ -469,9 +463,7 @@ class _PaymentOption extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// PAYMENT SUCCESS DIALOG
-// ─────────────────────────────────────────────
+
 class PaymentSuccessDialog extends StatelessWidget {
   const PaymentSuccessDialog({super.key});
 
@@ -494,7 +486,7 @@ class PaymentSuccessDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Success icon
+           
             Container(
               width: 72,
               height: 72,
@@ -526,7 +518,7 @@ class PaymentSuccessDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Transaction details row
+        
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
@@ -536,7 +528,7 @@ class PaymentSuccessDialog extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _TxDetail(label: 'DATE & TIME', value: 'APR 24, 2025 • 09:32'),
+                  _TxDetail(label: 'DATE & TIME', value: 'APR 16, 2026 • 02:32'),
                   _TxDetail(
                       label: 'TOTAL PAYMENT',
                       value: '\$78.25',
@@ -547,12 +539,17 @@ class PaymentSuccessDialog extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Back to Home button
+            
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE8A020),
                   shape: RoundedRectangleBorder(
@@ -560,9 +557,9 @@ class PaymentSuccessDialog extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: const Text(
-                  '← BACK TO HOME',
+                  'BACK TO HOME',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.8,
@@ -610,9 +607,7 @@ class _TxDetail extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// PAYMENT FAILED DIALOG
-// ─────────────────────────────────────────────
+
 class PaymentFailedDialog extends StatelessWidget {
   const PaymentFailedDialog({super.key});
 
@@ -635,7 +630,7 @@ class PaymentFailedDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Failed icon
+           
             Container(
               width: 72,
               height: 72,
@@ -669,7 +664,7 @@ class PaymentFailedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
-            // Try Again button
+            
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -695,7 +690,7 @@ class PaymentFailedDialog extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // Contact Support button
+          
             SizedBox(
               width: double.infinity,
               height: 48,
