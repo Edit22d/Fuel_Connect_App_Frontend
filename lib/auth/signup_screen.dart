@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'dart:math';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -17,6 +18,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscurePassword = true;
   bool _agreeToTerms = false;
 
+  // NEW CONTROLLERS (backend fields)
+  final TextEditingController _vehicleTypeController = TextEditingController();
+  final TextEditingController _vehicleNumberController = TextEditingController();
+  final TextEditingController _licenseController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+
+  String _userType = "customer"; // default
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -24,7 +33,50 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _phoneController.dispose();
     _referralController.dispose();
     _passwordController.dispose();
+
+    _vehicleTypeController.dispose();
+    _vehicleNumberController.dispose();
+    _licenseController.dispose();
+    _locationController.dispose();
+
     super.dispose();
+  }
+
+  // AUTO GENERATED BACKEND VALUES
+  String get deviceToken => "device_${Random().nextInt(999999)}";
+  String get status => "active";
+  bool get isVerified => false;
+  String get createdAt => DateTime.now().toIso8601String();
+  String get updatedAt => DateTime.now().toIso8601String();
+
+  void _submit() {
+    final data = {
+      "name": _fullNameController.text,
+      "email": _emailController.text,
+      "phone": _phoneController.text,
+      "password": _passwordController.text,
+      "user_type": _userType,
+      "device_token": deviceToken,
+      "status": status,
+      "is_verified": isVerified,
+      "created_at": createdAt,
+      "updated_at": updatedAt,
+      "profile_photo": "",
+      "vehicle_type": _vehicleTypeController.text,
+      "vehicle_number": _vehicleNumberController.text,
+      "license_number": _licenseController.text,
+      "location": _locationController.text,
+    };
+
+    print("SEND TO BACKEND:");
+    print(data);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
   }
 
   void _showTermsSheet(String type) {
@@ -56,7 +108,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             children: [
               const SizedBox(height: 16),
 
-             
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const Icon(
@@ -78,7 +129,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 28),
 
-             
               const Center(
                 child: Text(
                   'Create Account',
@@ -92,7 +142,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 8),
 
-             
               const Center(
                 child: Text(
                   'Join the Fuel Connect network and\noptimise your performance',
@@ -128,7 +177,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 18),
 
-              
               _buildLabel('PHONE NUMBER'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -140,7 +188,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 18),
 
-           
               _buildLabel('PASSWORD'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -151,7 +198,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 18),
 
-             
               _buildLabel('CONFIRM PASSWORD'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -174,6 +220,90 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
               ),
+
+              const SizedBox(height: 18),
+
+              // USER TYPE DROPDOWN
+              _buildLabel('USER TYPE'),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF2A2A2A)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _userType,
+                    dropdownColor: const Color(0xFF1A1A1A),
+                    iconEnabledColor: const Color(0xFF666666),
+                    isExpanded: true,
+                    items: const [
+                      DropdownMenuItem(
+                        value: "customer",
+                        child: Text(
+                          "Customer",
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: "driver",
+                        child: Text(
+                          "Driver",
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setState(() {
+                        _userType = val.toString();
+                      });
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // LOCATION
+              _buildLabel('LOCATION'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                controller: _locationController,
+                hintText: 'Enter your location',
+                prefixIcon: Icons.location_on_outlined,
+              ),
+
+              // DRIVER FIELDS
+              if (_userType == "driver") ...[
+                const SizedBox(height: 18),
+                _buildLabel('VEHICLE TYPE'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  controller: _vehicleTypeController,
+                  hintText: 'Motorcycle',
+                  prefixIcon: Icons.directions_car_outlined,
+                ),
+
+                const SizedBox(height: 18),
+                _buildLabel('VEHICLE NUMBER'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  controller: _vehicleNumberController,
+                  hintText: 'UAX 123A',
+                  prefixIcon: Icons.pin_outlined,
+                ),
+
+                const SizedBox(height: 18),
+                _buildLabel('LICENSE NUMBER'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  controller: _licenseController,
+                  hintText: 'DL123456',
+                  prefixIcon: Icons.badge_outlined,
+                ),
+              ],
 
               const SizedBox(height: 20),
 
@@ -253,50 +383,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const SizedBox(height: 24),
 
-                              SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _agreeToTerms
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            );
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC8A84B),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor:
-                          const Color(0xFFC8A84B).withOpacity(0.5),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _agreeToTerms ? _submit : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC8A84B),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
+                    disabledBackgroundColor:
+                        const Color(0xFFC8A84B).withOpacity(0.5),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                         ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward, size: 18),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, size: 18),
+                    ],
                   ),
                 ),
+              ),
+
               const SizedBox(height: 20),
 
-            
               Center(
                 child: GestureDetector(
                   onTap: () {
@@ -407,7 +528,6 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
       ),
       child: Column(
         children: [
-        
           Container(
             margin: const EdgeInsets.only(top: 12),
             width: 40,
@@ -418,7 +538,6 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
             ),
           ),
           const SizedBox(height: 16),
-     
           Text(
             widget.type,
             style: const TextStyle(
@@ -434,7 +553,6 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
             color: Colors.white24,
           ),
           const SizedBox(height: 16),
-        
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification notification) {
@@ -615,7 +733,6 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
               ),
             ),
           ),
-        
           Padding(
             padding: const EdgeInsets.all(24),
             child: SizedBox(
