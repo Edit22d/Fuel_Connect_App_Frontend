@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '/screens/splash_screen1.dart';
+import 'screens/onboarding_screen.dart';
 import '/screens/splash_screen2.dart';
+import '/screens/onboarding_screen.dart';
 import '/auth/login_screen.dart';
 import '/auth/signup_screen.dart';
 import '/screens/home_screen.dart';
@@ -39,7 +40,7 @@ class FuelConnectApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) =>  SplashScreen1(),
+        '/': (context) =>  OnboardingScreen(),
      
       },
     );
