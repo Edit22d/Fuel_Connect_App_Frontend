@@ -114,7 +114,7 @@ class _SplashScreen1State extends State<SplashScreen1> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD4AF37), 
-                    foregroundColor: Colors.black,
+                    foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
@@ -122,7 +122,7 @@ class _SplashScreen1State extends State<SplashScreen1> {
                     elevation: 0,
                   ),
                   child: const Text(
-                    'Get Started',
+                    'Next',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

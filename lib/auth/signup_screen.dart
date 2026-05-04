@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'dart:math';
 
@@ -10,21 +11,29 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final _auth = AuthService();
+
+  // Controllers
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _referralController = TextEditingController();
+  
+  // Fixed controller naming for Password fields
   final TextEditingController _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _agreeToTerms = false;
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  
+  final TextEditingController _referralController = TextEditingController(); 
 
-  // NEW CONTROLLERS (backend fields)
   final TextEditingController _vehicleTypeController = TextEditingController();
   final TextEditingController _vehicleNumberController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
 
-  String _userType = "customer"; // default
+  String _userType = "customer"; 
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true; 
+  bool _agreeToTerms = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -33,48 +42,91 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _phoneController.dispose();
     _referralController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
 
     _vehicleTypeController.dispose();
     _vehicleNumberController.dispose();
     _licenseController.dispose();
     _locationController.dispose();
-
     super.dispose();
   }
 
-  // AUTO GENERATED BACKEND VALUES
-  String get deviceToken => "device_${Random().nextInt(999999)}";
-  String get status => "active";
-  bool get isVerified => false;
-  String get createdAt => DateTime.now().toIso8601String();
-  String get updatedAt => DateTime.now().toIso8601String();
+  Future<void> _handleSignUp() async {
+  
+    final fullName = _fullNameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
-  void _submit() {
-    final data = {
-      "name": _fullNameController.text,
-      "email": _emailController.text,
-      "phone": _phoneController.text,
-      "password": _passwordController.text,
-      "user_type": _userType,
-      "device_token": deviceToken,
-      "status": status,
-      "is_verified": isVerified,
-      "created_at": createdAt,
-      "updated_at": updatedAt,
-      "profile_photo": "",
-      "vehicle_type": _vehicleTypeController.text,
-      "vehicle_number": _vehicleNumberController.text,
-      "license_number": _licenseController.text,
-      "location": _locationController.text,
-    };
+    if (fullName.isEmpty || 
+        email.isEmpty || 
+        phone.isEmpty || 
+        password.isEmpty || 
+        confirmPassword.isEmpty) {
+      _showError('Please fill in all required fields.');
+      return;
+    }
 
-    print("SEND TO BACKEND:");
-    print(data);
+    if (password != confirmPassword) {
+      _showError('Passwords do not match.');
+      return;
+    }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const LoginScreen(),
+    if (!_agreeToTerms) {
+      _showError('Please agree to the Terms of Service and Privacy Policy.');
+      return;
+    }
+
+  
+    setState(() => _isLoading = true);
+
+   
+    final result = await _auth.register(
+      fullName: fullName,
+      email: email,
+      phoneNumber: phone,
+      password: password,
+      confirmPassword: confirmPassword,
+    );
+
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      
+      _showSuccess(result['message'] ?? 'Account created successfully!');
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
+      });
+    } else {
+   
+      _showError(result['message'] ?? 'Registration failed. Please try again.');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -124,6 +176,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   'assets/images/logo.png',
                   width: 100,
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => 
+                      const Icon(Icons.local_gas_station, size: 60, color: Colors.white),
                 ),
               ),
 
@@ -191,18 +245,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               _buildLabel('PASSWORD'),
               const SizedBox(height: 8),
               _buildTextField(
-                controller: _referralController,
-                hintText: '············',
-                prefixIcon: Icons.card_giftcard_outlined,
-              ),
-
-              const SizedBox(height: 18),
-
-              _buildLabel('CONFIRM PASSWORD'),
-              const SizedBox(height: 8),
-              _buildTextField(
                 controller: _passwordController,
-                hintText: '••••••••',
+                hintText: '············',
                 prefixIcon: Icons.lock_outline,
                 obscureText: _obscurePassword,
                 suffixIcon: IconButton(
@@ -216,6 +260,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   onPressed: () {
                     setState(() {
                       _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              _buildLabel('CONFIRM PASSWORD'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                hintText: '••••••••',
+                prefixIcon: Icons.lock_outline,
+                obscureText: _obscureConfirmPassword,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: const Color(0xFF666666),
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureConfirmPassword = !_obscureConfirmPassword;
                     });
                   },
                 ),
@@ -275,7 +344,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 prefixIcon: Icons.location_on_outlined,
               ),
 
-              // DRIVER FIELDS
+           
               if (_userType == "driver") ...[
                 const SizedBox(height: 18),
                 _buildLabel('VEHICLE TYPE'),
@@ -387,7 +456,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _agreeToTerms ? _submit : null,
+                  onPressed: _isLoading ? null : _handleSignUp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC8A84B),
                     foregroundColor: Colors.white,
@@ -398,21 +467,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     disabledBackgroundColor:
                         const Color(0xFFC8A84B).withOpacity(0.5),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward, size: 18),
+                          ],
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 18),
-                    ],
-                  ),
                 ),
               ),
 
@@ -447,8 +525,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
 
-              const SizedBox(height: 36),
-            ],
+                const SizedBox(height: 36),
+              ],
+            
           ),
         ),
       ),
@@ -501,6 +580,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom Sheet Widget (Kept as is)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _TermsBottomSheet extends StatefulWidget {
   final String type;

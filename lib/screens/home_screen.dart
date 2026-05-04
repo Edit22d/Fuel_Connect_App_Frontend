@@ -289,8 +289,8 @@ class _StationDetailScreenState extends State<StationDetailScreen>
                                       : 'Station is currently closed',
                                 ),
                                 backgroundColor: widget.station.isOpen
-                                    ? const Color(0xFF1A4A1A)
-                                    : const Color(0xFF4A1A1A),
+                                    ? const Color(0xFF4CAF50)
+                                    : const Color(0xFF4CAF50),
                               ),
                             );
                           },
@@ -301,8 +301,8 @@ class _StationDetailScreenState extends State<StationDetailScreen>
                             ),
                             decoration: BoxDecoration(
                               color: widget.station.isOpen
-                                  ? const Color(0xFF1A4A1A)
-                                  : const Color(0xFF4A1A1A),
+                                  ? const Color(0xFF4CAF50)
+                                  : const Color(0xFF4CAF50),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -314,7 +314,7 @@ class _StationDetailScreenState extends State<StationDetailScreen>
                                   decoration: BoxDecoration(
                                     color: widget.station.isOpen
                                         ? const Color(0xFF4CAF50)
-                                        : const Color(0xFFE53935),
+                                        : const Color(0xFF4CAF50),
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -324,7 +324,7 @@ class _StationDetailScreenState extends State<StationDetailScreen>
                                   style: TextStyle(
                                     color: widget.station.isOpen
                                         ? const Color(0xFF4CAF50)
-                                        : const Color(0xFFE53935),
+                                        : const Color(0xFF4CAF50),
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1188,7 +1188,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                       decoration: BoxDecoration(
                         color: station.isOpen
                             ? const Color(0xFF1A4A1A)
-                            : const Color(0xFF4A1A1A),
+                            : const Color(0xFF4CAF50),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -1200,7 +1200,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                             decoration: BoxDecoration(
                               color: station.isOpen
                                   ? const Color(0xFF4CAF50)
-                                  : const Color(0xFFE53935),
+                                  : const Color(0xFF4CAF50),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -1210,7 +1210,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                             style: TextStyle(
                               color: station.isOpen
                                   ? const Color(0xFF4CAF50)
-                                  : const Color(0xFFE53935),
+                                  : const Color(0xFF4CAF50),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '/auth/signup_screen.dart';
-import '/screens/home_screen.dart';
-import '/password/forgot_password_screen.dart';
-
+import '../services/auth_service.dart';
+import 'signup_screen.dart';
+import '../screens/home_screen.dart';
+import '../password/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,15 +12,64 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _auth = AuthService();
+  
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  /// ── Handle Login Logic ─────────────────────────────────────────────────────
+  Future<void> _handleLogin() async {
+    // 1. Basic Validation
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (phone.isEmpty || password.isEmpty) {
+      _showError('Please enter both phone number and password.');
+      return;
+    }
+
+    // 2. Set Loading State
+    setState(() => _isLoading = true);
+
+    // 3. Call Backend Service
+    final result = await _auth.login(
+      emailOrPhone: phone, // The backend accepts email or phone
+      password: password,
+    );
+
+    // 4. Handle Result
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      // Success: Navigate to Home Screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      // Failure: Show error message from backend
+      _showError(result['message'] ?? 'Login failed. Please try again.');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -40,6 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   'assets/images/logo.png',
                   width: 100,
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => 
+                      const Icon(Icons.local_gas_station, size: 60, color: Colors.white),
                 ),
               ),
 
@@ -81,7 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-           
               const Text(
                 'PHONE',
                 style: TextStyle(
@@ -117,14 +167,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   GestureDetector(
-                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordScreen(),
-                      ),
-                    );
-                  },
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
                     child: const Text(
                       'Forgot Password?',
                       style: TextStyle(
@@ -139,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-             
+              // Password input
               _buildTextField(
                 controller: _passwordController,
                 hintText: '••••••••',
@@ -163,17 +213,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 32),
 
-              
+              // Login Button (Updated with loading state)
               _YellowButton(
                 text: 'LOG IN',
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HomeScreen(),
-                    ),
-                  );
-                },
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _handleLogin,
               ),
 
               const SizedBox(height: 24),
@@ -199,14 +243,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
-            
+              // Social Buttons
               Row(
                 children: [
                   Expanded(
                     child: _SocialButton(
                       label: 'GOOGLE',
                       icon: _GoogleIcon(),
-                      onTap: () {},
+                      onTap: () {
+                        // TODO: Implement Google Auth via AuthService
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -214,7 +260,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _SocialButton(
                       label: 'APPLE',
                       icon: const Icon(Icons.apple, color: Colors.white, size: 20),
-                      onTap: () {},
+                      onTap: () {
+                        // TODO: Implement Apple Auth via AuthService
+                      },
                     ),
                   ),
                 ],
@@ -222,7 +270,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-              
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -259,7 +306,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
@@ -290,116 +336,22 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  Widget _buildSocialButton({required String label, required IconData icon}) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
-      child: TextButton.icon(
-        onPressed: () {},
-        icon: Icon(icon, color: Colors.white, size: 20),
-        label: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-
-
-class FuelConnectLogo extends StatelessWidget {
-  const FuelConnectLogo({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1),
-            children: [
-              TextSpan(text: 'F', style: TextStyle(color: Color(0xFFC8A84B))),
-              TextSpan(text: 'U', style: TextStyle(color: Colors.white)),
-              TextSpan(text: 'E', style: TextStyle(color: Color(0xFFC8A84B))),
-              TextSpan(text: 'L', style: TextStyle(color: Colors.white)),
-            ],
-          ),
-        ),
-        const Text(
-          'CONNECT',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 4,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PasswordField extends StatefulWidget {
-  final String hint;
-  const _PasswordField({required this.hint});
-
-  @override
-  State<_PasswordField> createState() => _PasswordFieldState();
-}
-
-class _PasswordFieldState extends State<_PasswordField> {
-  bool _obscure = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      obscureText: _obscure,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
-      decoration: InputDecoration(
-        hintText: widget.hint,
-        hintStyle: const TextStyle(color: Color(0xFF555555), fontSize: 20, letterSpacing: 2),
-        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF666666), size: 18),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            color: const Color(0xFF666666),
-            size: 18,
-          ),
-          onPressed: () => setState(() => _obscure = !_obscure),
-        ),
-        filled: true,
-        fillColor: const Color(0xFF2A2A2A),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF333333), width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFC8A84B), width: 1.2),
-        ),
-      ),
-    );
-  }
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper Widgets
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _YellowButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
+  final bool isLoading;
 
-  const _YellowButton({required this.text, this.onPressed});
+  const _YellowButton({
+    required this.text,
+    this.onPressed,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -409,21 +361,26 @@ class _YellowButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC8A84B), 
-          foregroundColor: Colors.white,             
+          backgroundColor: const Color(0xFFC8A84B),
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: const Color(0xFFC8A84B).withOpacity(0.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              text,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Text(
+                text,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5),
+              ),
       ),
     );
   }
@@ -434,7 +391,11 @@ class _SocialButton extends StatelessWidget {
   final Widget icon;
   final VoidCallback onTap;
 
-  const _SocialButton({required this.label, required this.icon, required this.onTap});
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

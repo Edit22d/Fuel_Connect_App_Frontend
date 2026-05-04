@@ -1,9 +1,98 @@
 import 'package:flutter/material.dart';
-import '/auth/login_screen.dart';
-import 'home_screen.dart';
+import '../services/auth_service.dart';
+import '../auth/login_screen.dart'; 
+import 'home_screen.dart';          
 
-class SplashScreen2 extends StatelessWidget {
+class SplashScreen2 extends StatefulWidget {
   const SplashScreen2({super.key});
+
+  @override
+  State<SplashScreen2> createState() => _SplashScreen2State();
+}
+
+class _SplashScreen2State extends State<SplashScreen2> {
+  
+  final _auth = AuthService();
+
+  String _tagline = 'Always On Demand';
+  String _description =
+      'No more waiting in lines. Our \n professional fleet delivers high-\n quality fuel directly to your location, wherever \n you need it.';
+      
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppInfo();
+  }
+
+  Future<void> _loadAppInfo() async {
+    final result = await _auth.getAppInfo();
+    
+    if (result['success'] && mounted) {
+      setState(() {
+        _tagline     = result['data']['tagline'] ?? _tagline;
+        _description = result['data']['description'] ?? _description;
+      });
+    }
+  }
+
+  // ✅ Modified: Show warning if not logged in before redirecting
+  Future<void> _handleGetStarted() async {
+    setState(() => _isLoading = true);
+
+    final loggedIn = await _auth.isLoggedIn();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (loggedIn) {
+     
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+     
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Please log in first to continue',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFFC4963D),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'Login',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  void _goToLogin() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,18 +106,20 @@ class SplashScreen2 extends StatelessWidget {
               children: [
                 const SizedBox(height: 10),
 
-                // Top logo
+                
                 Center(
                   child: Image.asset(
                     'assets/images/logo.png',
                     width: 150,
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => 
+                        const Icon(Icons.local_gas_station, size: 80, color: Colors.white), 
                   ),
                 ),
 
                 const SizedBox(height: 18),
 
-                // Car image
+               
                 Container(
                   width: double.infinity,
                   height: 350,
@@ -43,6 +134,8 @@ class SplashScreen2 extends StatelessWidget {
                         'assets/images/car.png',
                         height: 350,
                         fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => 
+                            const Icon(Icons.directions_car, size: 150, color: Colors.grey), 
                       ),
                     ),
                   ),
@@ -50,12 +143,12 @@ class SplashScreen2 extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Headline text
+              
                 RichText(
                   textAlign: TextAlign.center,
-                  text: const TextSpan(
+                  text: TextSpan(
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: 'Always ',
                         style: TextStyle(
                           color: Colors.white,
@@ -64,7 +157,7 @@ class SplashScreen2 extends StatelessWidget {
                           height: 1.2,
                         ),
                       ),
-                      TextSpan(
+                      const TextSpan(
                         text: 'On\n',
                         style: TextStyle(
                           color: Color(0xFFC4963D),
@@ -73,7 +166,7 @@ class SplashScreen2 extends StatelessWidget {
                           height: 1.2,
                         ),
                       ),
-                      TextSpan(
+                      const TextSpan(
                         text: 'Demand',
                         style: TextStyle(
                           color: Colors.white,
@@ -88,11 +181,11 @@ class SplashScreen2 extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                // Subtitle
-                const Text(
-                  'No more waiting in lines. Our \n professional fleet delivers high-\n quality fuel directly to your location, wherever \n you need it.',
+                // Description
+                Text(
+                  _description,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Color(0xFFAAAAAA),
                     fontSize: 13,
                     height: 1.6,
@@ -102,123 +195,84 @@ class SplashScreen2 extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                // Two inactive buttons row (Premium Fuel & Fast Delivery)
+                // Tags
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Premium Fuel button (inactive)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: const Color(0xFFC4963D)),
-                        ),
-                        child: const Text(
-                          'Premium Fuel',
-                          style: TextStyle(
-                            color: Color(0xFFC4963D),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                      _buildTag('Premium Fuel'),
                       const SizedBox(width: 12),
-                      // Fast Delivery button (inactive)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: const Color(0xFFC4963D)),
-                        ),
-                        child: const Text(
-                          'Fast Delivery',
-                          style: TextStyle(
-                            color: Color(0xFFC4963D),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                      _buildTag('Fast Delivery'),
                     ],
                   ),
                 ),
 
                 const SizedBox(height: 28),
 
-                // Get Started button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HomeScreen(),
+                // Get Started Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleGetStarted,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC4963D),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC4963D),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        elevation: 0,
                       ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Get Started',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Text(
+                              'Get Started',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
                     ),
                   ),
                 ),
-              ),
 
-                  const SizedBox(height: 14),
-
-                  // Login row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Already have an account? ',
-                        style: TextStyle(
-                          color: Color(0xFFAAAAAA),
-                          fontSize: 12,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Log in',
-                          style: TextStyle(
-                            color: Color(0xFFC4963D),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 const SizedBox(height: 14),
 
+                // Login Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Already have an account? ',
+                      style: TextStyle(
+                        color: Color(0xFFAAAAAA),
+                        fontSize: 12,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _goToLogin,
+                      child: const Text(
+                        'Log in',
+                        style: TextStyle(
+                          color: Color(0xFFC4963D),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 24),
               ],
@@ -228,25 +282,19 @@ class SplashScreen2 extends StatelessWidget {
       ),
     );
   }
-}
 
-class _Tag extends StatelessWidget {
-  final String label;
-  const _Tag({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTag(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF333333)),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0xFFC4963D)),
       ),
       child: Text(
         label,
         style: const TextStyle(
-          color: Color(0xFFCCCCCC),
+          color: Color(0xFFC4963D),
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),

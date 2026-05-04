@@ -13,19 +13,16 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _accountInfoExpanded = true; 
   
- 
   bool _isDarkMode = true;
   String _selectedTheme = 'Dark Mode';
 
-
-  String _fullName = 'alex johnson';
-  String _phoneNumber = '+256 700 000';
-  String _email = 'alex.johnson@contact.com';
-  String _location = 'Kampala, UG';
+  String _fullName = 'Dmytro Shevchenko';
+  String _phoneNumber = '+38 067 123 45 16';
+  String _email = 'dmytro.shevchenko@email.com';
+  String _location = 'Kyiv, Ukraine';
 
   @override
   Widget build(BuildContext context) {
- 
     final bgColor = _isDarkMode ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5);
     final cardColor = _isDarkMode ? const Color(0xFF1A1A1A) : Colors.white;
     final textPrimary = _isDarkMode ? Colors.white : Colors.black87;
@@ -62,217 +59,146 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const SizedBox(height: 10),
 
-          
+            // Profile Header with Photo
             Center(
               child: Column(
                 children: [
                   Stack(
                     children: [
                       CircleAvatar(
-                        radius: 40,
+                        radius: 45,
                         backgroundColor: cardColor,
-                        backgroundImage:
-                            const AssetImage('assets/images/avatar.png'),
+                        backgroundImage: const AssetImage('assets/images/avatar.png'),
+                        child: const CircleAvatar(
+                          radius: 45,
+                          backgroundImage: AssetImage('assets/images/avatar.png'),
+                        ),
                       ),
                       Positioned(
-                        bottom: 0,
-                        right: 0,
+                        bottom: 5,
+                        right: 5,
                         child: Container(
-                          width: 22,
-                          height: 22,
+                          width: 24,
+                          height: 24,
                           decoration: const BoxDecoration(
                             color: Color(0xFFC4963D),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.edit,
-                              size: 13, color: Colors.black),
+                          child: const Icon(Icons.edit, size: 14, color: Colors.black),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
-                    'Alex Johnson',
+                    'Dmytro Shevchenko',
                     style: TextStyle(
                       color: textPrimary,
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 20,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
-                    'alex.johnson@email.com',
+                    '+38 067 123 45 16',
                     style: TextStyle(
-                      color: const Color(0xFFC4963D),
-                      fontSize: 12,
+                      color: textSecondary,
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
-            
-            _sectionLabel('ACCOUNT SETTINGS', textSecondary),
-            const SizedBox(height: 10),
-
-            
-            GestureDetector(
-              onTap: () =>
-                  setState(() => _accountInfoExpanded = !_accountInfoExpanded),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-             
-                    Row(
+            // Chat Bubble - Sandy
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A2A4A),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.person_outline,
-                            color: Color(0xFFC4963D), size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Account Info',
-                            style: TextStyle(
-                              color: textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        Text(
+                          'Hi, I\'m Sandy!',
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
-                        AnimatedRotation(
-                          turns: _accountInfoExpanded ? 0.25 : 0,
-                          duration: const Duration(milliseconds: 200),
-                          child: Icon(Icons.chevron_right,
-                              color: textSecondary, size: 20),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Let me know more about you',
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
-
-                  
-                    AnimatedCrossFade(
-                      firstChild: const SizedBox.shrink(),
-                      secondChild: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 14),
-                          Divider(color: dividerColor, height: 1),
-                          const SizedBox(height: 14),
-                          _editableInfoRow(
-                            label: 'Full Name',
-                            value: _fullName,
-                            textSecondary: textSecondary,
-                            textTertiary: textTertiary,
-                            onEdit: () => _showEditDialog(
-                              'Full Name',
-                              _fullName,
-                              (newValue) => setState(() => _fullName = newValue),
-                            ),
-                            onDelete: () => _showDeleteDialog(
-                              'Full Name',
-                              () => setState(() => _fullName = ''),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _editableInfoRow(
-                            label: 'Phone Number',
-                            value: _phoneNumber,
-                            textSecondary: textSecondary,
-                            textTertiary: textTertiary,
-                            onEdit: () => _showEditDialog(
-                              'Phone Number',
-                              _phoneNumber,
-                              (newValue) => setState(() => _phoneNumber = newValue),
-                            ),
-                            onDelete: () => _showDeleteDialog(
-                              'Phone Number',
-                              () => setState(() => _phoneNumber = ''),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _editableInfoRow(
-                            label: 'Email',
-                            value: _email,
-                            textSecondary: textSecondary,
-                            textTertiary: textTertiary,
-                            onEdit: () => _showEditDialog(
-                              'Email',
-                              _email,
-                              (newValue) => setState(() => _email = newValue),
-                            ),
-                            onDelete: () => _showDeleteDialog(
-                              'Email',
-                              () => setState(() => _email = ''),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _editableInfoRow(
-                            label: 'Location',
-                            value: _location,
-                            textSecondary: textSecondary,
-                            textTertiary: textTertiary,
-                            onEdit: () => _showEditDialog(
-                              'Location',
-                              _location,
-                              (newValue) => setState(() => _location = newValue),
-                            ),
-                            onDelete: () => _showDeleteDialog(
-                              'Location',
-                              () => setState(() => _location = ''),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                        ],
-                      ),
-                      crossFadeState: _accountInfoExpanded
-                          ? CrossFadeState.showSecond
-                          : CrossFadeState.showFirst,
-                      duration: const Duration(milliseconds: 250),
+                  ),
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3A3A5A),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
-                ),
+                    child: const Icon(
+                      Icons.chat_bubble_outline,
+                      color: Color(0xFFC4963D),
+                      size: 35,
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 24),
+
+            // Menu Items
+            _sectionLabel('MENU', textSecondary),
+            const SizedBox(height: 12),
 
             GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const OrderScreen()),
-              ),
+              onTap: () {},
               child: _profileTile(
-                icon: Icons.receipt_long_outlined,
-                title: 'Order History',
+                icon: Icons.person_outline,
+                title: 'My profile',
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
                 cardColor: cardColor,
               ),
             ),
 
-            const SizedBox(height: 28),
-
-            
-            _sectionLabel('PREFERENCES', textSecondary),
             const SizedBox(height: 10),
 
             GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const NotificationScreen()),
-              ),
+              onTap: () {},
               child: _profileTile(
-                icon: Icons.notifications_none_outlined,
-                title: 'Notifications',
+                icon: Icons.credit_card_outlined,
+                title: 'Payments and auto write-offs',
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                cardColor: cardColor,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            GestureDetector(
+              onTap: () {},
+              child: _profileTile(
+                icon: Icons.phone_outlined,
+                title: 'Phone codes',
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
                 cardColor: cardColor,
@@ -295,52 +221,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            const SizedBox(height: 28),
-
-          
-            _sectionLabel('THEME PREFERENCES', textSecondary),
             const SizedBox(height: 10),
 
-            _themeDropdownTile(
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              cardColor: cardColor,
+            GestureDetector(
+              onTap: () {},
+              child: _profileTile(
+                icon: Icons.error_outline,
+                title: 'Report an error',
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                cardColor: cardColor,
+              ),
             ),
 
             const SizedBox(height: 10),
 
-           
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFC4963D)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                ),
-                icon: const Icon(Icons.logout,
-                    color: Color(0xFFC4963D), size: 18),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Color(0xFFC4963D),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
+            GestureDetector(
+              onTap: () {},
+              child: _profileTile(
+                icon: Icons.support_outlined,
+                title: 'Support',
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                cardColor: cardColor,
               ),
             ),
 
             const SizedBox(height: 30),
+
+            // Bottom Navigation Bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _bottomNavItem(Icons.home_outlined, false),
+                  _bottomNavItem(Icons.chat_bubble_outline, false),
+                  _bottomNavItem(Icons.add_circle, true, isCenter: true),
+                  _bottomNavItem(Icons.notifications_outlined, false),
+                  _bottomNavItem(Icons.person_outline, true),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
+  Widget _bottomNavItem(IconData icon, bool isActive, {bool isCenter = false}) {
+    if (isCenter) {
+      return Container(
+        width: 56,
+        height: 56,
+        decoration: const BoxDecoration(
+          color: Color(0xFFC4963D),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.black, size: 28),
+      );
+    }
+    return Icon(
+      icon,
+      color: isActive ? const Color(0xFFC4963D) : Colors.white38,
+      size: 24,
+    );
+  }
+
+  Widget _sectionLabel(String label, Color color) {
+    return Text(
+      label,
+      style: TextStyle(
+        color: color,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.1,
+      ),
+    );
+  }
+
+  Widget _profileTile({
+    required IconData icon,
+    required String title,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color cardColor,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFFC4963D), size: 22),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Icon(Icons.chevron_right, color: textSecondary, size: 20),
+        ],
+      ),
+    );
+  }
 
   void _showEditDialog(String field, String currentValue, ValueChanged<String> onSave) {
     final controller = TextEditingController(text: currentValue);
@@ -402,177 +400,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(ctx);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-
-  Widget _sectionLabel(String label, Color color) {
-    return Text(
-      label,
-      style: TextStyle(
-        color: color,
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 1.1,
-      ),
-    );
-  }
-
-  Widget _editableInfoRow({
-    required String label,
-    required String value,
-    required Color textSecondary,
-    required Color textTertiary,
-    required VoidCallback onEdit,
-    required VoidCallback onDelete,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                value.isEmpty ? '—' : value,
-                style: TextStyle(
-                  color: value.isEmpty ? textSecondary : textTertiary,
-                  fontSize: 13,
-                  fontStyle: value.isEmpty ? FontStyle.italic : FontStyle.normal,
-                ),
-              ),
-            ],
-          ),
-        ),
-        GestureDetector(
-          onTap: onEdit,
-          child: Icon(
-            Icons.edit_outlined,
-            color: const Color(0xFFC4963D).withOpacity(0.8),
-            size: 18,
-          ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: onDelete,
-          child: Icon(
-            Icons.delete_outline,
-            color: Colors.redAccent.withOpacity(0.8),
-            size: 18,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _profileTile({
-    required IconData icon,
-    required String title,
-    required Color textPrimary,
-    required Color textSecondary,
-    required Color cardColor,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFC4963D), size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Icon(Icons.chevron_right, color: textSecondary, size: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _themeDropdownTile({
-    required Color textPrimary,
-    required Color textSecondary,
-    required Color cardColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            _isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-            color: const Color(0xFFC4963D),
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Theme',
-              style: TextStyle(
-                color: textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: _isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: DropdownButton<String>(
-              value: _selectedTheme,
-              underline: const SizedBox(),
-              isDense: true,
-              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFC4963D), size: 20),
-              dropdownColor: _isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              style: TextStyle(
-                color: textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Dark Mode', child: Text('Dark Mode')),
-                DropdownMenuItem(value: 'Light Mode', child: Text('Light Mode')),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedTheme = value;
-                    _isDarkMode = value == 'Dark Mode';
-                  });
-                }
-              },
-            ),
           ),
         ],
       ),
