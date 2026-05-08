@@ -1,9 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import '/password/otp_verify_screen.dart';
 
+// Replace with your actual IP or Domain
+const String baseUrl = 'http://10.0.2.2:8000';
+
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key});
+  final String email;
+  final String? token; // Used in debug mode or if you want to auto-fill
+  
+  const OtpScreen({super.key, required this.email, this.token});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -13,6 +21,25 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+
+  bool _isLoading = false;
+  bool _isResending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // If in debug mode and a token is passed, check if it fits the 6 boxes.
+    // Note: The backend generates a 48-char token, which won't fit here.
+    // This assumes your production setup sends a 6-digit code via email.
+    // If you want to auto-fill a specific code, uncomment below:
+    /*
+    if (widget.token != null && widget.token!.length == 6) {
+      for (int i = 0; i < 6; i++) {
+        _controllers[i].text = widget.token![i];
+      }
+    }
+    */
+  }
 
   @override
   void dispose() {
@@ -34,6 +61,88 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
+  Future<void> _resendOtp() async {
+    setState(() {
+      _isResending = true;
+    });
+
+    try {
+      // Re-use the forgot password endpoint to send a new code/token
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/v1/auth/forgot-password/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': widget.email}),
+      );
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Code sent successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Optional: Clear inputs
+          for (var c in _controllers) {
+            c.clear();
+          }
+          _focusNodes[0].requestFocus();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to resend code'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+        });
+      }
+    }
+  }
+
+  void _verifyOtp() {
+    // Concatenate the 6 input fields
+    final otpCode = _controllers.map((c) => c.text).join();
+
+    if (otpCode.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the complete 6-digit code'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Navigate to the verify screen (New Password screen)
+    // We pass the email and the code the user entered
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OtpVerifyScreen(
+          email: widget.email,
+          otp: otpCode,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,7 +150,6 @@ class _OtpScreenState extends State<OtpScreen> {
       body: SafeArea(
         child: Column(
           children: [
-        
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -60,7 +168,6 @@ class _OtpScreenState extends State<OtpScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -90,7 +197,6 @@ class _OtpScreenState extends State<OtpScreen> {
                 ],
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -98,8 +204,6 @@ class _OtpScreenState extends State<OtpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 32),
-
-                    
                     Container(
                       width: 72,
                       height: 72,
@@ -124,10 +228,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         size: 36,
                       ),
                     ),
-
                     const SizedBox(height: 28),
-
-                  
                     const Text(
                       'OTP Verification',
                       style: TextStyle(
@@ -136,10 +237,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
-                   
                     const Text(
                       'Enter the OTP you received to',
                       style: TextStyle(
@@ -148,19 +246,17 @@ class _OtpScreenState extends State<OtpScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const Text(
-                      '+1 (012) 345-67208',
-                      style: TextStyle(
+                    // Display the dynamic email instead of hardcoded phone number
+                    Text(
+                      widget.email,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                       textAlign: TextAlign.center,
                     ),
-
                     const SizedBox(height: 36),
-
-                  
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(6, (index) {
@@ -199,10 +295,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         );
                       }),
                     ),
-
                     const SizedBox(height: 20),
-
-                  
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -214,22 +307,28 @@ class _OtpScreenState extends State<OtpScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {},
-                          child: const Text(
-                            'Resend OTP',
-                            style: TextStyle(
-                              color: Color(0xFFC8A84B),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          onTap: _isResending ? null : _resendOtp,
+                          child: _isResending
+                              ? const SizedBox(
+                                  width: 15,
+                                  height: 15,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFFC8A84B),
+                                  ),
+                                )
+                              : const Text(
+                                  'Resend OTP',
+                                  style: TextStyle(
+                                    color: Color(0xFFC8A84B),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
-                    
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: const Text(
@@ -240,20 +339,12 @@ class _OtpScreenState extends State<OtpScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 32),
-
-                      
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const OtpVerifyScreen(),
-                          ),
-                        ),
+                        onPressed: _isLoading ? null : _verifyOtp,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -262,7 +353,6 @@ class _OtpScreenState extends State<OtpScreen> {
                           ),
                           padding: EdgeInsets.zero,
                         ),
-                        
                         child: Ink(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
@@ -274,31 +364,38 @@ class _OtpScreenState extends State<OtpScreen> {
                           ),
                           child: Container(
                             alignment: Alignment.center,
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                               Icon(
-                                 Icons.lock_outline,
-                                  color: Colors.black,
-                                  size: 18,
-                                ),
-                                Text(
-                                  'Verify OTP',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                                    ),
+                                  )
+                                : const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.lock_outline,
+                                        color: Colors.black,
+                                        size: 18,
+                                      ),
+                                      Text(
+                                        'Verify OTP',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                    ],
                                   ),
-                                ),
-                                SizedBox(width: 8),
-                                
-                              ],
-                            ),
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 40),
                   ],
                 ),

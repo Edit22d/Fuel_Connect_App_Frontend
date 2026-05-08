@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../auth/login_screen.dart'; 
-import 'home_screen.dart';          
+import '../auth/login_screen.dart';
+// import '../auth/signup_screen.dart'; // ✅ Added import for Sign Up
+import 'home_screen.dart';
 
 class SplashScreen2 extends StatefulWidget {
   const SplashScreen2({super.key});
@@ -37,61 +38,37 @@ class _SplashScreen2State extends State<SplashScreen2> {
     }
   }
 
-  // ✅ Modified: Show warning if not logged in before redirecting
+  // ✅ Updated: Bypass login/signup and go directly to Home Screen
   Future<void> _handleGetStarted() async {
-    setState(() => _isLoading = true);
-
-    final loggedIn = await _auth.isLoggedIn();
-
     if (!mounted) return;
-    setState(() => _isLoading = false);
+    
+    // User is automatically taken to the Home Screen without login
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
+  }
+
+  // ✅ Updated: Check login status. 
+  // If Logged In -> Home. 
+  // If Not -> Go to Login Screen.
+  Future<void> _goToLogin() async {
+    final loggedIn = await _auth.isLoggedIn();
+    
+    if (!mounted) return;
 
     if (loggedIn) {
-     
+      // Skip login screen if already authenticated
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
-     
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Please log in first to continue',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: const Color(0xFFC4963D),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'Login',
-            textColor: Colors.white,
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            },
-          ),
-        ),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     }
-  }
-
-  void _goToLogin() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
   }
 
   @override
@@ -106,7 +83,6 @@ class _SplashScreen2State extends State<SplashScreen2> {
               children: [
                 const SizedBox(height: 10),
 
-                
                 Center(
                   child: Image.asset(
                     'assets/images/logo.png',
@@ -119,7 +95,6 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
                 const SizedBox(height: 18),
 
-               
                 Container(
                   width: double.infinity,
                   height: 350,
@@ -143,12 +118,11 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
                 const SizedBox(height: 12),
 
-              
                 RichText(
                   textAlign: TextAlign.center,
-                  text: TextSpan(
+                  text: const TextSpan(
                     children: [
-                      const TextSpan(
+                      TextSpan(
                         text: 'Always ',
                         style: TextStyle(
                           color: Colors.white,
@@ -157,7 +131,7 @@ class _SplashScreen2State extends State<SplashScreen2> {
                           height: 1.2,
                         ),
                       ),
-                      const TextSpan(
+                      TextSpan(
                         text: 'On\n',
                         style: TextStyle(
                           color: Color(0xFFC4963D),
@@ -166,7 +140,7 @@ class _SplashScreen2State extends State<SplashScreen2> {
                           height: 1.2,
                         ),
                       ),
-                      const TextSpan(
+                      TextSpan(
                         text: 'Demand',
                         style: TextStyle(
                           color: Colors.white,
@@ -181,7 +155,6 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
                 const SizedBox(height: 16),
 
-                // Description
                 Text(
                   _description,
                   textAlign: TextAlign.center,
@@ -195,7 +168,6 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
                 const SizedBox(height: 28),
 
-                // Tags
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Row(
@@ -210,7 +182,6 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
                 const SizedBox(height: 28),
 
-                // Get Started Button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: SizedBox(
@@ -249,7 +220,6 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
                 const SizedBox(height: 14),
 
-                // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -261,7 +231,7 @@ class _SplashScreen2State extends State<SplashScreen2> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: _goToLogin,
+                      onTap: _goToLogin, // ✅ Now calls the async check
                       child: const Text(
                         'Log in',
                         style: TextStyle(

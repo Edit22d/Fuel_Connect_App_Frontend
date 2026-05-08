@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/screens/splash_screen1.dart';
+import '/screens/splash_screen2.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,7 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const SplashScreen1(),
+            builder: (context) => const SplashScreen2(),
           ),
         );
       }
@@ -62,7 +62,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SplashScreen1(),
+                        builder: (context) => const SplashScreen2(),
                       ),
                     );
                   },

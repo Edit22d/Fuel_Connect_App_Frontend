@@ -63,6 +63,7 @@ flutter:
     - assets/images/Totall.png
     - assets/images/cityoil.png
     - assets/images/Rubi.png
+    - assets/images/map.png
 
   fonts:
     - family: Poppins

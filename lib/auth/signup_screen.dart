@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import '../services/auth_service.dart'; // Integration active
 import 'login_screen.dart';
 import 'dart:math';
 
@@ -11,7 +11,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final _auth = AuthService();
+  final _auth = AuthService(); // Auth Service Active
 
   // Controllers
   final TextEditingController _fullNameController = TextEditingController();
@@ -34,6 +34,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscureConfirmPassword = true; 
   bool _agreeToTerms = false;
   bool _isLoading = false;
+
+  // ─── REGEX CONSTANTS (Validation Logic) ─────────────────────────────────────
+  
+  // 1. Full Name: Must be at least two words (First Last), letters only.
+  static final String _fullNamePattern = r"^[a-zA-Z]+(?: [a-zA-Z]+)+$";
+
+  // 2. Phone: Must start with +, have country code, spaces/dashes allowed.
+  static final String _phonePattern = r"^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$";
+
+  // 3. Password: Min 8 chars, uppercase, lowercase, number, symbol.
+  static final String _passwordPattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$";
+
+  // Helper to get RegExp
+  static final _nameRegex = RegExp(_fullNamePattern);
+  static final _phoneRegex = RegExp(_phonePattern);
+  static final _passRegex = RegExp(_passwordPattern);
 
   @override
   void dispose() {
@@ -58,30 +74,82 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+    final location = _locationController.text.trim();
 
+    // Generic Error Messages as requested
+    const String _genericError = "Invalid credentials or mismatch. Please check your inputs.";
+
+    // ─── VALIDATION BLOCK ─────────────────────────────────────────────────────
+
+    // 1. Check if ALL fields are empty (User clicked button without typing)
+    if (fullName.isEmpty && 
+        email.isEmpty && 
+        phone.isEmpty && 
+        password.isEmpty && 
+        confirmPassword.isEmpty &&
+        location.isEmpty) {
+      _showError('Please enter credentials before continue');
+      return;
+    }
+
+    // 2. Check if SOME fields are skipped
     if (fullName.isEmpty || 
         email.isEmpty || 
         phone.isEmpty || 
         password.isEmpty || 
-        confirmPassword.isEmpty) {
-      _showError('Please fill in all required fields.');
+        confirmPassword.isEmpty ||
+        location.isEmpty) {
+      _showError('All fields are required');
       return;
     }
 
+    // 3. Validate Full Name (Must be two names)
+    if (!_nameRegex.hasMatch(fullName)) {
+      _showError(_genericError);
+      return;
+    }
+
+    // 4. Validate Phone Format
+    if (!_phoneRegex.hasMatch(phone)) {
+      _showError(_genericError);
+      return;
+    }
+
+    // 5. Validate Password Strength
+    if (!_passRegex.hasMatch(password)) {
+      _showError(_genericError);
+      return;
+    }
+
+    // 6. Check Password Match
     if (password != confirmPassword) {
-      _showError('Passwords do not match.');
+      _showError(_genericError);
       return;
     }
 
+    // 7. Validate Driver Specific Fields if applicable
+    if (_userType == "driver") {
+      final vType = _vehicleTypeController.text.trim();
+      final vNum = _vehicleNumberController.text.trim();
+      final license = _licenseController.text.trim();
+
+      if (vType.isEmpty || vNum.isEmpty || license.isEmpty) {
+        _showError(_genericError);
+        return;
+      }
+    }
+
+    // 8. Validate Terms (Kept specific because it's a UI state, not credential data)
     if (!_agreeToTerms) {
       _showError('Please agree to the Terms of Service and Privacy Policy.');
       return;
     }
 
+    // ─── API CALL ─────────────────────────────────────────────────────────────
   
     setState(() => _isLoading = true);
 
-   
+    // Call AuthService to register
     final result = await _auth.register(
       fullName: fullName,
       email: email,
@@ -89,16 +157,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       password: password,
       confirmPassword: confirmPassword,
     );
-
     
     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      
+      // Registration Successful
       _showSuccess(result['message'] ?? 'Account created successfully!');
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) {
+          // Navigate to Login screen to log in with the newly created account
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -106,7 +174,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       });
     } else {
-   
+      // API returned error (e.g., User already exists, network error)
       _showError(result['message'] ?? 'Registration failed. Please try again.');
     }
   }
@@ -214,7 +282,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 8),
               _buildTextField(
                 controller: _fullNameController,
-                hintText: 'Sterling Archer',
+                hintText: 'John Doe',
                 prefixIcon: Icons.person_outline,
               ),
 
@@ -235,7 +303,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 8),
               _buildTextField(
                 controller: _phoneController,
-                hintText: '+1 (555) 000-0000',
+                hintText: '+256 740 000-0000',
                 prefixIcon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
               ),

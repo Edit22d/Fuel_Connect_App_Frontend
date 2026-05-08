@@ -3,25 +3,18 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
 import '../models/user_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 
 class AuthService {
-  Future<void> saveAuthData({
-    required String token,
-    required String userId,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString('token', token);
-    await prefs.setString('userId', userId);
-  }
 
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal();
 
   final _storage = const FlutterSecureStorage();
+
+  // ──────────────────────────────────────────────────────────────
+  // Token Management
+  // ──────────────────────────────────────────────────────────────
 
   Future<void> saveTokens(String access, String refresh) async {
     await _storage.write(key: 'access_token', value: access);
@@ -47,6 +40,10 @@ class AuthService {
     return token != null && token.isNotEmpty;
   }
 
+  Future<void> saveUserProfile(UserModel user) async {
+    await _storage.write(key: 'user_profile', value: jsonEncode(user.toJson()));
+  }
+
   Future<UserModel?> getCurrentUser() async {
     final profileJson = await _storage.read(key: 'user_profile');
     if (profileJson != null && profileJson.isNotEmpty) {
@@ -55,9 +52,9 @@ class AuthService {
     return null;
   }
 
-  Future<void> saveUserProfile(UserModel user) async {
-    await _storage.write(key: 'user_profile', value: jsonEncode(user.toJson()));
-  }
+  // ──────────────────────────────────────────────────────────────
+  // API Headers
+  // ──────────────────────────────────────────────────────────────
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
@@ -71,18 +68,26 @@ class AuthService {
     };
   }
 
+  // ──────────────────────────────────────────────────────────────
+  // Auth Actions
+  // ──────────────────────────────────────────────────────────────
+
   Future<Map<String, dynamic>> getAppInfo() async {
-    final response = await http.get(
-      Uri.parse(ApiConstants.appInfo),
-      headers: _headers,
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConstants.appInfo),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 10));
 
-    final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-    if (response.statusCode == 200) {
-      return {'success': true, 'data': data};
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'message': 'Failed to load app info'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
-    return {'success': false, 'message': 'Failed to load app info'};
   }
 
   Future<Map<String, dynamic>> register({
@@ -107,9 +112,11 @@ class AuthService {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 201) {
+     
       await saveTokens(data['access'], data['refresh']);
       final user = UserModel.fromJson(data['user']);
       await saveUserProfile(user);
+      
       return {
         'success': true,
         'user': user,
@@ -119,23 +126,23 @@ class AuthService {
 
     String errorMsg = 'Registration failed.';
     if (data is Map) {
-      final firstKey = data.keys.first;
+      final firstKey = data.keys.firstWhere((k) => data[k] != null, orElse: () => 'detail');
       final firstValue = data[firstKey];
-      errorMsg =
-          firstValue is List ? firstValue.first : firstValue.toString();
+      errorMsg = firstValue is List ? firstValue.first : firstValue.toString();
     }
     return {'success': false, 'message': errorMsg};
   }
 
   Future<Map<String, dynamic>> login({
-    required String emailOrPhone,
+    required String emailOrPhone, 
     required String password,
   }) async {
+   
     final response = await http.post(
       Uri.parse(ApiConstants.login),
       headers: _headers,
       body: jsonEncode({
-        'email': emailOrPhone,
+        'phone_number': emailOrPhone, 
         'password': password,
       }),
     );
@@ -146,6 +153,7 @@ class AuthService {
       await saveTokens(data['access'], data['refresh']);
       final user = UserModel.fromJson(data['user']);
       await saveUserProfile(user);
+      
       return {
         'success': true,
         'user': user,
@@ -154,21 +162,28 @@ class AuthService {
 
     return {
       'success': false,
-      'message': data['detail'] ?? 'Invalid credentials.',
+      'message': data['detail'] ?? data['message'] ?? 'Invalid credentials.',
     };
   }
 
   Future<void> logout() async {
-    final refresh = await getRefreshToken();
-    final headers = await _authHeaders;
-
-    await http.post(
-      Uri.parse(ApiConstants.logout),
-      headers: headers,
-      body: jsonEncode({'refresh': refresh}),
-    );
-
-    await clearTokens();
+    try {
+      final refresh = await getRefreshToken();
+    
+      if (refresh != null && refresh.isNotEmpty) {
+        final headers = await _authHeaders;
+        await http.post(
+          Uri.parse(ApiConstants.logout),
+          headers: headers,
+          body: jsonEncode({'refresh': refresh}),
+        );
+      }
+    } catch (e) {
+      
+    } finally {
+   
+      await clearTokens();
+    }
   }
 
   Future<Map<String, dynamic>> socialLogin({
@@ -348,6 +363,3 @@ class AuthService {
     return {'success': false, 'message': errorMsg};
   }
 }
-
-
-
