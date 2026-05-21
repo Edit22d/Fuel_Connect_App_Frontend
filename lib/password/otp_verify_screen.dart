@@ -17,9 +17,9 @@ class OtpVerifyScreen extends StatefulWidget {
 }
 
 class _OtpVerifyScreenState extends State<OtpVerifyScreen>
-    with SingleTickerProviderStateMixin {   // 🔥 FIXED HERE
+    with SingleTickerProviderStateMixin {
 
-  // Animation for the shield icon (keeping your visual style)
+  // Animation for the shield icon
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
 
@@ -60,7 +60,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
     }
 
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
 
     try {
@@ -117,7 +117,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: const Color(0xFF0D0D0D),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -130,8 +130,19 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back_ios,
-                          color: Colors.white, size: 18),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.chevron_left,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
                     ),
                     const Text(
                       'Verification',

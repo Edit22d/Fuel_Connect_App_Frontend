@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../auth/login_screen.dart';
-// import '../auth/signup_screen.dart'; // ✅ Added import for Sign Up
+
 import 'home_screen.dart';
 
 class SplashScreen2 extends StatefulWidget {
@@ -38,27 +38,24 @@ class _SplashScreen2State extends State<SplashScreen2> {
     }
   }
 
-  // ✅ Updated: Bypass login/signup and go directly to Home Screen
   Future<void> _handleGetStarted() async {
     if (!mounted) return;
     
-    // User is automatically taken to the Home Screen without login
+   
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
-  // ✅ Updated: Check login status. 
-  // If Logged In -> Home. 
-  // If Not -> Go to Login Screen.
+ 
   Future<void> _goToLogin() async {
     final loggedIn = await _auth.isLoggedIn();
     
     if (!mounted) return;
 
     if (loggedIn) {
-      // Skip login screen if already authenticated
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
