@@ -11,7 +11,6 @@ import '/screens/order_screen.dart';
 import '/screens/support_screen.dart';
 import '/password/forgot_password_screen.dart';
 import '/password/otp_screen.dart';
-import '/password/success_otp_screen.dart';
 import '/password/otp_verify_screen.dart';
 
 

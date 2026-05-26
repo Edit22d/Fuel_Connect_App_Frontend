@@ -1,9 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import '/password/otp_screen.dart';
-
-const String baseUrl = 'http://10.0.2.2:8000';
+import 'otp_screen.dart'; // ← Import your OtpScreen
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -14,10 +10,6 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  
-  bool _isLoading = false;
-  String? _errorMessage;
 
   @override
   void dispose() {
@@ -25,40 +17,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _submitEmail() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final String email = _emailController.text.trim();
-
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/auth/forgot-password/'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        String? token = data['debug_token'];
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => OtpScreen(email: email, token: token)),
-          );
-        }
-      } else {
-        setState(() => _errorMessage = 'An unexpected error occurred. Please try again.');
-      }
-    } catch (e) {
-      setState(() => _errorMessage = 'Connection error. Please check your internet.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  void _goToNextScreen() {
+    final email = _emailController.text.trim();
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpScreen(
+          email: email.isNotEmpty ? email : 'user@example.com',
+          fromForgotPassword: true, 
+        ),
+      ),
+    );
   }
 
   @override
@@ -68,9 +38,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ============================================================
-            // LAYER 1: Background Layer (Logo top, Footer bottom)
-            // ============================================================
+            // ==================== HEADER ====================
             Padding(
               padding: const EdgeInsets.only(top: 20, bottom: 16),
               child: Row(
@@ -82,7 +50,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       children: [
                         Icon(Icons.arrow_back_ios, color: Color(0xFFC8A84B), size: 14),
                         SizedBox(width: 6),
-    
                       ],
                     ),
                   ),
@@ -106,9 +73,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
 
-            // ============================================================
-            // LAYER 2: Premium Centered Container with Padlock
-            // ============================================================
+            // ==================== CARD ====================
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -156,7 +121,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             size: 32,
                           ),
                         ),
-                        
                         const SizedBox(height: 24),
 
                         // Title
@@ -180,12 +144,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 12),
 
                         // Subtitle
                         const Text(
-                          'No worries! Enter your email and we\'ll send you instructions to reset it.',
+                          'No worries! We\'ll help you reset your password securely.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Color(0xFF9E9E9E),
@@ -193,14 +156,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             height: 1.6,
                           ),
                         ),
-
                         const SizedBox(height: 32),
 
-                        // Email Field
+                        // Email Field (Optional UI)
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'Email',
+                            'Email (Optional)',
                             style: TextStyle(
                               color: Color(0xFF888888),
                               fontSize: 11,
@@ -217,106 +179,57 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: const Color(0xFF2A2A2A)),
                           ),
-                          child: Form(
-                            key: _formKey,
-                            child: TextFormField(
-                              controller: _emailController,
-                              style: const TextStyle(color: Colors.white, fontSize: 14),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                                  return 'Please enter a valid email';
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'example@email.com',
-                                hintStyle: const TextStyle(color: Color(0xFF555555), fontSize: 14),
-                                prefixIcon: const Icon(
-                                  Icons.email_outlined,
-                                  color: Color(0xFF666666),
-                                  size: 20,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: TextFormField(
+                            controller: _emailController,
+                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'example@email.com',
+                              hintStyle: const TextStyle(color: Color(0xFF555555), fontSize: 14),
+                              prefixIcon: const Icon(
+                                Icons.email_outlined,
+                                color: Color(0xFF666666),
+                                size: 20,
                               ),
-                              keyboardType: TextInputType.emailAddress,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             ),
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
                           ),
                         ),
-
-                        // Error Message
-                        if (_errorMessage != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.red.withOpacity(0.3)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.error_outline, color: Colors.red, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _errorMessage!,
-                                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-
                         const SizedBox(height: 28),
 
-                        // Send Reset Link Button
+                        // ✅ Next Button — Instant Navigation
                         SizedBox(
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _submitEmail,
+                            onPressed: _goToNextScreen,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFC8A84B),
-                              disabledBackgroundColor: const Color(0xFFC8A84B).withOpacity(0.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               elevation: 0,
                             ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                                    ),
-                                  )
-                                : const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Send Reset Link',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                     
-                                    ],
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Next',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    letterSpacing: 0.5,
                                   ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
+                              ],
+                            ),
                           ),
                         ),
-
                         const SizedBox(height: 20),
 
                         // Return to Login
@@ -326,7 +239,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                           
                               SizedBox(width: 6),
                               Text(
                                 'Return to Login',
@@ -346,9 +258,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
 
-            // ============================================================
-            // FOOTER: Privacy Text
-            // ============================================================
+            // ==================== FOOTER ====================
             const Padding(
               padding: EdgeInsets.only(bottom: 20),
               child: Column(

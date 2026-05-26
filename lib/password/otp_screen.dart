@@ -1,16 +1,22 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import '/password/otp_verify_screen.dart';
+// ❌ REMOVED: import 'package:http/http.dart' as http;
+// ❌ REMOVED: import 'dart:convert';
+import 'otp_verify_screen.dart';
 
-const String baseUrl = 'http://10.0.2.2:8000';
+// ❌ REMOVED: const String baseUrl = 'http://10.0.2.2:8000';
 
 class OtpScreen extends StatefulWidget {
   final String email;
   final String? token;
+  final bool fromForgotPassword; // Optional flag for flow tracking
   
-  const OtpScreen({super.key, required this.email, this.token});
+  const OtpScreen({
+    super.key, 
+    required this.email, 
+    this.token,
+    this.fromForgotPassword = false,
+  });
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -21,22 +27,13 @@ class _OtpScreenState extends State<OtpScreen> {
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
-  bool _isLoading = false;
-  bool _isResending = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
+  // ❌ REMOVED: bool _isLoading = false;
+  // ❌ REMOVED: bool _isResending = false;
 
   @override
   void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
-    }
-    for (final f in _focusNodes) {
-      f.dispose();
-    }
+    for (final c in _controllers) c.dispose();
+    for (final f in _focusNodes) f.dispose();
     super.dispose();
   }
 
@@ -49,79 +46,45 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
-  Future<void> _resendOtp() async {
-    setState(() {
-      _isResending = true;
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/auth/forgot-password/'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': widget.email}),
-      );
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Code sent successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          
-          for (var c in _controllers) {
-            c.clear();
-          }
-          _focusNodes[0].requestFocus();
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to resend code'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isResending = false;
-        });
-      }
-    }
+  // ✅ MOCK: Resend OTP — UI feedback only, no API call
+  void _resendOtp() {
+    // Show instant UI feedback
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✓ Code resent (Mock)'),
+        backgroundColor: Color(0xFFC8A84B),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    
+    // Clear fields for demo
+    for (var c in _controllers) c.clear();
+    _focusNodes[0].requestFocus();
   }
 
+  // ✅ MOCK: Verify OTP — Navigate directly, no API validation
   void _verifyOtp() {
     final otpCode = _controllers.map((c) => c.text).join();
 
     if (otpCode.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter the complete 6-digit code'),
+          content: Text('Please enter all 6 digits'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
+    // ✅ Instant navigation to next screen — no backend call
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => OtpVerifyScreen(
           email: widget.email,
-          otp: otpCode,
+          otp: otpCode, // Passed for UI continuity; ignored in mock mode
         ),
       ),
     );
@@ -134,15 +97,12 @@ class _OtpScreenState extends State<OtpScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ============================================================
-            // LAYER 1: Background Layer (Header top)
-            // ============================================================
+            // ==================== HEADER ====================
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Advanced Back Button with Icon Only
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -151,10 +111,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF1A1A1A),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFF2A2A2A),
-                          width: 1,
-                        ),
+                        border: Border.all(color: const Color(0xFF2A2A2A)),
                       ),
                       child: const Icon(
                         Icons.chevron_left,
@@ -176,8 +133,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF1A1A1A),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: const Color(0xFFC8A84B).withOpacity(0.5)),
+                      border: Border.all(color: const Color(0xFFC8A84B).withOpacity(0.5)),
                     ),
                     child: const Row(
                       children: [
@@ -199,9 +155,7 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
             ),
 
-            // ============================================================
-            // LAYER 2: Premium Centered Container with Shield Icon
-            // ============================================================
+            // ==================== CARD ====================
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -249,7 +203,6 @@ class _OtpScreenState extends State<OtpScreen> {
                             size: 32,
                           ),
                         ),
-                        
                         const SizedBox(height: 24),
 
                         // Title
@@ -261,20 +214,14 @@ class _OtpScreenState extends State<OtpScreen> {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-
                         const SizedBox(height: 8),
 
-                        // Subtitle
+                        // Subtitle + Email
                         const Text(
                           'Enter the OTP you received to',
-                          style: TextStyle(
-                            color: Color(0xFF9E9E9E),
-                            fontSize: 13,
-                          ),
+                          style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 13),
                           textAlign: TextAlign.center,
                         ),
-                        
-                        // Email
                         Text(
                           widget.email,
                           style: const TextStyle(
@@ -284,10 +231,9 @@ class _OtpScreenState extends State<OtpScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-
                         const SizedBox(height: 32),
 
-                        // OTP Input Fields
+                        // OTP Fields
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(6, (index) {
@@ -298,10 +244,7 @@ class _OtpScreenState extends State<OtpScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1A1A1A),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: const Color(0xFF2A2A2A),
-                                  width: 1.5,
-                                ),
+                                border: Border.all(color: const Color(0xFF2A2A2A), width: 1.5),
                               ),
                               child: TextField(
                                 controller: _controllers[index],
@@ -326,114 +269,78 @@ class _OtpScreenState extends State<OtpScreen> {
                             );
                           }),
                         ),
-
                         const SizedBox(height: 24),
 
-                        // Resend OTP
+                        // Resend OTP — Mock Only
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text(
                               "Didn't receive the code? ",
-                              style: TextStyle(
-                                color: Color(0xFF9E9E9E),
-                                fontSize: 12,
-                              ),
+                              style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
                             ),
                             GestureDetector(
-                              onTap: _isResending ? null : _resendOtp,
-                              child: _isResending
-                                  ? const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFFC8A84B),
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Resend OTP',
-                                      style: TextStyle(
-                                        color: Color(0xFFC8A84B),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                              onTap: _resendOtp, // ✅ Direct call, no loading
+                              child: const Text(
+                                'Resend OTP',
+                                style: TextStyle(
+                                  color: Color(0xFFC8A84B),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 8),
 
-                        // Cancel with Icon
+                        // Cancel
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.close,
-                                color: Color(0xFF9E9E9E),
-                                size: 14,
-                              ),
+                              Icon(Icons.close, color: Color(0xFF9E9E9E), size: 14),
                               SizedBox(width: 6),
                               Text(
                                 'Cancel',
-                                style: TextStyle(
-                                  color: Color(0xFF9E9E9E),
-                                  fontSize: 12,
-                                ),
+                                style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
                               ),
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 28),
 
-                        // Verify OTP Button
+                        // ✅ Verify Button — Instant Navigation
                         SizedBox(
                           width: double.infinity,
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _verifyOtp,
+                            onPressed: _verifyOtp, // ✅ No loading state
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFC8A84B),
-                              disabledBackgroundColor: const Color(0xFFC8A84B).withOpacity(0.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               elevation: 0,
                             ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                                    ),
-                                  )
-                                : const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.lock_outline,
-                                        color: Colors.black,
-                                        size: 18,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Verify OTP',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ],
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.lock_outline, color: Colors.black, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Verify OTP',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    letterSpacing: 0.5,
                                   ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
