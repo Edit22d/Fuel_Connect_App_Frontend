@@ -11,18 +11,19 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Core packages
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.2.3
+  local_auth: ^2.2.0
+  http: ^1.2.1
+
   # Social Auth
   sign_in_with_apple: ^5.0.0
   google_sign_in: ^6.2.1
 
-  # HTTP & Storage
-  http: ^1.2.1
-  flutter_secure_storage: ^9.0.0
-  shared_preferences: ^2.2.2
-
-  # Maps & Launcher
-  google_maps_flutter: ^2.5.0
-  url_launcher: ^6.1.10
+  # Maps & Utilities
+  google_maps_flutter: ^2.5.3
+  url_launcher: ^6.2.5
 
   # Icons
   cupertino_icons: ^1.0.8

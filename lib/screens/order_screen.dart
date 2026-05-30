@@ -11,8 +11,9 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   int _selectedTab = 0;
+  int _selectedIndex = 2; // 2 is the 'Orders' tab index in the bottom nav
 
-  final List<_OrderItem> _orders = const [
+  final List<_OrderItem> _orders = [
     _OrderItem(
       name: 'Shell Super Petrol',
       date: 'Daily, Mar 20 – Apr 14, 2024',
@@ -20,6 +21,7 @@ class _OrderScreenState extends State<OrderScreen> {
       price: 'UGX\n\$64.20',
       status: 'DELIVERED',
       statusColor: Color(0xFF00C853),
+      showOrderAgain: true,
     ),
     _OrderItem(
       name: 'TotalEnergies Diesel',
@@ -29,6 +31,7 @@ class _OrderScreenState extends State<OrderScreen> {
       status: 'PENDING',
       statusColor: Color(0xFFC4963D),
       showTrackOrder: true,
+      showCancel: true,
     ),
     _OrderItem(
       name: 'Rubis Kerosene',
@@ -37,18 +40,19 @@ class _OrderScreenState extends State<OrderScreen> {
       price: 'UGX\n\$10.8',
       status: 'DELIVERED',
       statusColor: Color(0xFF00C853),
+      showOrderAgain: true,
     ),
   ];
 
   List<_OrderItem> get _filteredOrders {
     switch (_selectedTab) {
-      case 1: 
+      case 1:
         return _orders.where((order) => order.status == 'PENDING').toList();
-      case 2: 
+      case 2:
         return _orders.where((order) => order.status == 'PENDING').toList();
-      case 3: 
+      case 3:
         return _orders.where((order) => order.status == 'DELIVERED').toList();
-      default: 
+      default:
         return _orders;
     }
   }
@@ -60,6 +64,10 @@ class _OrderScreenState extends State<OrderScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D0D0D),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           'ORDER HISTORY',
           style: TextStyle(
@@ -72,7 +80,7 @@ class _OrderScreenState extends State<OrderScreen> {
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
+            icon: const Icon(Icons.notifications_none, color: Colors.white),
             onPressed: () {},
           ),
         ],
@@ -82,6 +90,7 @@ class _OrderScreenState extends State<OrderScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 _buildTab('All Orders', 0),
                 const SizedBox(width: 8),
@@ -105,6 +114,29 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      backgroundColor: const Color(0xFF0D0D0D),
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: const Color(0xFFC4963D),
+      unselectedItemColor: Colors.white54,
+      currentIndex: _selectedIndex,
+      onTap: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_outlined), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.people_outline), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
+      ],
     );
   }
 
@@ -231,35 +263,94 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ],
           ),
-          if (order.showTrackOrder) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const TrackOrderScreen(),
+          // Conditional Buttons based on Order Status
+          if (order.showTrackOrder || order.showCancel || order.showOrderAgain) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                // Track Order Button (Filled Yellow)
+                if (order.showTrackOrder)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TrackOrderScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC4963D),
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'TRACK ORDER',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
                         ),
-                      );
-                    },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFC4963D)),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                ),
-                child: const Text(
-                  'TRACK ORDER',
-                  style: TextStyle(
-                    color: Color(0xFFC4963D),
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                
+                // Spacer if both buttons exist
+                if (order.showTrackOrder && order.showCancel) const SizedBox(width: 10),
+
+                // Cancel Button (Text)
+                if (order.showCancel)
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        // Handle Cancel Action
+                      },
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Order Again Button (Outlined)
+                if (order.showOrderAgain)
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                         // Handle Order Again Action (e.g., go to fuel type)
+                         Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FuelTypeScreen(),
+                            ),
+                          );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFC4963D)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      child: const Text(
+                        'Order Again',
+                        style: TextStyle(
+                          color: Color(0xFFC4963D),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ],
@@ -276,6 +367,8 @@ class _OrderItem {
   final String status;
   final Color statusColor;
   final bool showTrackOrder;
+  final bool showCancel;
+  final bool showOrderAgain;
 
   const _OrderItem({
     required this.name,
@@ -285,5 +378,7 @@ class _OrderItem {
     required this.status,
     required this.statusColor,
     this.showTrackOrder = false,
+    this.showCancel = false,
+    this.showOrderAgain = false,
   });
 }

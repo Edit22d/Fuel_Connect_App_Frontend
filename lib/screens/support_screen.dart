@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '/screens/home_screen.dart';
 import '/screens/profile_screen.dart';
 import '/screens/settings_screen.dart';
+import '/screens/order_screen.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -14,64 +16,88 @@ class SupportScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF0D0D0D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Support Center',
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
-        centerTitle: false,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Gradient hero section
+            // Main content section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 0.85,
-                  colors: [
-                    Color(0xFF0D1117),
-                    Color(0xFF0D1117),
-                    Color(0xFF1A1A1A),
-                  ],
-                  stops: [0.0, 0.45, 1.0],
-                ),
-              ),
               child: Column(
                 children: [
-                  // Glowing circular icon
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const RadialGradient(
-                        colors: [Color(0xFFC4963D), Color(0xFFC4963D)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFC4963D).withOpacity(0.6),
-                          blurRadius: 24,
-                          spreadRadius: 4,
+                  // Glowing circular icon with badge
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 110,
+                        height: 110,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const RadialGradient(
+                            colors: [Color(0xFF1A1A1A), Color(0xFF0D0D0D)],
+                          ),
                         ),
-                      ],
-                    ),
-                    child: const Icon(Icons.headset_mic,
-                        color: Colors.white, size: 40),
+                      ),
+                      Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const RadialGradient(
+                            colors: [Color(0xFFC4963D), Color(0xFFB8860B)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFC4963D).withOpacity(0.5),
+                              blurRadius: 30,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.headset_mic_rounded,
+                          color: Colors.white,
+                          size: 44,
+                        ),
+                      ),
+                      // Notification badge
+                      Positioned(
+                        right: 22,
+                        bottom: 22,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF6B35),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_active_rounded,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   RichText(
                     textAlign: TextAlign.center,
-                    text: const TextSpan(
+                    text: TextSpan(
                       children: [
                         TextSpan(
                           text: 'Contact our\n',
@@ -79,7 +105,7 @@ class SupportScreen extends StatelessWidget {
                             color: Colors.white,
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            height: 1.25,
+                            height: 1.3,
                           ),
                         ),
                         TextSpan(
@@ -88,7 +114,7 @@ class SupportScreen extends StatelessWidget {
                             color: Color(0xFFC4963D),
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            height: 1.25,
+                            height: 1.3,
                           ),
                         ),
                         TextSpan(
@@ -97,124 +123,139 @@ class SupportScreen extends StatelessWidget {
                             color: Color(0xFFC4963D),
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            height: 1.25,
+                            height: 1.3,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   const Text(
                     'Our specialists are available around the\nclock to assist you with any inquiries.\nFree of charge for all domestic calls.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      height: 1.5,
+                      color: Colors.white60,
+                      fontSize: 14,
+                      height: 1.6,
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 32),
                   // Call Now button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => _showCallDialog(context),
+                      onPressed: () => _makePhoneCall(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFC4963D),
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
                       ),
-                      icon: const Icon(Icons.call, size: 18),
+                      icon: const Icon(Icons.call_rounded, size: 20),
                       label: const Text(
                         'Call Now',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 16,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   const Text(
-                    'Toll-Free: 1-800 SUPPORT-247',
+                    'Toll-Free: 1-800-SUPPORT-247',
                     style: TextStyle(
-                      color: Color(0xFFC4963D),
-                      fontSize: 11,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w500,
+                      color: Colors.white54,
+                      fontSize: 12,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ],
               ),
             ),
 
-            // White background buttons: Chat, Email, FAQ
+            // Two white buttons: Chat and Email
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildWhiteButton(context, Icons.chat_bubble_outline, 'Chat'),
-                  _buildWhiteButton(context, Icons.email_outlined, 'Email'),
-                  _buildWhiteButton(context, Icons.help_outline, 'FAQ'),
+                  _buildWhiteButton(
+                    context,
+                    Icons.chat_bubble_outline_rounded,
+                    'Chat',
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ChatSupportScreen()),
+                    ),
+                  ),
+                  _buildWhiteButton(
+                    context,
+                    Icons.email_outlined,
+                    'Email',
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const EmailSupportScreen()),
+                    ),
+                  ),
                 ],
               ),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
-      // Bottom Navigation Bar - Home, Station, Support, Settings
+      // Bottom Navigation Bar - Home, Support, Profile, Settings
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFF0D0D0D),
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFFC4963D),
         unselectedItemColor: Colors.white54,
-        selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        unselectedLabelStyle: const TextStyle(fontSize: 12),
+        selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.local_gas_station_outlined),
-            activeIcon: Icon(Icons.local_gas_station),
-            label: 'Station',
+            activeIcon: Icon(Icons.home_rounded),
+            label: 'HOME',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.headset_mic_outlined),
-            activeIcon: Icon(Icons.headset_mic),
-            label: 'Support',
+            activeIcon: Icon(Icons.headset_mic_rounded),
+            label: 'SUPPORT',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline_rounded),
+            activeIcon: Icon(Icons.person_rounded),
+            label: 'PROFILE',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Settings',
+            activeIcon: Icon(Icons.settings_rounded),
+            label: 'SETTINGS',
           ),
         ],
         onTap: (index) {
           switch (index) {
-            case 0: 
+            case 0:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
               );
               break;
-            case 1: 
+            case 1:
+              // Already on support screen
+              break;
+            case 2:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfileScreen()),
               );
               break;
-            case 2: 
-              
-              break;
-            case 3: 
+            case 3:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const SettingsScreen()),
@@ -222,55 +263,39 @@ class SupportScreen extends StatelessWidget {
               break;
           }
         },
-        currentIndex: 2, 
+        currentIndex: 1,
       ),
     );
   }
 
-  Widget _buildWhiteButton(BuildContext context, IconData icon, String label) {
+  Widget _buildWhiteButton(BuildContext context, IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
-      onTap: () {
-        if (label == 'Chat') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatSupportScreen()),
-          );
-        } else if (label == 'Email') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const EmailSupportScreen()),
-          );
-        } else if (label == 'FAQ') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const FAQScreen()),
-          );
-        }
-      },
+      onTap: onTap,
       child: Container(
-        width: 90,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        width: 140,
+        height: 90,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFFC4963D), size: 26),
-            const SizedBox(height: 6),
+            Icon(icon, color: const Color(0xFFC4963D), size: 32),
+            const SizedBox(height: 8),
             Text(
               label,
               style: const TextStyle(
-                color: Color(0xFFC4963D),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+                color: Color(0xFF1A1A1A),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -279,94 +304,61 @@ class SupportScreen extends StatelessWidget {
     );
   }
 
-  void _showCallDialog(BuildContext context) {
-    final TextEditingController phoneController = TextEditingController();
-    
+  void _makePhoneCall(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1A1A1A),
-          title: const Text(
-            'Enter Phone Number',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          content: TextField(
-            controller: phoneController,
-            style: const TextStyle(color: Colors.white),
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              hintText: 'e.g., +1 234 567 8900',
-              hintStyle: const TextStyle(color: Colors.white54),
-              prefixIcon: const Icon(Icons.phone, color: Color(0xFFC4963D)),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFFC4963D)),
-                borderRadius: BorderRadius.circular(8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.call_rounded, color: Color(0xFFC4963D), size: 24),
+              SizedBox(width: 12),
+              Text(
+                'Call Support',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFFC4963D), width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (phoneController.text.isNotEmpty) {
-                  Navigator.pop(context);
-                  _makePhoneCall(phoneController.text);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC4963D),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Call Now'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _makePhoneCall(String phoneNumber) {
-   
-    showDialog(
-      context: chatContext.currentContext!,
-    
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A1A),
-          title: const Text(
-            'Calling...',
-            style: TextStyle(color: Color(0xFFC4963D), fontWeight: FontWeight.bold),
+            ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.call, color: Color(0xFFC4963D), size: 50),
-              const SizedBox(height: 10),
-              Text(
-                phoneNumber,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-              ),
-              const SizedBox(height: 10),
               const Text(
-                'Our support team will contact you shortly.',
-                style: TextStyle(color: Colors.white70),
-                textAlign: TextAlign.center,
+                '1-800-SUPPORT-247',
+                style: TextStyle(
+                  color: Color(0xFFC4963D),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Available 24/7',
+                style: TextStyle(color: Colors.white60, fontSize: 13),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close', style: TextStyle(color: Color(0xFFC4963D))),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final Uri launchUri = Uri(scheme: 'tel', path: '18007877678247');
+                if (await canLaunchUrl(launchUri)) {
+                  await launchUrl(launchUri);
+                }
+                if (context.mounted) Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC4963D),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.phone_rounded, size: 18),
+              label: const Text('Call'),
             ),
           ],
         );
@@ -375,7 +367,7 @@ class SupportScreen extends StatelessWidget {
   }
 }
 
-
+// Chat Support Screen
 class ChatSupportScreen extends StatefulWidget {
   const ChatSupportScreen({super.key});
 
@@ -393,40 +385,37 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
     'Delivery time?',
     'Payment methods',
     'Track my order',
-    'Fuel prices',
-    'Issue with delivery',
   ];
 
   @override
   void initState() {
     super.initState();
-    _addSystemMessage('Hello! 👋 I\'m your fuel ordering assistant. How can I help you today?');
+    _addSystemMessage('Hello! 👋 I\'m your support assistant. How can I help you today?');
   }
 
   void _addSystemMessage(String text) {
-    _messages.add(ChatMessage(text: text, isUser: false, timestamp: DateTime.now()));
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: false, timestamp: DateTime.now()));
+    });
   }
 
   void _addUserMessage(String text) {
-    _messages.add(ChatMessage(text: text, isUser: true, timestamp: DateTime.now()));
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: true, timestamp: DateTime.now()));
+    });
   }
 
   void _sendMessage(String message) {
     if (message.trim().isEmpty) return;
     
-    setState(() {
-      _addUserMessage(message);
-      _isTyping = true;
-    });
-    
+    _addUserMessage(message);
     _messageController.clear();
     
+    setState(() => _isTyping = true);
     
     Future.delayed(const Duration(seconds: 1), () {
-      setState(() {
-        _isTyping = false;
-        _getAutoResponse(message);
-      });
+      setState(() => _isTyping = false);
+      _getAutoResponse(message);
     });
   }
 
@@ -435,19 +424,15 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
     String lowerMsg = message.toLowerCase();
     
     if (lowerMsg.contains('order') || lowerMsg.contains('fuel')) {
-      response = 'To order fuel:\n\n1. Go to Home screen\n2. Select your preferred fuel station\n3. Choose fuel type\n4. Enter quantity\n5. Confirm booking\n6. Make payment\n\nNeed help with any step? Just ask! 👍';
+      response = 'To order fuel:\n\n1. Go to Home screen\n2. Select your preferred fuel station\n3. Choose fuel type\n4. Enter quantity\n5. Confirm booking\n\nNeed help with any step?';
     } else if (lowerMsg.contains('delivery')) {
-      response = 'Delivery typically takes 30-45 minutes. You can track your order in real-time from the Order History screen. 🚚';
+      response = 'Delivery typically takes 30-45 minutes. You can track your order in real-time from the Orders screen. 🚚';
     } else if (lowerMsg.contains('payment')) {
-      response = 'We accept:\n• Mobile Money (M-Pesa, Airtel Money)\n• Credit/Debit Cards\n• Bank Transfer\n• Cash on Delivery\n\nAll payments are secure! 💳';
+      response = 'We accept:\n• Mobile Money\n• Credit/Debit Cards\n• Bank Transfer\n• Cash on Delivery\n\nAll payments are secure! 💳';
     } else if (lowerMsg.contains('track')) {
-      response = 'Go to Orders → Track Order to see real-time location of your fuel delivery. You\'ll get SMS updates too! 📍';
-    } else if (lowerMsg.contains('price')) {
-      response = 'Fuel prices vary by station. Current average:\n• Petrol: UGX 4,500/L\n• Diesel: UGX 4,300/L\n• Kerosene: UGX 3,800/L\n\nCheck Station screen for exact prices! ⛽';
-    } else if (lowerMsg.contains('issue') || lowerMsg.contains('problem')) {
-      response = 'Sorry for the inconvenience! Please call our support line at 1-800-SUPPORT-247 or share your order ID so we can help immediately. 📞';
+      response = 'Go to Orders → Track Order to see real-time location of your delivery. 📍';
     } else {
-      response = 'I\'m here to help! You can ask me about:\n• Ordering fuel\n• Delivery status\n• Payment methods\n• Fuel prices\n• Technical issues\n\nWhat would you like to know? 😊';
+      response = 'I\'m here to help! You can ask me about ordering, delivery, payments, or tracking. What would you like to know? 😊';
     }
     
     _addSystemMessage(response);
@@ -461,26 +446,26 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
         backgroundColor: const Color(0xFF0D0D0D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFC4963D),
+                color: Color(0xFFC4963D),
               ),
-              child: const Icon(Icons.support_agent, color: Colors.black, size: 22),
+              child: const Icon(Icons.support_agent_rounded, color: Colors.black, size: 20),
             ),
             const SizedBox(width: 12),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Fuel Support Chat',
+                  'Support Chat',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text(
@@ -495,7 +480,6 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
       ),
       body: Column(
         children: [
-         
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -509,10 +493,8 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
               },
             ),
           ),
-          
-         
           Container(
-            height: 50,
+            height: 44,
             margin: const EdgeInsets.only(bottom: 8),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -532,18 +514,11 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
               },
             ),
           ),
-          
-       
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 4,
-                ),
-              ],
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
               children: [
@@ -574,7 +549,7 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
                       color: Color(0xFFC4963D),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.send, color: Colors.black, size: 20),
+                    child: const Icon(Icons.send_rounded, color: Colors.black, size: 20),
                   ),
                 ),
               ],
@@ -680,7 +655,7 @@ class TypingIndicator extends StatelessWidget {
   }
 }
 
-
+// Email Support Screen
 class EmailSupportScreen extends StatefulWidget {
   const EmailSupportScreen({super.key});
 
@@ -691,7 +666,7 @@ class EmailSupportScreen extends StatefulWidget {
 class _EmailSupportScreenState extends State<EmailSupportScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _orderIdController = TextEditingController();
+  final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   
   @override
@@ -702,7 +677,7 @@ class _EmailSupportScreenState extends State<EmailSupportScreen> {
         backgroundColor: const Color(0xFF0D0D0D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -724,11 +699,11 @@ class _EmailSupportScreenState extends State<EmailSupportScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.email, color: Color(0xFFC4963D), size: 24),
+                  Icon(Icons.email_rounded, color: Color(0xFFC4963D), size: 24),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Our support team will respond within 24 hours',
+                      'We\'ll respond within 24 hours',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ),
@@ -736,29 +711,30 @@ class _EmailSupportScreenState extends State<EmailSupportScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _buildInputField('Full Name', _nameController, Icons.person),
+            _buildInputField('Full Name', _nameController, Icons.person_outline_rounded),
             const SizedBox(height: 16),
-            _buildInputField('Email Address', _emailController, Icons.email, keyboardType: TextInputType.emailAddress),
+            _buildInputField('Email Address', _emailController, Icons.email_outlined, keyboardType: TextInputType.emailAddress),
             const SizedBox(height: 16),
-            _buildInputField('Order ID (Optional)', _orderIdController, Icons.receipt),
+            _buildInputField('Subject', _subjectController, Icons.subject_outlined),
             const SizedBox(height: 16),
-            _buildInputField('Message', _messageController, Icons.message, maxLines: 5),
+            _buildInputField('Message', _messageController, Icons.message_outlined, maxLines: 5),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: () {
                   if (_nameController.text.isNotEmpty && _emailController.text.isNotEmpty && _messageController.text.isNotEmpty) {
                     _showEmailSentDialog(context);
                   }
                 },
+                icon: const Icon(Icons.send_rounded),
+                label: const Text('Send Email'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFC4963D),
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Send Email', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
           ],
@@ -782,7 +758,8 @@ class _EmailSupportScreenState extends State<EmailSupportScreen> {
             prefixIcon: Icon(icon, color: const Color(0xFFC4963D), size: 20),
             filled: true,
             fillColor: const Color(0xFF1A1A1A),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ],
@@ -795,17 +772,48 @@ class _EmailSupportScreenState extends State<EmailSupportScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1A1A1A),
-          title: const Icon(Icons.check_circle, color: Color(0xFFC4963D), size: 50),
-          content: const Text(
-            'Email sent successfully!\nOur team will respond shortly.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF00C853),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded, color: Colors.white, size: 32),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Email Sent!',
+                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Our team will respond to you shortly.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white60),
+              ),
+            ],
           ),
           actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC4963D), foregroundColor: Colors.black),
-              child: const Text('OK'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC4963D),
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
             ),
           ],
         );
@@ -813,116 +821,3 @@ class _EmailSupportScreenState extends State<EmailSupportScreen> {
     );
   }
 }
-
-// FAQ Screen
-class FAQScreen extends StatelessWidget {
-  const FAQScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Frequently Asked Questions',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        centerTitle: false,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          FAQItem(
-            question: 'How do I order fuel?',
-            answer: '1. Go to Home screen\n2. Select a fuel station\n3. Choose fuel type (Petrol/Diesel/Kerosene)\n4. Enter quantity in liters\n5. Review payment details\n6. Confirm booking\n7. Complete payment\n\nYour fuel will be delivered to your location within 30-45 minutes.',
-          ),
-          FAQItem(
-            question: 'What payment methods are accepted?',
-            answer: 'We accept multiple payment methods:\n• Mobile Money (M-Pesa, Airtel Money)\n• Credit/Debit Cards (Visa, Mastercard)\n• Bank Transfer\n• Cash on Delivery\n\nAll transactions are secure and encrypted.',
-          ),
-          FAQItem(
-            question: 'How can I track my order?',
-            answer: 'To track your order:\n1. Go to Order History\n2. Find your active order\n3. Tap "Track Order"\n4. See real-time location of your delivery\n\nYou\'ll also receive SMS updates at each stage.',
-          ),
-          FAQItem(
-            question: 'What is the delivery time?',
-            answer: 'Standard delivery takes 30-45 minutes depending on your location and traffic conditions. During peak hours (8-10 AM, 5-7 PM), delivery may take up to 60 minutes. You\'ll receive an estimated arrival time after booking.',
-          ),
-          FAQItem(
-            question: 'Can I cancel my order?',
-            answer: 'Yes, orders can be cancelled within 5 minutes of booking without any fee. After 5 minutes, a small cancellation fee may apply. To cancel:\n1. Go to Order History\n2. Select the order\n3. Tap "Cancel Order"\n4. Confirm cancellation',
-          ),
-          FAQItem(
-            question: 'What if I have issues with delivery?',
-            answer: 'If you experience any issues:\n1. Use our live chat support for immediate help\n2. Call our 24/7 support line: 1-800-SUPPORT-247\n3. Send an email to support@fuelapp.com\n\nOur team will resolve your issue within 2 hours.',
-          ),
-          FAQItem(
-            question: 'Are there any delivery fees?',
-            answer: 'Delivery fees vary by distance:\n• Within 5km: Free delivery\n• 5-10km: UGX 5,000\n• 10-15km: UGX 8,000\n• 15+ km: UGX 10,000\n\nMinimum order of 10 liters required for delivery.',
-          ),
-          FAQItem(
-            question: 'How do I get a refund?',
-            answer: 'Refunds are processed within 3-5 business days. To request a refund:\n1. Contact support via chat or email\n2. Provide your order ID\n3. Explain the issue\n4. Our team will review and process your refund',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class FAQItem extends StatefulWidget {
-  final String question;
-  final String answer;
-  
-  const FAQItem({super.key, required this.question, required this.answer});
-  
-  @override
-  State<FAQItem> createState() => _FAQItemState();
-}
-
-class _FAQItemState extends State<FAQItem> {
-  bool _isExpanded = false;
-  
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            title: Text(
-              widget.question,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
-            ),
-            trailing: Icon(
-              _isExpanded ? Icons.expand_less : Icons.expand_more,
-              color: const Color(0xFFC4963D),
-            ),
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-          ),
-          if (_isExpanded)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                widget.answer,
-                style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// Global variable to help with context in makePhoneCall
-GlobalKey<NavigatorState> chatContext = GlobalKey<NavigatorState>();

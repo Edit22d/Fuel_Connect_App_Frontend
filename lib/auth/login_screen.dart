@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
-import '../screens/home_screen.dart';
-import '../password/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,28 +12,26 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _auth = AuthService();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  static final _emailOrPhoneRegex = RegExp(
-    r'^(\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}|[^@]+@[^@]+\.[^@]+)$',
-  );
-  static final _passwordRegex = RegExp(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$',
+  // Regex for Phone only
+  static final _phoneRegex = RegExp(
+    r'^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$',
   );
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _goToHome() => Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreenPlaceholder()),
       );
 
   void _goToSignUp() => Navigator.push(
@@ -45,50 +41,48 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _goToForgotPassword() => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+        MaterialPageRoute(builder: (_) => const ForgotPasswordPlaceholder()),
       );
 
   Future<void> _handleLogin() async {
-    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty && password.isEmpty) {
-      _showError('Please enter credentials before continuing');
-      return;
-    }
-    if (email.isEmpty || password.isEmpty) {
+    if (phone.isEmpty || password.isEmpty) {
       _showError('All fields are required');
       return;
     }
-    if (!_emailOrPhoneRegex.hasMatch(email) ||
-        !_passwordRegex.hasMatch(password)) {
-      _showError('Invalid credentials, please enter correct credentials');
+
+    if (!_phoneRegex.hasMatch(phone)) {
+      _showError('Please enter a valid phone number (e.g. +256 744 000 000)');
       return;
     }
 
     setState(() => _isLoading = true);
     try {
       final result = await _auth
-          .login(emailOrPhone: email, password: password)
+          .login(phoneNumber: phone, password: password)
           .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () => throw TimeoutException('Timed out'),
+            const Duration(seconds: 15),
+            onTimeout: () => throw TimeoutException('Connection timed out'),
           );
 
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      result['success'] == true
-          ? _goToHome()
-          : _showError(result['message'] ?? 'Login failed.');
+      if (result['success'] == true) {
+        _goToHome();
+      } else {
+        _showError(result['message'] ?? 'Login failed. Please try again.');
+      }
     } on TimeoutException {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError('Login took too long. Please try again.');
-    } catch (_) {
+      _showError('Request timed out. Check your internet connection.');
+    } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError('An error occurred. Please try again.');
+      _showError('An error occurred: ${e.toString()}');
     }
   }
 
@@ -116,7 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Column(
           verticalDirection: VerticalDirection.down,
-          spacing: 0.0,
           children: [
             // ============================================================
             // LAYER 1: Logo Section (Top)
@@ -173,153 +166,156 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Welcome Section
-                      const Text(
-                        'Welcome back',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Please enter valid credentials!.',
-                        style: TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Phone Field
-                      const Text(
-                        'PHONE',
-                        style: TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 10,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      _buildTextField(
-                        controller: _emailController,
-                        hintText: 'Enter your phone number',
-                        prefixIcon: Icons.phone,
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Password Field
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'PASSWORD',
-                            style: TextStyle(
-                              color: Color(0xFF888888),
-                              fontSize: 10,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Welcome Section
+                        const Text(
+                          'Welcome back',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
                           ),
-                          GestureDetector(
-                            onTap: _goToForgotPassword,
-                            child: const Text(
-                              'FORGOT PASSWORD?',
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Please enter your phone number and password.',
+                          style: TextStyle(
+                            color: Color(0xFF888888),
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Phone Field
+                        const Text(
+                          'PHONE NUMBER',
+                          style: TextStyle(
+                            color: Color(0xFF888888),
+                            fontSize: 10,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildTextField(
+                          controller: _phoneController,
+                          hintText: '+256 744 000 000',
+                          prefixIcon: Icons.phone,
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Password Field
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'PASSWORD',
                               style: TextStyle(
-                                color: Color(0xFFC8A84B),
+                                color: Color(0xFF888888),
                                 fontSize: 10,
-                                letterSpacing: 1.0,
+                                letterSpacing: 1.2,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      _buildTextField(
-                        controller: _passwordController,
-                        hintText: '••••••••',
-                        prefixIcon: Icons.lock_outline,
-                        obscureText: _obscurePassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF666666),
-                            size: 18,
-                          ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Login Button
-                      _YellowButton(
-                        isLoading: _isLoading,
-                        onPressed: _isLoading ? null : _handleLogin,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Divider
-                      Row(
-                        children: const [
-                          Expanded(
-                            child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              'OR CONTINUE WITH',
-                              style: TextStyle(
-                                color: Color(0xFF555555),
-                                fontSize: 9,
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w500,
+                            GestureDetector(
+                              onTap: _goToForgotPassword,
+                              child: const Text(
+                                'FORGOT PASSWORD?',
+                                style: TextStyle(
+                                  color: Color(0xFFC8A84B),
+                                  fontSize: 10,
+                                  letterSpacing: 1.0,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        _buildTextField(
+                          controller: _passwordController,
+                          hintText: '••••••••',
+                          prefixIcon: Icons.lock_outline,
+                          obscureText: _obscurePassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: const Color(0xFF666666),
+                              size: 18,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
-                          Expanded(
-                            child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                        ),
+                        const SizedBox(height: 20),
 
-                      // Social Login Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SocialButton(
-                              label: 'GOOGLE',
-                              icon: const _GoogleIcon(),
-                              onPressed: _handleGoogleSignIn,
+                        // Login Button
+                        _YellowButton(
+                          isLoading: _isLoading,
+                          onPressed: _isLoading ? null : _handleLogin,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Divider
+                        Row(
+                          children: const [
+                            Expanded(
+                              child: Divider(
+                                  color: Color(0xFF2A2A2A), thickness: 1),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _SocialButton(
-                              label: 'APPLE',
-                              icon: const _AppleIcon(),
-                              onPressed: _handleAppleSignIn,
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'OR CONTINUE WITH',
+                                style: TextStyle(
+                                  color: Color(0xFF555555),
+                                  fontSize: 9,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            Expanded(
+                              child: Divider(
+                                  color: Color(0xFF2A2A2A), thickness: 1),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Social Login Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'GOOGLE',
+                                icon: const _GoogleIcon(),
+                                onPressed: _handleGoogleSignIn,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'APPLE',
+                                icon: const _AppleIcon(),
+                                onPressed: _handleAppleSignIn,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -383,8 +379,10 @@ class _LoginScreenState extends State<LoginScreen> {
         style: const TextStyle(color: Colors.white, fontSize: 13),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: Color(0xFF555555), fontSize: 13),
-          prefixIcon: Icon(prefixIcon, color: const Color(0xFF666666), size: 18),
+          hintStyle:
+              const TextStyle(color: Color(0xFF555555), fontSize: 13),
+          prefixIcon:
+              Icon(prefixIcon, color: const Color(0xFF666666), size: 18),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
           contentPadding:
@@ -395,6 +393,44 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// Placeholders
+// ─────────────────────────────────────────────────────────────────────
+class HomeScreenPlaceholder extends StatelessWidget {
+  const HomeScreenPlaceholder({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+          title: const Text("Home"),
+          backgroundColor: const Color(0xFFC8A84B)),
+      body: const Center(
+          child: Text("Login Successful!",
+              style: TextStyle(color: Colors.white))),
+      backgroundColor: const Color(0xFF0D0D0D),
+    );
+  }
+}
+
+class ForgotPasswordPlaceholder extends StatelessWidget {
+  const ForgotPasswordPlaceholder({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+          title: const Text("Forgot Password"),
+          backgroundColor: const Color(0xFFC8A84B)),
+      body: const Center(
+          child: Text("Forgot Password Screen",
+              style: TextStyle(color: Colors.white))),
+      backgroundColor: const Color(0xFF0D0D0D),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Custom UI Components
+// ─────────────────────────────────────────────────────────────────────
 class _YellowButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
@@ -411,8 +447,10 @@ class _YellowButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFC8A84B),
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFC8A84B).withOpacity(0.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          disabledBackgroundColor:
+              const Color(0xFFC8A84B).withOpacity(0.5),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8)),
           elevation: 0,
         ),
         child: isLoading
@@ -531,7 +569,8 @@ class _GooglePainter extends CustomPainter {
       );
     }
 
-    canvas.drawCircle(Offset(cx, cy), r * 0.45, Paint()..color = Colors.white);
+    canvas.drawCircle(
+        Offset(cx, cy), r * 0.45, Paint()..color = Colors.white);
 
     canvas.drawLine(
       Offset(cx, cy),
@@ -564,7 +603,7 @@ class _ApplePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final path = Path();
-    
+
     path.moveTo(size.width * 0.5, size.height * 0.15);
     path.cubicTo(
       size.width * 0.5, size.height * 0.15,
@@ -611,10 +650,7 @@ class _ApplePainter extends CustomPainter {
     );
     path.close();
 
-    canvas.drawPath(
-      path,
-      Paint()..color = Colors.white,
-    );
+    canvas.drawPath(path, Paint()..color = Colors.white);
   }
 
   @override

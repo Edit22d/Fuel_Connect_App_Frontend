@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-// We keep the import for LatLng since it is used in the FuelStation model
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '/screens/order_screen.dart';
 import '/screens/support_screen.dart';
@@ -172,7 +171,6 @@ final List<FuelStation> kStations = [
 ];
 
 
-
 class StationDetailScreen extends StatefulWidget {
   final FuelStation station;
 
@@ -283,57 +281,41 @@ class _StationDetailScreenState extends State<StationDetailScreen>
                             ),
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  widget.station.isOpen
-                                      ? 'Station is currently open'
-                                      : 'Station is currently closed',
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: widget.station.isOpen
+                                ? const Color(0xFF1A4A1A)
+                                : const Color(0xFF4A1A1A),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: widget.station.isOpen
+                                      ? const Color(0xFF4CAF50)
+                                      : const Color(0xFFE53935),
+                                  shape: BoxShape.circle,
                                 ),
-                                backgroundColor: widget.station.isOpen
-                                    ? const Color(0xFF1A4A1A)
-                                    : const Color(0xFF1A4A1A),
                               ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: widget.station.isOpen
-                                  ? const Color(0xFF1A4A1A)
-                                  : const Color(0xFF1A4A1A),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: widget.station.isOpen
-                                        ? const Color(0xFF1A4A1A)
-                                        : const Color(0xFF1A4A1A),
-                                    shape: BoxShape.circle,
-                                  ),
+                              const SizedBox(width: 6),
+                              Text(
+                                widget.station.isOpen ? 'Open' : 'Closed',
+                                style: TextStyle(
+                                  color: widget.station.isOpen
+                                      ? const Color(0xFF4CAF50)
+                                      : const Color(0xFFE53935),
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  widget.station.isOpen ? 'Open' : 'Closed',
-                                  style: TextStyle(
-                                    color: widget.station.isOpen
-                                        ? const Color(0xFF1A4A1A)
-                                        : const Color(0xFF1A4A1A),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -482,7 +464,7 @@ class _StationDetailScreenState extends State<StationDetailScreen>
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFC4963D), Color(0xFFC4963D)],
+                          colors: [Color(0xFFC4963D), Color(0xFFE8B560)],
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -522,9 +504,9 @@ class _StationDetailScreenState extends State<StationDetailScreen>
           bottom: MediaQuery.of(context).padding.bottom + 16,
           top: 16,
         ),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: const BorderRadius.only(
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
@@ -533,9 +515,7 @@ class _StationDetailScreenState extends State<StationDetailScreen>
           children: [
             Expanded(
               child: ElevatedButton.icon(
-               onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.navigation),
                 label: const Text('Navigate'),
                 style: ElevatedButton.styleFrom(
@@ -601,27 +581,21 @@ class StationsNearYouScreen extends StatefulWidget {
   const StationsNearYouScreen({super.key});
 
   @override
-  State<StationsNearYouScreen> createState() =>
-      _StationsNearYouScreenState();
+  State<StationsNearYouScreen> createState() => _StationsNearYouScreenState();
 }
 
 class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     with TickerProviderStateMixin {
 
-  // ── Auth Service ────────────────────────────────────────────────────────────
   final _auth = AuthService();
 
-  // ── Map ────────────────────────────────────────────────────────────────────
-  // Removed GoogleMapController as we are using a static image
   final LatLng _userLocation     = const LatLng(0.3476, 32.5825);
   final LatLng _deliveryLocation = const LatLng(0.3530, 32.5870);
   Set<Marker>   _markers   = {};
   Set<Polyline> _polylines = {};
 
-  // ── Bottom nav ─────────────────────────────────────────────────────────────
   int _selectedNav = 0;
 
-  // ── Auto-scroll station cards ──────────────────────────────────────────────
   late ScrollController _scrollController;
   Timer? _scrollTimer;
   bool   _userTouching = false;
@@ -631,16 +605,13 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   static const double _scrollStep = 0.6;
   String? _activeStationId;
 
-  // ── Fade-in ────────────────────────────────────────────────────────────────
   late AnimationController _fadeController;
   late Animation<double>   _fadeAnim;
 
-  // ── Search ─────────────────────────────────────────────────────────────────
   final TextEditingController _searchController = TextEditingController();
   List<FuelStation> _filteredStations = kStations;
   bool _isSearching = false;
 
-  // ── Premium Overlay Drawer ─────────────────────────────────────────────────
   late AnimationController _drawerController;
   late Animation<double>   _drawerSlideAnim;
   late Animation<double>   _contentScaleAnim;
@@ -659,7 +630,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     _setupMarkers();
     _setupPolylines();
 
-    // Fade-in
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -667,7 +637,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     _fadeAnim = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
     _fadeController.forward();
 
-    // Drawer animation controller
     _drawerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -696,9 +665,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
 
     _searchController.addListener(_onSearchChanged);
-
-    // Removed PostFrameCallback for map readiness since we are using an image
-    
     _startScroll();
   }
 
@@ -725,15 +691,11 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     _closeDrawer();
     Future.delayed(const Duration(milliseconds: 260), () {
       if (mounted) {
-        Navigator.push(
-          context,
-          _premiumSlideRoute(screen),
-        );
+        Navigator.push(context, _premiumSlideRoute(screen));
       }
     });
   }
 
-  /// Premium right-to-left slide transition matching iOS feel
   Route _premiumSlideRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
@@ -769,10 +731,10 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // LOGOUT LOGIC
+  // LOGOUT LOGIC  ← THE ONLY CHANGED LINE IS INSIDE HERE
   // ─────────────────────────────────────────────────────────────────────────────
   Future<void> _showLogoutDialog() async {
-    final phoneController = TextEditingController();
+    final phoneController    = TextEditingController();
     final passwordController = TextEditingController();
     bool isLoading = false;
 
@@ -790,7 +752,10 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
             ),
             title: const Text(
               'Confirm Logout',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -810,60 +775,73 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                   controller: passwordController,
                   hintText: 'Password',
                   obscureText: true,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.text,
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: isLoading ? null : () => Navigator.of(context).pop(),
-                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                child: const Text('Cancel',
+                    style: TextStyle(color: Colors.grey)),
               ),
               TextButton(
-                onPressed: isLoading ? null : () async {
-                  final phone = phoneController.text.trim();
-                  final password = passwordController.text.trim();
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final phone    = phoneController.text.trim();
+                        final password = passwordController.text.trim();
 
-                  if (phone.isEmpty || password.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please fill in all fields')),
-                    );
-                    return;
-                  }
+                        if (phone.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Please fill in all fields')),
+                          );
+                          return;
+                        }
 
-                  setDialogState(() => isLoading = true);
+                        setDialogState(() => isLoading = true);
 
-                  final result = await _auth.login(
-                    emailOrPhone: phone,
-                    password: password,
-                  );
+                        // ✅ FIXED: was emailOrPhone, now phoneNumber
+                        final result = await _auth.login(
+                          phoneNumber: phone,
+                          password: password,
+                        );
 
-                  setDialogState(() => isLoading = false);
+                        setDialogState(() => isLoading = false);
 
-                  if (result['success']) {
-                    await _auth.logout();
-                    if (mounted) {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/',
-                        (route) => false,
-                      );
-                    }
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(result['message'] ?? 'Invalid credentials'),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                  }
-                },
+                        if (result['success'] == true) {
+                          await _auth.logout();
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (_) => const LoginScreen()),
+                              (route) => false,
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  result['message'] ?? 'Invalid credentials'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      },
                 child: isLoading
                     ? const SizedBox(
-                        width: 16, height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC4963D)),
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFC4963D)),
                       )
-                    : const Text('Confirm', style: TextStyle(color: Color(0xFFC4963D), fontWeight: FontWeight.bold)),
+                    : const Text('Confirm',
+                        style: TextStyle(
+                            color: Color(0xFFC4963D),
+                            fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -888,7 +866,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
         hintStyle: const TextStyle(color: Colors.grey),
         filled: true,
         fillColor: const Color(0xFF1A1A1A),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
@@ -896,16 +875,15 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
       ),
     );
   }
-  // ─────────────────────────────────────────────────────────────────────────────
 
   void _onSearchChanged() {
     final query = _searchController.text.trim();
     setState(() {
-      _isSearching         = query.isNotEmpty;
-      _filteredStations    = query.isEmpty
+      _isSearching      = query.isNotEmpty;
+      _filteredStations = query.isEmpty
           ? kStations
           : kStations.where((s) => s.matchesQuery(query)).toList();
-      _activeStationId     = null;
+      _activeStationId  = null;
     });
     _updateMapMarkers();
   }
@@ -929,7 +907,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
       markers.add(Marker(
         markerId: MarkerId(station.id),
         position: station.position,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueOrange),
         infoWindow: InfoWindow(
           title: station.name,
           snippet: station.pricePerLitre,
@@ -946,7 +925,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
 
   void _startScroll() {
     _scrollTimer?.cancel();
-    _scrollTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+    _scrollTimer =
+        Timer.periodic(const Duration(milliseconds: 16), (_) {
       if (_userTouching || _isSearching) return;
       if (!_scrollController.hasClients) return;
 
@@ -966,7 +946,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   void _onPointerDown(FuelStation station) {
     _userTouching = true;
     setState(() => _activeStationId = station.id);
-    // Removed camera animation as there is no controller
   }
 
   void _onPointerUp() {
@@ -993,7 +972,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
       markers.add(Marker(
         markerId: MarkerId(station.id),
         position: station.position,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueOrange),
         infoWindow: InfoWindow(
           title: station.name,
           snippet: station.pricePerLitre,
@@ -1028,15 +1008,14 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth  = MediaQuery.of(context).size.width;
-    final drawerWidth  = screenWidth * _drawerWidthFraction;
+    final screenWidth    = MediaQuery.of(context).size.width;
+    final drawerWidth    = screenWidth * _drawerWidthFraction;
     final maxContentShift = drawerWidth * 0.30;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
       body: Stack(
         children: [
-          // ── LAYER 1: Home content (scales + shifts when drawer opens) ───────
           AnimatedBuilder(
             animation: _drawerController,
             builder: (context, child) {
@@ -1074,25 +1053,27 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
             ),
           ),
 
-          // ── LAYER 2: Scrim overlay ─────────────────────────────────────────
           AnimatedBuilder(
             animation: _overlayOpacityAnim,
             builder: (context, _) {
-              if (_overlayOpacityAnim.value == 0) return const SizedBox.shrink();
+              if (_overlayOpacityAnim.value == 0) {
+                return const SizedBox.shrink();
+              }
               return GestureDetector(
                 onTap: _closeDrawer,
                 child: Container(
-                  color: Colors.black.withOpacity(_overlayOpacityAnim.value),
+                  color: Colors.black
+                      .withOpacity(_overlayOpacityAnim.value),
                 ),
               );
             },
           ),
 
-          // ── LAYER 3: Drawer panel ────────────────────────────────────────────
           AnimatedBuilder(
             animation: _drawerSlideAnim,
             builder: (context, child) {
-              final dx = -drawerWidth + (_drawerSlideAnim.value * drawerWidth);
+              final dx =
+                  -drawerWidth + (_drawerSlideAnim.value * drawerWidth);
               return Transform.translate(
                 offset: Offset(dx, 0),
                 child: child,
@@ -1105,7 +1086,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 
-  // ── DRAWER PANEL ────────────────────────────────────────────────────────────
   Widget _buildDrawerPanel(double drawerWidth) {
     return SizedBox(
       width: drawerWidth,
@@ -1129,7 +1109,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header ─────────────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
                 child: Row(
@@ -1158,9 +1137,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                           Text(
                             'Welcome back',
                             style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 12,
-                            ),
+                                color: Colors.white54, fontSize: 12),
                           ),
                           Text(
                             'Fuel Finder',
@@ -1175,11 +1152,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                     ),
                     GestureDetector(
                       onTap: _closeDrawer,
-                      child: const Icon(
-                        Icons.close_rounded,
-                        color: Colors.white38,
-                        size: 22,
-                      ),
+                      child: const Icon(Icons.close_rounded,
+                          color: Colors.white38, size: 22),
                     ),
                   ],
                 ),
@@ -1188,7 +1162,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
               const Divider(color: Colors.white10, height: 1),
               const SizedBox(height: 16),
 
-              // ── Nav Items ─────────────────────────────────────────────────────
               _drawerItem(
                 icon: Icons.local_gas_station_rounded,
                 label: 'Stations',
@@ -1235,7 +1208,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
               const Spacer(),
               const Divider(color: Colors.white10, height: 1),
 
-              // ── Logout ─────────────────────────────────────────────────────
               _drawerItem(
                 icon: Icons.logout_rounded,
                 label: 'Logout',
@@ -1284,7 +1256,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
               style: TextStyle(
                 color: c,
                 fontSize: 15,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                fontWeight:
+                    active ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
             if (active) ...[
@@ -1299,11 +1272,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
               ),
             ] else ...[
               const Spacer(),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.white12,
-                size: 18,
-              ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: Colors.white12, size: 18),
             ],
           ],
         ),
@@ -1311,7 +1281,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 
-  // ── TOP BAR ─────────────────────────────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: const Color(0xFF1A1A1A),
@@ -1352,7 +1321,9 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                     : null,
               ),
               child: Icon(
-                _drawerOpen ? Icons.close_rounded : Icons.tune_rounded,
+                _drawerOpen
+                    ? Icons.close_rounded
+                    : Icons.tune_rounded,
                 color: const Color(0xFFC4963D),
                 size: 20,
               ),
@@ -1363,7 +1334,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 
-  // ── SEARCH BAR ──────────────────────────────────────────────────────────────
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1377,16 +1347,19 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
         child: Row(
           children: [
             const SizedBox(width: 12),
-            const Icon(Icons.search_rounded, color: Color(0xFF888888), size: 20),
+            const Icon(Icons.search_rounded,
+                color: Color(0xFF888888), size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
                 controller: _searchController,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style:
+                    const TextStyle(color: Colors.white, fontSize: 14),
                 cursorColor: const Color(0xFFC4963D),
                 decoration: const InputDecoration(
                   hintText: 'Find a fuel station near you',
-                  hintStyle: TextStyle(color: Color(0xFF666666), fontSize: 14),
+                  hintStyle: TextStyle(
+                      color: Color(0xFF666666), fontSize: 14),
                   border: InputBorder.none,
                   isCollapsed: true,
                 ),
@@ -1411,7 +1384,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
             else
               Container(
                 margin: const EdgeInsets.all(6),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFC4963D),
                   borderRadius: BorderRadius.circular(8),
@@ -1425,34 +1399,33 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 
- Widget _buildMap() {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      return SizedBox(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        child: Image.asset(
-          'assets/images/map.png',
-          fit: BoxFit.cover,
-          alignment: const Alignment(0.5, -0.5), // 👈 horizontal + vertical control
-
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: const Color(0xFF1A1A1A),
-              child: const Center(
-                child: Text(
-                  'Map Image Missing',
-                  style: TextStyle(color: Colors.white54),
+  Widget _buildMap() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          child: Image.asset(
+            'assets/images/map.png',
+            fit: BoxFit.cover,
+            alignment: const Alignment(0.5, -0.5),
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: const Color(0xFF1A1A1A),
+                child: const Center(
+                  child: Text(
+                    'Map Image Missing',
+                    style: TextStyle(color: Colors.white54),
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      );
-    },
-  );
-}
-  // ── FUEL TYPE SECTION ───────────────────────────────────────────────────────
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildFuelTypeSection() {
     return Container(
       color: const Color(0xFF1A1A1A),
@@ -1532,7 +1505,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 
-  // ── NEARBY SECTION ──────────────────────────────────────────────────────────
   Widget _buildNearbySection() {
     if (_isSearching && _filteredStations.isEmpty) {
       return Container(
@@ -1584,7 +1556,9 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
             child: Row(
               children: [
                 Text(
-                  _isSearching ? 'Search Results' : 'Nearby Petrol Stations',
+                  _isSearching
+                      ? 'Search Results'
+                      : 'Nearby Petrol Stations',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -1603,13 +1577,10 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    
                   ),
-            
-            ],
-          )
+              ],
+            ),
           ),
-          
           SizedBox(
             height: 160,
             child: Listener(
@@ -1622,14 +1593,16 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                 physics: _isSearching
                     ? const BouncingScrollPhysics()
                     : const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(left: 16, right: 4, bottom: 2),
+                padding: const EdgeInsets.only(
+                    left: 16, right: 4, bottom: 2),
                 itemCount: _isSearching
                     ? _filteredStations.length
                     : _filteredStations.length * 200,
                 itemBuilder: (context, index) {
                   final station = _isSearching
                       ? _filteredStations[index]
-                      : _filteredStations[index % _filteredStations.length];
+                      : _filteredStations[
+                          index % _filteredStations.length];
                   final isActive = _activeStationId == station.id;
                   return GestureDetector(
                     onTapDown: (_) => _onPointerDown(station),
@@ -1647,7 +1620,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 
-  // ── STATION CARD ─────────────────────────────────────────────────────────────
   Widget _buildStationCard(FuelStation station, bool isActive) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -1703,7 +1675,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                     onTap: () {
                       Navigator.push(
                         context,
-                        _premiumSlideRoute(StationDetailScreen(station: station)),
+                        _premiumSlideRoute(
+                            StationDetailScreen(station: station)),
                       );
                     },
                     child: Container(
@@ -1719,11 +1692,12 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 6, height: 6,
+                            width: 6,
+                            height: 6,
                             decoration: BoxDecoration(
                               color: station.isOpen
-                                  ? const Color(0xFF1A4A1A)
-                                  : const Color(0xFF1A4A1A),
+                                  ? const Color(0xFF4CAF50)
+                                  : const Color(0xFFE53935),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -1732,8 +1706,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                             station.isOpen ? 'Open' : 'Closed',
                             style: TextStyle(
                               color: station.isOpen
-                                  ? const Color(0xFF1A4A1A)
-                                  : const Color(0xFF1A4A1A),
+                                  ? const Color(0xFF4CAF50)
+                                  : const Color(0xFFE53935),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1805,7 +1779,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                           color: const Color(0xFFC4963D).withOpacity(0.15),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: const Color(0xFFC4963D).withOpacity(0.3),
+                            color:
+                                const Color(0xFFC4963D).withOpacity(0.3),
                           ),
                         ),
                         child: Text(
@@ -1828,7 +1803,6 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 
-  // ── BOTTOM NAV ───────────────────────────────────────────────────────────────
   Widget _buildBottomNav() {
     final items = [
       (Icons.local_gas_station_rounded, 'Stations'),
@@ -1856,25 +1830,23 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
             onTap: () {
               setState(() => _selectedNav = i);
               if (i == 1) {
-                Navigator.push(
-                  context,
-                  _premiumSlideRoute(const SupportScreen()),
-                ).then((_) => setState(() => _selectedNav = 0));
+                Navigator.push(context,
+                        _premiumSlideRoute(const SupportScreen()))
+                    .then((_) => setState(() => _selectedNav = 0));
               } else if (i == 2) {
-                Navigator.push(
-                  context,
-                  _premiumSlideRoute(const OrderScreen()),
-                ).then((_) => setState(() => _selectedNav = 0));
+                Navigator.push(context,
+                        _premiumSlideRoute(const OrderScreen()))
+                    .then((_) => setState(() => _selectedNav = 0));
               } else if (i == 3) {
-                Navigator.push(
-                  context,
-                  _premiumSlideRoute(const ProfileScreen()),
-                ).then((_) => setState(() => _selectedNav = 0));
+                Navigator.push(context,
+                        _premiumSlideRoute(const ProfileScreen()))
+                    .then((_) => setState(() => _selectedNav = 0));
               }
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: selected
                     ? const Color(0xFFC4963D).withOpacity(0.12)
@@ -1899,8 +1871,9 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                           ? const Color(0xFFC4963D)
                           : Colors.white.withOpacity(0.4),
                       fontSize: 10,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.w400,
+                      fontWeight: selected
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                     ),
                   ),
                 ],

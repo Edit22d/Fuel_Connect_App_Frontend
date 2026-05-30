@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../auth/login_screen.dart';
-
 import 'home_screen.dart';
 
 class SplashScreen2 extends StatefulWidget {
@@ -12,13 +11,12 @@ class SplashScreen2 extends StatefulWidget {
 }
 
 class _SplashScreen2State extends State<SplashScreen2> {
-  
   final _auth = AuthService();
 
   String _tagline = 'Always On Demand';
   String _description =
       'No more waiting in lines. Our \n professional fleet delivers high-\n quality fuel directly to your location, wherever \n you need it.';
-      
+
   bool _isLoading = false;
 
   @override
@@ -29,43 +27,48 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
   Future<void> _loadAppInfo() async {
     final result = await _auth.getAppInfo();
-    
-    if (result['success'] && mounted) {
+    if (result['success'] == true && mounted) {
       setState(() {
-        _tagline     = result['data']['tagline'] ?? _tagline;
+        _tagline     = result['data']['tagline']     ?? _tagline;
         _description = result['data']['description'] ?? _description;
       });
     }
   }
 
+  // ✅ "Get Started" — check auth first, go to Home or Login
   Future<void> _handleGetStarted() async {
     if (!mounted) return;
-    
-   
+    setState(() => _isLoading = true);
+
+    final loggedIn = await _auth.isLoggedIn();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(
+        builder: (_) => loggedIn ? const HomeScreen() : const LoginScreen(),
+      ),
     );
   }
 
- 
+  // ✅ "Log in" link — same auth check
   Future<void> _goToLogin() async {
-    final loggedIn = await _auth.isLoggedIn();
-    
     if (!mounted) return;
+    setState(() => _isLoading = true);
 
-    if (loggedIn) {
-      
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
+    final loggedIn = await _auth.isLoggedIn();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => loggedIn ? const HomeScreen() : const LoginScreen(),
+      ),
+    );
   }
 
   @override
@@ -85,8 +88,11 @@ class _SplashScreen2State extends State<SplashScreen2> {
                     'assets/images/logo.png',
                     width: 150,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => 
-                        const Icon(Icons.local_gas_station, size: 80, color: Colors.white), 
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.local_gas_station,
+                      size: 80,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
 
@@ -106,8 +112,11 @@ class _SplashScreen2State extends State<SplashScreen2> {
                         'assets/images/car.png',
                         height: 350,
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => 
-                            const Icon(Icons.directions_car, size: 150, color: Colors.grey), 
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.directions_car,
+                          size: 150,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ),
@@ -189,6 +198,8 @@ class _SplashScreen2State extends State<SplashScreen2> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFC4963D),
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            const Color(0xFFC4963D).withOpacity(0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -222,17 +233,16 @@ class _SplashScreen2State extends State<SplashScreen2> {
                   children: [
                     const Text(
                       'Already have an account? ',
-                      style: TextStyle(
-                        color: Color(0xFFAAAAAA),
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 12),
                     ),
                     GestureDetector(
-                      onTap: _goToLogin, // ✅ Now calls the async check
-                      child: const Text(
+                      onTap: _isLoading ? null : _goToLogin,
+                      child: Text(
                         'Log in',
                         style: TextStyle(
-                          color: Color(0xFFC4963D),
+                          color: _isLoading
+                              ? const Color(0xFFC4963D).withOpacity(0.5)
+                              : const Color(0xFFC4963D),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
