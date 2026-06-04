@@ -1,35 +1,145 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// ── AppTheme (your color system) ──────────────────────────
+// ── Theme State Notifier ──────────────────────────────────
+class ThemeNotifier extends ValueNotifier<ThemeMode> {
+  static const String _themePrefKey = 'theme_pref';
+
+  ThemeNotifier() : super(ThemeMode.dark) {
+    _loadTheme();
+  }
+
+  void _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isDark = prefs.getBool(_themePrefKey) ?? true;
+    value = isDark ? ThemeMode.dark : ThemeMode.light;
+  }
+
+  void toggleTheme() async {
+    value = value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool(_themePrefKey, value == ThemeMode.dark);
+  }
+}
+
+// Global singleton notifier for the app
+final themeNotifier = ThemeNotifier();
+
+// ── AppTheme (Color System & ThemeData) ───────────────────
 class AppTheme {
-  static const Color black    = Color(0xFF0F0F0F);
-  static const Color gold     = Color(0xFFD4AF37);
+  // Shared Gold Colors
+  static const Color gold = Color(0xFFC8A84B);
   static const Color darkGold = Color(0xFF8C6E3F);
-  static const Color darkBg   = Color(0xFF1A1200);
-  static const Color white    = Colors.white;
+  
+  // Dark Mode Colors
+  static const Color darkBg = Color(0xFF0D0D0D);
+  static const Color darkSurface = Color(0xFF141414);
+  static const Color darkBorder = Color(0xFF2A2A2A);
+  static const Color darkTextPrimary = Colors.white;
+  static const Color darkTextSecondary = Color(0xFF888888);
+  
+  // Light Mode Colors
+  static const Color lightBg = Color(0xFFF7F7F9);
+  static const Color lightSurface = Colors.white;
+  static const Color lightBorder = Color(0xFFE5E5E5);
+  static const Color lightTextPrimary = Color(0xFF111111);
+  static const Color lightTextSecondary = Color(0xFF666666);
 
-  static LinearGradient buttonGradient = LinearGradient(
-    colors: [Color(0xFFD4AF37), Color(0xFF8C6E3F)],
+  static LinearGradient buttonGradient = const LinearGradient(
+    colors: [gold, darkGold],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: lightBg,
+      primaryColor: gold,
+      colorScheme: const ColorScheme.light(
+        primary: gold,
+        surface: lightSurface,
+        onSurface: lightTextPrimary,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: lightBg,
+        elevation: 0,
+        iconTheme: IconThemeData(color: lightTextPrimary),
+        titleTextStyle: TextStyle(color: lightTextPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: lightTextPrimary),
+        bodyMedium: TextStyle(color: lightTextSecondary),
+      ),
+      dividerColor: lightBorder,
+      fontFamily: 'sans-serif',
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: darkBg,
+      primaryColor: gold,
+      colorScheme: const ColorScheme.dark(
+        primary: gold,
+        surface: darkSurface,
+        onSurface: darkTextPrimary,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: darkBg,
+        elevation: 0,
+        iconTheme: IconThemeData(color: darkTextPrimary),
+        titleTextStyle: TextStyle(color: darkTextPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: darkTextPrimary),
+        bodyMedium: TextStyle(color: darkTextSecondary),
+      ),
+      dividerColor: darkBorder,
+      fontFamily: 'sans-serif',
+    );
+  }
 }
 
-// ── Convenience aliases (used throughout all screens) ─────
-Color kGold      = AppTheme.gold;
+// ── Convenience aliases (Legacy support) ──────────────────
+Color kGold = AppTheme.gold;
 Color kGoldLight = AppTheme.gold;
-Color kDarkBg    = AppTheme.darkBg;
-Color kWhite     = AppTheme.white;
-Color kBlack     = AppTheme.black;
+Color kDarkBg = AppTheme.darkBg;
+Color kWhite = Colors.white;
+Color kBlack = Colors.black;
 
-// ── FUEL CONNECT Logo (image asset) ───────────────────────
-class FuelConnectLogo extends StatelessWidget {
-  final double fontSize;
-  FuelConnectLogo({this.fontSize = 32});
+// ── Theme Toggle Button ───────────────────────────────────
+class ThemeToggleButton extends StatelessWidget {
+  const ThemeToggleButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final double imgWidth  = fontSize * 5.0;
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, mode, child) {
+        final isDark = mode == ThemeMode.dark;
+        return IconButton(
+          icon: Icon(
+            isDark ? Icons.light_mode : Icons.dark_mode,
+            color: isDark ? AppTheme.gold : AppTheme.darkGold,
+          ),
+          onPressed: themeNotifier.toggleTheme,
+          tooltip: 'Toggle Theme',
+        );
+      },
+    );
+  }
+}
+
+// ── FUEL CONNECT Logo ─────────────────────────────────────
+class FuelConnectLogo extends StatelessWidget {
+  final double fontSize;
+  const FuelConnectLogo({super.key, this.fontSize = 32});
+
+  @override
+  Widget build(BuildContext context) {
+    final double imgWidth = fontSize * 5.0;
     final double imgHeight = fontSize * 3.75;
     return Image.asset(
       'assets/images/logo.png',
@@ -43,44 +153,38 @@ class FuelConnectLogo extends StatelessWidget {
 // ── Gold AppBar ────────────────────────────────────────────
 class FuelAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  FuelAppBar({required this.title});
+  const FuelAppBar({super.key, required this.title});
 
   @override
-  Size get preferredSize => Size.fromHeight(56);
+  Size get preferredSize => const Size.fromHeight(56);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.buttonGradient,
-        ),
+        decoration: BoxDecoration(gradient: AppTheme.buttonGradient),
       ),
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: AppTheme.black),
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
         onPressed: () => Navigator.maybePop(context),
       ),
       title: Text(
         title,
-        style: TextStyle(
-          color: AppTheme.black,
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        ),
+        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.home, color: AppTheme.black),
-          onPressed: () {},
+          icon: const Icon(Icons.home, color: Colors.black),
+          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         ),
       ],
     );
   }
 }
 
-// ── Gold Underline Text Field ─────────────────────────────
+// ── Gold Underline Text Field (Legacy) ────────────────────
 class GoldUnderlineField extends StatefulWidget {
   final String label;
   final String hint;
@@ -89,6 +193,7 @@ class GoldUnderlineField extends StatefulWidget {
   final TextInputType keyboardType;
 
   GoldUnderlineField({
+    super.key,
     required this.label,
     String? hint,
     this.isPassword = false,
@@ -105,36 +210,29 @@ class _GoldUnderlineFieldState extends State<GoldUnderlineField> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final hintColor = isDark ? Colors.white38 : Colors.black38;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: TextStyle(color: AppTheme.gold, fontSize: 11),
-        ),
+        Text(widget.label, style: const TextStyle(color: AppTheme.gold, fontSize: 11)),
         TextField(
           controller: widget.controller,
           obscureText: widget.isPassword ? _obscure : false,
           keyboardType: widget.keyboardType,
-          style: TextStyle(color: AppTheme.white, fontSize: 14),
+          style: TextStyle(color: textColor, fontSize: 14),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppTheme.gold),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppTheme.darkGold, width: 2),
-            ),
+            hintStyle: TextStyle(color: hintColor, fontSize: 13),
+            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.gold)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.darkGold, width: 2)),
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(vertical: 6),
+            contentPadding: const EdgeInsets.symmetric(vertical: 6),
             suffixIcon: widget.isPassword
                 ? IconButton(
-                    icon: Icon(
-                      _obscure ? Icons.visibility_off : Icons.visibility,
-                      color: AppTheme.gold,
-                      size: 18,
-                    ),
+                    icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility, color: AppTheme.gold, size: 18),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   )
                 : null,
@@ -149,7 +247,7 @@ class _GoldUnderlineFieldState extends State<GoldUnderlineField> {
 class GoldButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  GoldButton({required this.text, required this.onPressed});
+  const GoldButton({super.key, required this.text, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -165,11 +263,7 @@ class GoldButton extends StatelessWidget {
         child: Center(
           child: Text(
             text,
-            style: TextStyle(
-              color: AppTheme.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
       ),
@@ -177,24 +271,26 @@ class GoldButton extends StatelessWidget {
   }
 }
 
-// ── OTP Top Bar (back + home) ─────────────────────────────
+// ── OTP Top Bar ───────────────────────────────────────────
 class OtpTopBar extends StatelessWidget {
+  const OtpTopBar({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final iconColor = Theme.of(context).iconTheme.color;
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back, color: AppTheme.white),
+            icon: Icon(Icons.arrow_back, color: iconColor),
             onPressed: () => Navigator.maybePop(context),
           ),
-          Spacer(),
+          const Spacer(),
+          const ThemeToggleButton(),
           IconButton(
-            icon: Icon(Icons.home, color: AppTheme.white),
-            onPressed: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
+            icon: Icon(Icons.home, color: iconColor),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -206,7 +302,7 @@ class OtpTopBar extends StatelessWidget {
 class OtpInputRow extends StatefulWidget {
   final List<TextEditingController> controllers;
   final List<FocusNode> focusNodes;
-  OtpInputRow({required this.controllers, required this.focusNodes});
+  const OtpInputRow({super.key, required this.controllers, required this.focusNodes});
 
   @override
   State<OtpInputRow> createState() => _OtpInputRowState();
@@ -215,17 +311,20 @@ class OtpInputRow extends StatefulWidget {
 class _OtpInputRowState extends State<OtpInputRow> {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(4, (i) {
         return Container(
           width: 54,
           height: 54,
-          margin: EdgeInsets.symmetric(horizontal: 6),
+          margin: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
-            color: AppTheme.gold.withOpacity(0.25),
+            color: AppTheme.gold.withOpacity(0.15),
             border: Border.all(color: AppTheme.gold, width: 1.5),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: TextField(
             controller: widget.controllers[i],
@@ -233,15 +332,8 @@ class _OtpInputRowState extends State<OtpInputRow> {
             textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
             maxLength: 1,
-            style: TextStyle(
-              color: AppTheme.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-            decoration: InputDecoration(
-              counterText: '',
-              border: InputBorder.none,
-            ),
+            style: TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.bold),
+            decoration: const InputDecoration(counterText: '', border: InputBorder.none),
             onChanged: (val) {
               if (val.isNotEmpty && i < 3) {
                 widget.focusNodes[i + 1].requestFocus();
@@ -260,40 +352,50 @@ class _OtpInputRowState extends State<OtpInputRow> {
 // ── OTP Info Dialog ───────────────────────────────────────
 class OtpInfoDialog extends StatelessWidget {
   final VoidCallback onOk;
-  OtpInfoDialog({required this.onOk});
+  const OtpInfoDialog({super.key, required this.onOk});
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.symmetric(horizontal: 40),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
       child: Container(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           gradient: AppTheme.buttonGradient,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            const Text(
               'A 4-digit OTP will be sent\nto your Registered Mobile\nNumber/Email ID',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.black,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-              ),
+              style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w600, height: 1.5),
             ),
-            SizedBox(height: 22),
+            const SizedBox(height: 24),
             SizedBox(
-              width: 80,
-              height: 36,
+              width: 100,
+              height: 40,
               child: ElevatedButton(
                 onPressed: onOk,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.black,
+                  backgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(color: AppTheme.gold, fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+oundColor: AppTheme.black,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

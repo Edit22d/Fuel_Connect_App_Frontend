@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'auth/theme.dart'; // ✅ Import theme definitions
 import 'services/auth_service.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/splash_screen2.dart';
@@ -36,32 +37,31 @@ class FuelConnectApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fuel Connect',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFFC8A84B),
-          surface: const Color(0xFF141414),
-        ),
-        fontFamily: 'sans-serif',
-      ),
-      // ✅ Auto-login: go straight to HomeScreen if token is valid
-      home: isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
-      routes: {
-  '/onboarding':      (context) => const OnboardingScreen(),
-  '/login':           (context) => const LoginScreen(),
-  '/signup':          (context) => const SignUpScreen(),
-  '/home':            (context) => const HomeScreen(),
-  '/station':         (context) => const StationScreen(),
-  '/profile':         (context) => const ProfileScreen(),
-  '/orders':          (context) => const OrderScreen(),
-  '/support':         (context) => const SupportScreen(),
-  '/forgot-password': (context) => const ForgotPasswordScreen(),
-  '/otp':             (context) => const OtpScreen(email: ''), // placeholder
-  // ✅ REMOVED '/otp-verify' — it requires arguments, use Navigator.push instead
-},
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, mode, child) {
+        return MaterialApp(
+          title: 'Fuel Connect',
+          debugShowCheckedModeBanner: false,
+          themeMode: mode,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          // ✅ Auto-login: go straight to HomeScreen if token is valid
+          home: isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
+          routes: {
+            '/onboarding':      (context) => const OnboardingScreen(),
+            '/login':           (context) => const LoginScreen(),
+            '/signup':          (context) => const SignUpScreen(),
+            '/home':            (context) => const HomeScreen(),
+            '/station':         (context) => const StationScreen(),
+            '/profile':         (context) => const ProfileScreen(),
+            '/orders':          (context) => const OrderScreen(),
+            '/support':         (context) => const SupportScreen(),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
+            '/otp':             (context) => const OtpScreen(email: ''), // placeholder
+          },
+        );
+      },
     );
   }
-} 
+}

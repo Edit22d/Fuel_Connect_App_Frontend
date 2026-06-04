@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// ❌ REMOVED: import 'package:http/http.dart' as http;
-// ❌ REMOVED: import 'dart:convert';
 import 'otp_verify_screen.dart';
-
-// ❌ REMOVED: const String baseUrl = 'http://10.0.2.2:8000';
+import '../auth/theme.dart';
 
 class OtpScreen extends StatefulWidget {
   final String email;
   final String? token;
-  final bool fromForgotPassword; // Optional flag for flow tracking
+  final bool fromForgotPassword;
   
   const OtpScreen({
     super.key, 
@@ -23,12 +20,9 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
-
-  // ❌ REMOVED: bool _isLoading = false;
-  // ❌ REMOVED: bool _isResending = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -46,45 +40,46 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
-  // ✅ MOCK: Resend OTP — UI feedback only, no API call
   void _resendOtp() {
-    // Show instant UI feedback
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✓ Code resent (Mock)'),
-        backgroundColor: Color(0xFFC8A84B),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: const Text('✓ Code resent successfully'),
+        backgroundColor: AppTheme.gold,
         behavior: SnackBarBehavior.floating,
       ),
     );
-    
-    // Clear fields for demo
     for (var c in _controllers) c.clear();
     _focusNodes[0].requestFocus();
   }
 
-  // ✅ MOCK: Verify OTP — Navigate directly, no API validation
-  void _verifyOtp() {
+  void _verifyOtp() async {
     final otpCode = _controllers.map((c) => c.text).join();
 
     if (otpCode.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter all 6 digits'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    // ✅ Instant navigation to next screen — no backend call
+    setState(() => _isLoading = true);
+    
+    // Simulate API Verification
+    await Future.delayed(const Duration(seconds: 1));
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => OtpVerifyScreen(
           email: widget.email,
-          otp: otpCode, // Passed for UI continuity; ignored in mock mode
+          otp: otpCode,
         ),
       ),
     );
@@ -92,85 +87,59 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        actions: const [ThemeToggleButton()],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // ==================== HEADER ====================
+            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF2A2A2A)),
-                      ),
-                      child: const Icon(
-                        Icons.chevron_left,
-                        color: Color(0xFFC8A84B),
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  const Text(
-                    'Verification',
+                  const FuelConnectLogo(fontSize: 16),
+                  const SizedBox(height: 8),
+                  Text(
+                    'SECURITY VERIFICATION',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
+                      color: theme.textTheme.bodyMedium?.color,
+                      fontSize: 10,
+                      letterSpacing: 2.0,
                       fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFC8A84B).withOpacity(0.5)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.lock, color: Color(0xFFC8A84B), size: 11),
-                        SizedBox(width: 4),
-                        Text(
-                          'SECURE',
-                          style: TextStyle(
-                            color: Color(0xFFC8A84B),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ],
               ),
             ),
 
-            // ==================== CARD ====================
+            // Card
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                  constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF141414),
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2A2A2A)),
+                    border: Border.all(color: theme.dividerColor),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 25,
-                        offset: const Offset(0, 12),
+                        color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
@@ -184,50 +153,42 @@ class _OtpScreenState extends State<OtpScreen> {
                           height: 64,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFC8A84B), Color(0xFFB8983B)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            gradient: AppTheme.buttonGradient,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFC8A84B).withOpacity(0.4),
+                                color: AppTheme.gold.withOpacity(0.4),
                                 blurRadius: 20,
                                 spreadRadius: 3,
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.shield_outlined,
-                            color: Colors.black,
-                            size: 32,
-                          ),
+                          child: const Icon(Icons.shield_outlined, color: Colors.black, size: 32),
                         ),
                         const SizedBox(height: 24),
 
                         // Title
-                        const Text(
+                        Text(
                           'OTP Verification',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
+                            color: theme.textTheme.bodyLarge?.color,
+                            fontSize: 24,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 8),
 
-                        // Subtitle + Email
-                        const Text(
+                        // Subtitle
+                        Text(
                           'Enter the OTP you received to',
-                          style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 13),
+                          style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13),
                           textAlign: TextAlign.center,
                         ),
                         Text(
                           widget.email,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: theme.textTheme.bodyLarge?.color,
                             fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -240,18 +201,18 @@ class _OtpScreenState extends State<OtpScreen> {
                             return Container(
                               width: 42,
                               height: 50,
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1A1A1A),
+                                color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFF2A2A2A), width: 1.5),
+                                border: Border.all(color: theme.dividerColor, width: 1.5),
                               ),
                               child: TextField(
                                 controller: _controllers[index],
                                 focusNode: _focusNodes[index],
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: theme.textTheme.bodyLarge?.color,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -269,79 +230,45 @@ class _OtpScreenState extends State<OtpScreen> {
                             );
                           }),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
 
-                        // Resend OTP — Mock Only
+                        // Resend
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "Didn't receive the code? ",
-                              style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
+                              style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12),
                             ),
                             GestureDetector(
-                              onTap: _resendOtp, // ✅ Direct call, no loading
+                              onTap: _resendOtp,
                               child: const Text(
                                 'Resend OTP',
                                 style: TextStyle(
-                                  color: Color(0xFFC8A84B),
+                                  color: AppTheme.gold,
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-
-                        // Cancel
+                        const SizedBox(height: 12),
+                        
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.close, color: Color(0xFF9E9E9E), size: 14),
-                              SizedBox(width: 6),
-                              Text(
-                                'Cancel',
-                                style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
-                              ),
-                            ],
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ),
                         const SizedBox(height: 28),
 
-                        // ✅ Verify Button — Instant Navigation
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: _verifyOtp, // ✅ No loading state
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFC8A84B),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.lock_outline, color: Colors.black, size: 18),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Verify OTP',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        // Verify Button
+                        GoldButton(
+                          text: _isLoading ? 'VERIFYING...' : 'VERIFY OTP',
+                          onPressed: _isLoading ? () {} : _verifyOtp,
+                          icon: Icons.lock_outline,
                         ),
                       ],
                     ),

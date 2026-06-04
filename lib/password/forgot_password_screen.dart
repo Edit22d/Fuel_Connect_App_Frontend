@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'otp_screen.dart'; // ← Import your OtpScreen
+import 'otp_screen.dart';
+import '../auth/theme.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -10,6 +11,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -17,14 +19,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _goToNextScreen() {
+  void _handleNext() async {
     final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email or phone number'), backgroundColor: Colors.redAccent),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
     
+    // Simulate API call for sending OTP
+    await Future.delayed(const Duration(seconds: 1));
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => OtpScreen(
-          email: email.isNotEmpty ? email : 'user@example.com',
+          email: email,
           fromForgotPassword: true, 
         ),
       ),
@@ -33,42 +49,41 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        actions: const [
+          ThemeToggleButton(),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
             // ==================== HEADER ====================
             Padding(
-              padding: const EdgeInsets.only(top: 20, bottom: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: const EdgeInsets.only(top: 10, bottom: 24),
+              child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.maybePop(context),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.arrow_back_ios, color: Color(0xFFC8A84B), size: 14),
-                        SizedBox(width: 6),
-                      ],
+                  const FuelConnectLogo(fontSize: 16),
+                  const SizedBox(height: 8),
+                  Text(
+                    'FUEL CONNECT PORTAL',
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color,
+                      fontSize: 10,
+                      letterSpacing: 2.0,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Image.asset(
-                    'assets/images/logo.png',
-                    width: 120,
-                    height: 100,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Text(
-                      'FUELCONNECT',
-                      style: TextStyle(
-                        color: Color(0xFFC8A84B),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 60),
                 ],
               ),
             ),
@@ -76,19 +91,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             // ==================== CARD ====================
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                  constraints: const BoxConstraints(maxWidth: 400),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF141414),
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2A2A2A)),
+                    border: Border.all(color: theme.dividerColor),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 25,
-                        offset: const Offset(0, 12),
+                        color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
@@ -102,72 +117,45 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           height: 64,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFC8A84B), Color(0xFFB8983B)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            gradient: AppTheme.buttonGradient,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFC8A84B).withOpacity(0.4),
+                                color: AppTheme.gold.withOpacity(0.4),
                                 blurRadius: 20,
-                                spreadRadius: 3,
+                                spreadRadius: 2,
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.lock_outline,
-                            color: Colors.black,
-                            size: 32,
-                          ),
+                          child: const Icon(Icons.lock_outline, color: Colors.black, size: 32),
                         ),
                         const SizedBox(height: 24),
 
                         // Title
-                        RichText(
+                        Text(
+                          'Forgot your password?',
                           textAlign: TextAlign.center,
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w700,
-                              height: 1.3,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: 'Forgot your\n',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              TextSpan(
-                                text: 'password?',
-                                style: TextStyle(color: Color(0xFFC8A84B)),
-                              ),
-                            ],
-                          ),
+                          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 12),
 
                         // Subtitle
-                        const Text(
-                          'No worries! We\'ll help you reset your password securely.',
+                        Text(
+                          'No worries! Enter your registered email or phone number to receive a secure OTP.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color(0xFF9E9E9E),
-                            fontSize: 13,
-                            height: 1.6,
-                          ),
+                          style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13, height: 1.5),
                         ),
                         const SizedBox(height: 32),
 
-                        // Email Field (Optional UI)
-                        const Align(
+                        // Email Field
+                        Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'Email (Optional)',
+                            'EMAIL OR PHONE NUMBER',
                             style: TextStyle(
-                              color: Color(0xFF888888),
-                              fontSize: 11,
-                              letterSpacing: 1.0,
-                              fontWeight: FontWeight.w600,
+                              color: theme.textTheme.bodyMedium?.color,
+                              fontSize: 10,
+                              letterSpacing: 1.2,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -175,82 +163,46 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         
                         Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A1A),
+                            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFF2A2A2A)),
+                            border: Border.all(color: theme.dividerColor),
                           ),
-                          child: TextFormField(
+                          child: TextField(
                             controller: _emailController,
-                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
                             decoration: InputDecoration(
-                              hintText: 'example@email.com',
-                              hintStyle: const TextStyle(color: Color(0xFF555555), fontSize: 14),
-                              prefixIcon: const Icon(
-                                Icons.email_outlined,
-                                color: Color(0xFF666666),
-                                size: 20,
-                              ),
+                              hintText: 'example@email.com / +256...',
+                              hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), fontSize: 14),
+                              prefixIcon: Icon(Icons.email_outlined, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             ),
                             keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
+                            textInputAction: TextInputAction.done,
                           ),
                         ),
                         const SizedBox(height: 28),
 
-                        // ✅ Next Button — Instant Navigation
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: _goToNextScreen,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFC8A84B),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Next',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
-                              ],
-                            ),
-                          ),
+                        // Next Button
+                        GoldButton(
+                          text: _isLoading ? 'SENDING OTP...' : 'NEXT',
+                          onPressed: _isLoading ? () {} : _handleNext,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
                         // Return to Login
                         GestureDetector(
                           onTap: () => Navigator.maybePop(context),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(width: 6),
-                              Text(
-                                'Return to Login',
-                                style: TextStyle(
-                                  color: Color(0xFF9E9E9E),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Return to Login',
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
@@ -259,26 +211,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
 
             // ==================== FOOTER ====================
-            const Padding(
-              padding: EdgeInsets.only(bottom: 20),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24, top: 16),
               child: Column(
                 children: [
                   Text(
                     'PRIVACY PROTECTED • HELP CENTER',
-                    style: TextStyle(
-                      color: Color(0xFF555555),
-                      fontSize: 9,
-                      letterSpacing: 1.2,
-                    ),
+                    style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
                   Text(
                     '© FUELCONNECT. SYSTEM SECURE',
-                    style: TextStyle(
-                      color: Color(0xFF555555),
-                      fontSize: 9,
-                      letterSpacing: 1.2,
-                    ),
+                    style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
                   ),
                 ],
               ),
@@ -288,4 +232,4 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ),
     );
   }
-}
+}

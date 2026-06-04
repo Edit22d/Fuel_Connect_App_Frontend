@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
+import 'theme.dart'; // ✅ Import theme system
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,20 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _goToHome() => Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreenPlaceholder()),
-      );
-
-  void _goToSignUp() => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SignUpScreen()),
-      );
-
-  void _goToForgotPassword() => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ForgotPasswordPlaceholder()),
-      );
+  void _goToHome() => Navigator.pushReplacementNamed(context, '/home');
+  void _goToSignUp() => Navigator.pushNamed(context, '/signup');
+  void _goToForgotPassword() => Navigator.pushNamed(context, '/forgot-password');
 
   Future<void> _handleLogin() async {
     final phone = _phoneController.text.trim();
@@ -105,237 +95,209 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/onboarding');
+            }
+          },
+        ),
+        actions: const [
+          ThemeToggleButton(),
+        ],
+      ),
       body: SafeArea(
-        child: Column(
-          verticalDirection: VerticalDirection.down,
-          children: [
-            // ============================================================
-            // LAYER 1: Logo Section (Top)
-            // ============================================================
-            Padding(
-              padding: const EdgeInsets.only(top: 32),
-              child: Column(
-                children: [
-                  Image.asset(
-                    'assets/images/logo.png',
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.local_gas_station,
-                      size: 60,
-                      color: Color(0xFFC8A84B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'FUEL CONNECT PORTAL',
-                    style: TextStyle(
-                      color: Color(0xFF888888),
-                      fontSize: 10,
-                      letterSpacing: 2.0,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+          child: Column(
+            children: [
+              // ============================================================
+              // LAYER 1: Logo Section (Top)
+              // ============================================================
+              const FuelConnectLogo(fontSize: 20),
+              const SizedBox(height: 12),
+              Text(
+                'FUEL CONNECT PORTAL',
+                style: TextStyle(
+                  color: theme.textTheme.bodyMedium?.color,
+                  fontSize: 10,
+                  letterSpacing: 2.0,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-            // ============================================================
-            // LAYER 2: Login Card (Center - Flexible)
-            // ============================================================
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141414),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2A2A2A)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+              // ============================================================
+              // LAYER 2: Login Form
+              // ============================================================
+              Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: theme.dividerColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Welcome back',
+                      style: TextStyle(
+                        color: theme.textTheme.bodyLarge?.color,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Please enter your phone number and password.',
+                      style: TextStyle(
+                        color: theme.textTheme.bodyMedium?.color,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Phone Field
+                    _buildLabel('PHONE NUMBER', theme),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      controller: _phoneController,
+                      hintText: '+256 744 000 000',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      theme: theme,
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Password Field
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Welcome Section
-                        const Text(
-                          'Welcome back',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                        _buildLabel('PASSWORD', theme),
+                        GestureDetector(
+                          onTap: _goToForgotPassword,
+                          child: const Text(
+                            'FORGOT PASSWORD?',
+                            style: TextStyle(
+                              color: AppTheme.gold,
+                              fontSize: 10,
+                              letterSpacing: 1.0,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Please enter your phone number and password.',
-                          style: TextStyle(
-                            color: Color(0xFF888888),
-                            fontSize: 12,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Phone Field
-                        const Text(
-                          'PHONE NUMBER',
-                          style: TextStyle(
-                            color: Color(0xFF888888),
-                            fontSize: 10,
-                            letterSpacing: 1.2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        _buildTextField(
-                          controller: _phoneController,
-                          hintText: '+256 744 000 000',
-                          prefixIcon: Icons.phone,
-                          keyboardType: TextInputType.phone,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Password Field
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'PASSWORD',
-                              style: TextStyle(
-                                color: Color(0xFF888888),
-                                fontSize: 10,
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: _goToForgotPassword,
-                              child: const Text(
-                                'FORGOT PASSWORD?',
-                                style: TextStyle(
-                                  color: Color(0xFFC8A84B),
-                                  fontSize: 10,
-                                  letterSpacing: 1.0,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        _buildTextField(
-                          controller: _passwordController,
-                          hintText: '••••••••',
-                          prefixIcon: Icons.lock_outline,
-                          obscureText: _obscurePassword,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: const Color(0xFF666666),
-                              size: 18,
-                            ),
-                            onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Login Button
-                        _YellowButton(
-                          isLoading: _isLoading,
-                          onPressed: _isLoading ? null : _handleLogin,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Divider
-                        Row(
-                          children: const [
-                            Expanded(
-                              child: Divider(
-                                  color: Color(0xFF2A2A2A), thickness: 1),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Text(
-                                'OR CONTINUE WITH',
-                                style: TextStyle(
-                                  color: Color(0xFF555555),
-                                  fontSize: 9,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                  color: Color(0xFF2A2A2A), thickness: 1),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Social Login Buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _SocialButton(
-                                label: 'GOOGLE',
-                                icon: const _GoogleIcon(),
-                                onPressed: _handleGoogleSignIn,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _SocialButton(
-                                label: 'APPLE',
-                                icon: const _AppleIcon(),
-                                onPressed: _handleAppleSignIn,
-                              ),
-                            ),
-                          ],
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      controller: _passwordController,
+                      hintText: '••••••••',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: _obscurePassword,
+                      theme: theme,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                          size: 18,
+                        ),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Login Button
+                    GoldButton(
+                      text: _isLoading ? 'LOGGING IN...' : 'LOG IN',
+                      onPressed: _isLoading ? () {} : _handleLogin,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Divider
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'OR CONTINUE WITH',
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color,
+                              fontSize: 10,
+                              letterSpacing: 1.2,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Social Login Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'GOOGLE',
+                            icon: const _GoogleIcon(),
+                            theme: theme,
+                            onPressed: _handleGoogleSignIn,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'APPLE',
+                            icon: _AppleIcon(isDark: isDark),
+                            theme: theme,
+                            onPressed: _handleAppleSignIn,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 32),
 
-            // ============================================================
-            // LAYER 3: Create Account (Bottom)
-            // ============================================================
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Row(
+              // ============================================================
+              // LAYER 3: Create Account (Bottom)
+              // ============================================================
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     "Don't have an account? ",
                     style: TextStyle(
-                      color: Color(0xFF888888),
-                      fontSize: 12,
+                      color: theme.textTheme.bodyMedium?.color,
+                      fontSize: 13,
                     ),
                   ),
                   GestureDetector(
@@ -343,17 +305,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Create Account',
                       style: TextStyle(
-                        color: Color(0xFFC8A84B),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        color: AppTheme.gold,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text, ThemeData theme) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: theme.textTheme.bodyMedium?.color,
+        fontSize: 10,
+        letterSpacing: 1.2,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -362,68 +337,34 @@ class _LoginScreenState extends State<LoginScreen> {
     required TextEditingController controller,
     required String hintText,
     required IconData prefixIcon,
-    TextInputType? keyboardType,
+    required ThemeData theme,
+    TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     Widget? suffixIcon,
   }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0);
+
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        style: const TextStyle(color: Colors.white, fontSize: 13),
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle:
-              const TextStyle(color: Color(0xFF555555), fontSize: 13),
-          prefixIcon:
-              Icon(prefixIcon, color: const Color(0xFF666666), size: 18),
+          hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), fontSize: 14),
+          prefixIcon: Icon(prefixIcon, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// Placeholders
-// ─────────────────────────────────────────────────────────────────────
-class HomeScreenPlaceholder extends StatelessWidget {
-  const HomeScreenPlaceholder({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: const Text("Home"),
-          backgroundColor: const Color(0xFFC8A84B)),
-      body: const Center(
-          child: Text("Login Successful!",
-              style: TextStyle(color: Colors.white))),
-      backgroundColor: const Color(0xFF0D0D0D),
-    );
-  }
-}
-
-class ForgotPasswordPlaceholder extends StatelessWidget {
-  const ForgotPasswordPlaceholder({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: const Text("Forgot Password"),
-          backgroundColor: const Color(0xFFC8A84B)),
-      body: const Center(
-          child: Text("Forgot Password Screen",
-              style: TextStyle(color: Colors.white))),
-      backgroundColor: const Color(0xFF0D0D0D),
     );
   }
 }
@@ -431,92 +372,48 @@ class ForgotPasswordPlaceholder extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────
 // Custom UI Components
 // ─────────────────────────────────────────────────────────────────────
-class _YellowButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final bool isLoading;
-
-  const _YellowButton({this.onPressed, this.isLoading = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 44,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC8A84B),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor:
-              const Color(0xFFC8A84B).withOpacity(0.5),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8)),
-          elevation: 0,
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2.5,
-                ),
-              )
-            : const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'LOG IN',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  SizedBox(width: 6),
-                ],
-              ),
-      ),
-    );
-  }
-}
 
 class _SocialButton extends StatelessWidget {
   final String label;
   final Widget icon;
+  final ThemeData theme;
   final VoidCallback? onPressed;
 
   const _SocialButton({
     required this.label,
     required this.icon,
+    required this.theme,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          height: 40,
+          height: 44,
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF2A2A2A)),
+            color: bgColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               icon,
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                style: TextStyle(
+                  color: theme.textTheme.bodyLarge?.color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                 ),
               ),
@@ -534,8 +431,8 @@ class _GoogleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 16,
-      height: 16,
+      width: 18,
+      height: 18,
       child: CustomPaint(painter: _GooglePainter()),
     );
   }
@@ -569,8 +466,7 @@ class _GooglePainter extends CustomPainter {
       );
     }
 
-    canvas.drawCircle(
-        Offset(cx, cy), r * 0.45, Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(cx, cy), r * 0.45, Paint()..color = Colors.white);
 
     canvas.drawLine(
       Offset(cx, cy),
@@ -587,22 +483,27 @@ class _GooglePainter extends CustomPainter {
 }
 
 class _AppleIcon extends StatelessWidget {
-  const _AppleIcon();
+  final bool isDark;
+  const _AppleIcon({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 16,
-      height: 16,
-      child: CustomPaint(painter: _ApplePainter()),
+      width: 18,
+      height: 18,
+      child: CustomPaint(painter: _ApplePainter(isDark: isDark)),
     );
   }
 }
 
 class _ApplePainter extends CustomPainter {
+  final bool isDark;
+  _ApplePainter({required this.isDark});
+
   @override
   void paint(Canvas canvas, Size size) {
     final path = Path();
+    final color = isDark ? Colors.white : Colors.black;
 
     path.moveTo(size.width * 0.5, size.height * 0.15);
     path.cubicTo(
@@ -650,9 +551,9 @@ class _ApplePainter extends CustomPainter {
     );
     path.close();
 
-    canvas.drawPath(path, Paint()..color = Colors.white);
+    canvas.drawPath(path, Paint()..color = color);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+}
