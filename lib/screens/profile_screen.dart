@@ -267,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context,
                       MaterialPageRoute(builder: (_) => const NotificationScreen()),
                     ),
-                    icon: const Icon(Icons.settings, size: 18, color: accent Color),
+                    icon: Icon(Icons.settings, size: 18, color: accentColor),
                     label: Text(
                       'Notification Settings',
                       style: TextStyle(color: accentColor, fontWeight: FontWeight.w500),

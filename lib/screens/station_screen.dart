@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import '/screens/home_screen.dart';
 import '/screens/order_screen.dart';
 import '/screens/profile_screen.dart';
@@ -19,7 +20,7 @@ class StationScreen extends StatefulWidget {
 }
 
 class _StationScreenState extends State<StationScreen> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   int _currentIndex = 1;
 
   final List<_StationData> _stations = const [
@@ -133,37 +134,77 @@ class _StationScreenState extends State<StationScreen> {
 
             const SizedBox(height: 14),
 
-            // ── Google Map ────────────────────────────────────────────
+            // ── Map ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
                 child: SizedBox(
                   height: 200,
-                  child: GoogleMap(
-                    initialCameraPosition: const CameraPosition(
-                      target: LatLng(-1.268, 36.807),
-                      zoom: 14,
+                  child: FlutterMap(
+                    mapController: _mapController,
+                    options: const MapOptions(
+                      initialCenter: LatLng(-1.268, 36.807),
+                      initialZoom: 14,
+                      backgroundColor: Color(0xFF1A1A1A),
                     ),
-                    onMapCreated: (controller) {
-                      _mapController = controller;
-                    },
-                    zoomControlsEnabled: false,
-                    myLocationButtonEnabled: false,
-                    markers: {
-                      const Marker(
-                        markerId: MarkerId('station1'),
-                        position: LatLng(-1.268, 36.807),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
+                        userAgentPackageName: 'com.fuelconnect.app',
+                        maxZoom: 19,
                       ),
-                      const Marker(
-                        markerId: MarkerId('station2'),
-                        position: LatLng(-1.274, 36.815),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: const LatLng(-1.268, 36.807),
+                            width: 34, height: 34,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFDBA84E), Color(0xFFC4963D)],
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.local_gas_station_rounded,
+                                  color: Colors.white, size: 16),
+                            ),
+                          ),
+                          Marker(
+                            point: const LatLng(-1.274, 36.815),
+                            width: 34, height: 34,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFDBA84E), Color(0xFFC4963D)],
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.local_gas_station_rounded,
+                                  color: Colors.white, size: 16),
+                            ),
+                          ),
+                          Marker(
+                            point: const LatLng(-1.262, 36.800),
+                            width: 34, height: 34,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFDBA84E), Color(0xFFC4963D)],
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.local_gas_station_rounded,
+                                  color: Colors.white, size: 16),
+                            ),
+                          ),
+                        ],
                       ),
-                      const Marker(
-                        markerId: MarkerId('station3'),
-                        position: LatLng(-1.262, 36.800),
-                      ),
-                    },
+                    ],
                   ),
                 ),
               ),

@@ -62,6 +62,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final confirmPassword = _confirmPasswordController.text.trim();
     final location = _locationController.text.trim();
 
+    // DEMO BYPASS: Register directly for offline click-through testing.
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    _showSuccess('Account created! (Demo Mode)');
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    });
+    return;
+
+    /* Original Integration:
     if (fullName.isEmpty || email.isEmpty || phone.isEmpty || 
         password.isEmpty || confirmPassword.isEmpty || location.isEmpty) {
       _showError('All fields are required');
@@ -138,6 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       setState(() => _isLoading = false);
       _showError('Registration failed: ${e.toString()}');
     }
+    */
   }
 
   void _showError(String message) {
@@ -188,197 +203,196 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-          child: Column(
-            children: [
-              // ============================================================
-              // LAYER 1: Background Layer (Logo top, Sign In bottom)
-              // ============================================================
-              const FuelConnectLogo(fontSize: 16),
-              const SizedBox(height: 8),
-              Text(
-                'FUEL CONNECT PORTAL',
-                style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 9, letterSpacing: 1.5, fontWeight: FontWeight.w600),
-              ),
-  
-              const SizedBox(height: 24),
-
-              // ============================================================
-              // LAYER 2: Premium Card Container (Signup Form)
-              // ============================================================
-              Container(
-                constraints: const BoxConstraints(maxWidth: 420),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.dividerColor),
-                  boxShadow: [
-                    BoxShadow(color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.05), blurRadius: 25, offset: const Offset(0, 12)),
-                  ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Center(
-                      child: Text(
-                        'Create Account',
-                        style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 22, fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Center(
-                      child: Text(
-                        'Join the Fuel Connect network and optimise your performance',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12, height: 1.4),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Form Fields
-                    _buildLabel('FULL NAME', theme),
-                    const SizedBox(height: 6),
-                    _buildTextField(controller: _fullNameController, hintText: 'John Doe', prefixIcon: Icons.person_outline, theme: theme),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('EMAIL ADDRESS', theme),
-                    const SizedBox(height: 6),
-                    _buildTextField(controller: _emailController, hintText: 'name@example.com', prefixIcon: Icons.email_outlined, keyboardType: TextInputType.emailAddress, theme: theme),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('PHONE NUMBER', theme),
-                    const SizedBox(height: 6),
-                    _buildTextField(controller: _phoneController, hintText: '+256 740 000-0000', prefixIcon: Icons.phone_outlined, keyboardType: TextInputType.phone, theme: theme),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('PASSWORD', theme),
-                    const SizedBox(height: 6),
-                    _buildTextField(
-                      controller: _passwordController,
-                      hintText: '············',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: _obscurePassword,
-                      theme: theme,
-                      suffixIcon: _buildVisibilityToggle(_obscurePassword, () => setState(() => _obscurePassword = !_obscurePassword), theme),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('CONFIRM PASSWORD', theme),
-                    const SizedBox(height: 6),
-                    _buildTextField(
-                      controller: _confirmPasswordController,
-                      hintText: '••••••••',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: _obscureConfirmPassword,
-                      theme: theme,
-                      suffixIcon: _buildVisibilityToggle(_obscureConfirmPassword, () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword), theme),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('USER TYPE', theme),
-                    const SizedBox(height: 6),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: theme.dividerColor),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _userType,
-                          dropdownColor: theme.colorScheme.surface,
-                          iconEnabledColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                          isExpanded: true,
-                          items: [
-                            DropdownMenuItem(value: "customer", child: Text("Customer", style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14))),
-                            DropdownMenuItem(value: "driver", child: Text("Driver", style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14))),
-                          ],
-                          onChanged: (val) => setState(() => _userType = val.toString()),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('LOCATION', theme),
-                    const SizedBox(height: 6),
-                    _buildTextField(controller: _locationController, hintText: 'Enter your location', prefixIcon: Icons.location_on_outlined, theme: theme),
-
-                    // ✅ Driver fields shown conditionally
-                    if (_userType == "driver") ...[
-                      const SizedBox(height: 16),
-                      _buildLabel('VEHICLE TYPE', theme),
-                      const SizedBox(height: 6),
-                      _buildTextField(controller: _vehicleTypeController, hintText: 'Motorcycle', prefixIcon: Icons.directions_car_outlined, theme: theme),
-                      const SizedBox(height: 16),
-                      _buildLabel('VEHICLE NUMBER', theme),
-                      const SizedBox(height: 6),
-                      _buildTextField(controller: _vehicleNumberController, hintText: 'UAX 123A', prefixIcon: Icons.pin_outlined, theme: theme),
-                      const SizedBox(height: 16),
-                      _buildLabel('LICENSE NUMBER', theme),
-                      const SizedBox(height: 6),
-                      _buildTextField(controller: _licenseController, hintText: 'DL123456', prefixIcon: Icons.badge_outlined, theme: theme),
-                    ],
-
-                    const SizedBox(height: 24),
-                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      SizedBox(
-                        width: 20, height: 20,
-                        child: Checkbox(
-                          value: _agreeToTerms,
-                          onChanged: (val) => setState(() => _agreeToTerms = val ?? false),
-                          activeColor: AppTheme.gold,
-                          checkColor: Colors.white,
-                          side: BorderSide(color: theme.dividerColor, width: 2),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(text: 'I agree to the ', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12, height: 1.4)),
-                              WidgetSpan(child: GestureDetector(onTap: () => _showTermsSheet('Terms of Service'), child: const Text('Terms of Service', style: TextStyle(color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.w700)))),
-                              TextSpan(text: ' and ', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12)),
-                              WidgetSpan(child: GestureDetector(onTap: () => _showTermsSheet('Privacy Policy'), child: const Text('Privacy Policy', style: TextStyle(color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.w700)))),
-                            ],
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(child: FuelConnectLogo(fontSize: 32)),
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(
+                            'FUEL CONNECT PORTAL',
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color,
+                              fontSize: 9,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ]),
+                        const SizedBox(height: 32),
+                        Text(
+                          'Create Account',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.textTheme.bodyLarge?.color,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Join the Fuel Connect network and optimise your performance',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.textTheme.bodyMedium?.color,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
 
-                    const SizedBox(height: 28),
-                    GoldButton(
-                      text: _isLoading ? 'SIGNING UP...' : 'SIGN UP',
-                      onPressed: _isLoading ? () {} : _handleSignUp,
+                        // Form Fields
+                        _buildLabel('FULL NAME', theme),
+                        const SizedBox(height: 6),
+                        _buildTextField(controller: _fullNameController, hintText: 'John Doe', prefixIcon: Icons.person_outline, theme: theme),
+                        const SizedBox(height: 16),
+
+                        _buildLabel('EMAIL ADDRESS', theme),
+                        const SizedBox(height: 6),
+                        _buildTextField(controller: _emailController, hintText: 'name@example.com', prefixIcon: Icons.email_outlined, keyboardType: TextInputType.emailAddress, theme: theme),
+                        const SizedBox(height: 16),
+
+                        _buildLabel('PHONE NUMBER', theme),
+                        const SizedBox(height: 6),
+                        _buildTextField(controller: _phoneController, hintText: '+256 740 000-0000', prefixIcon: Icons.phone_outlined, keyboardType: TextInputType.phone, theme: theme),
+                        const SizedBox(height: 16),
+
+                        _buildLabel('PASSWORD', theme),
+                        const SizedBox(height: 6),
+                        _buildTextField(
+                          controller: _passwordController,
+                          hintText: '············',
+                          prefixIcon: Icons.lock_outline,
+                          obscureText: _obscurePassword,
+                          theme: theme,
+                          suffixIcon: _buildVisibilityToggle(_obscurePassword, () => setState(() => _obscurePassword = !_obscurePassword), theme),
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildLabel('CONFIRM PASSWORD', theme),
+                        const SizedBox(height: 6),
+                        _buildTextField(
+                          controller: _confirmPasswordController,
+                          hintText: '••••••••',
+                          prefixIcon: Icons.lock_outline,
+                          obscureText: _obscureConfirmPassword,
+                          theme: theme,
+                          suffixIcon: _buildVisibilityToggle(_obscureConfirmPassword, () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword), theme),
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildLabel('USER TYPE', theme),
+                        const SizedBox(height: 6),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _userType,
+                              dropdownColor: theme.colorScheme.surface,
+                              iconEnabledColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                              isExpanded: true,
+                              items: [
+                                DropdownMenuItem(value: "customer", child: Text("Customer", style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14))),
+                                DropdownMenuItem(value: "driver", child: Text("Driver", style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14))),
+                              ],
+                              onChanged: (val) => setState(() => _userType = val.toString()),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildLabel('LOCATION', theme),
+                        const SizedBox(height: 6),
+                        _buildTextField(controller: _locationController, hintText: 'Enter your location', prefixIcon: Icons.location_on_outlined, theme: theme),
+
+                        if (_userType == "driver") ...[
+                          const SizedBox(height: 16),
+                          _buildLabel('VEHICLE TYPE', theme),
+                          const SizedBox(height: 6),
+                          _buildTextField(controller: _vehicleTypeController, hintText: 'Motorcycle', prefixIcon: Icons.directions_car_outlined, theme: theme),
+                          const SizedBox(height: 16),
+                          _buildLabel('VEHICLE NUMBER', theme),
+                          const SizedBox(height: 6),
+                          _buildTextField(controller: _vehicleNumberController, hintText: 'UAX 123A', prefixIcon: Icons.pin_outlined, theme: theme),
+                          const SizedBox(height: 16),
+                          _buildLabel('LICENSE NUMBER', theme),
+                          const SizedBox(height: 6),
+                          _buildTextField(controller: _licenseController, hintText: 'DL123456', prefixIcon: Icons.badge_outlined, theme: theme),
+                        ],
+
+                        const SizedBox(height: 24),
+                        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          SizedBox(
+                            width: 20, height: 20,
+                            child: Checkbox(
+                              value: _agreeToTerms,
+                              onChanged: (val) => setState(() => _agreeToTerms = val ?? false),
+                              activeColor: AppTheme.gold,
+                              checkColor: Colors.white,
+                              side: BorderSide(color: theme.dividerColor, width: 2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(text: 'I agree to the ', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12, height: 1.4)),
+                                  WidgetSpan(child: GestureDetector(onTap: () => _showTermsSheet('Terms of Service'), child: const Text('Terms of Service', style: TextStyle(color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.w700)))),
+                                  TextSpan(text: ' and ', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12)),
+                                  WidgetSpan(child: GestureDetector(onTap: () => _showTermsSheet('Privacy Policy'), child: const Text('Privacy Policy', style: TextStyle(color: AppTheme.gold, fontSize: 12, fontWeight: FontWeight.w700)))),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ]),
+
+                        const SizedBox(height: 28),
+                        GoldButton(
+                          text: _isLoading ? 'SIGNING UP...' : 'SIGN UP',
+                          onPressed: _isLoading ? () {} : _handleSignUp,
+                        ),
+                        const SizedBox(height: 32),
+
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Center(
+                            child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(text: "Already part of the fleet?  ", style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13)),
+                                  const TextSpan(text: 'Sign In', style: TextStyle(color: AppTheme.gold, fontSize: 13, fontWeight: FontWeight.w800)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // ============================================================
-              // BOTTOM: Sign In Link
-              // ============================================================
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(text: "Already part of the fleet?  ", style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13)),
-                      const TextSpan(text: 'Sign In', style: TextStyle(color: AppTheme.gold, fontSize: 13, fontWeight: FontWeight.w800)),
-                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

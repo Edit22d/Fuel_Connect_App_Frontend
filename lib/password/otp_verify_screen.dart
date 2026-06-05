@@ -38,6 +38,28 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
   }
 
   Future<void> _resetPassword() async {
+    // DEMO BYPASS: Reset directly for offline click-through testing.
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 600));
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    _showPopup(
+      title: 'Password Reset!',
+      message: 'Your password has been reset successfully. Please log in with your new password.',
+      isSuccess: true,
+      onConfirm: () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      },
+    );
+    return;
+
+    /* Original Integration:
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -46,14 +68,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       // API integration for later implementation. Right now we simulate success.
       await Future.delayed(const Duration(seconds: 2));
       final result = {'success': true};
-      /* 
-      final result = await _auth.resetPassword(
-        email: widget.email,
-        token: widget.otp,
-        newPassword: _newPassController.text.trim(),
-        confirmNewPassword: _confirmPassController.text.trim(),
-      ).timeout(const Duration(seconds: 15));
-      */
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -87,6 +101,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
         isSuccess: false,
       );
     }
+    */
   }
 
   void _showPopup({
@@ -183,78 +198,69 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       body: SafeArea(
         child: Form(
           key: _formKey,
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  children: [
-                    const FuelConnectLogo(fontSize: 16),
-                    const SizedBox(height: 8),
-                    Text(
-                      'SECURE PASSWORD RESET',
-                      style: TextStyle(
-                        color: theme.textTheme.bodyMedium?.color,
-                        fontSize: 10,
-                        letterSpacing: 2.0,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Body
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
                   child: Center(
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 400),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: theme.dividerColor),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(
-                            width: 64, height: 64,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: AppTheme.buttonGradient,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.gold.withOpacity(0.4),
-                                  blurRadius: 20, spreadRadius: 3,
-                                ),
-                              ],
+                          const Center(child: FuelConnectLogo(fontSize: 32)),
+                          const SizedBox(height: 8),
+                          Center(
+                            child: Text(
+                              'SECURE PASSWORD RESET',
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color,
+                                fontSize: 10,
+                                letterSpacing: 2.0,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            child: const Icon(Icons.lock_outline, color: Colors.black, size: 32),
+                          ),
+                          const SizedBox(height: 40),
+
+                          Center(
+                            child: Container(
+                              width: 64, height: 64,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: AppTheme.buttonGradient,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.gold.withOpacity(0.4),
+                                    blurRadius: 20, spreadRadius: 3,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(Icons.lock_outline, color: Colors.black, size: 32),
+                            ),
                           ),
                           const SizedBox(height: 24),
                           
                           Text(
                             'Create New Password',
+                            textAlign: TextAlign.center,
                             style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 22, fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 8),
                           
-                          Text(
-                            'For ${widget.email}',
-                            style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13),
+                          Center(
+                            child: Text(
+                              'For ${widget.email}',
+                              style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13),
+                            ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 20),
 
                           // Password rules hint
                           Container(
@@ -325,15 +331,17 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                           
                           GestureDetector(
                             onTap: () => Navigator.pop(context),
-                            child: Text('Cancel', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w600)),
+                            child: Center(
+                              child: Text('Cancel', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w600)),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

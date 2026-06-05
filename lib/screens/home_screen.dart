@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import '/screens/order_screen.dart';
 import '/screens/support_screen.dart';
 import '/screens/profile_screen.dart';
@@ -40,7 +41,7 @@ class FuelStation {
   final int reviewCount;
   final String distance;
   final String imageUrl;
-  final LatLng position;
+  final LatLng position;  // latlong2 LatLng
   final bool isOpen;
   final String pricePerLitre;
   final List<String> fuelTypes;
@@ -591,8 +592,9 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
 
   final LatLng _userLocation     = const LatLng(0.3476, 32.5825);
   final LatLng _deliveryLocation = const LatLng(0.3530, 32.5870);
-  Set<Marker>   _markers   = {};
-  Set<Polyline> _polylines = {};
+  List<Marker>   _markers   = [];
+  List<Polyline> _polylines = [];
+  final MapController _mapController = MapController();
 
   int _selectedNav = 0;
 
@@ -889,30 +891,23 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   }
 
   void _updateMapMarkers() {
-    final markers = <Marker>{
+    final markers = <Marker>[
       Marker(
-        markerId: const MarkerId('user'),
-        position: _userLocation,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        infoWindow: const InfoWindow(title: 'You are here'),
+        point: _userLocation,
+        width: 40, height: 40,
+        child: const _PulsingDot(color: Color(0xFF4A90D9)),
       ),
       Marker(
-        markerId: const MarkerId('delivery'),
-        position: _deliveryLocation,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: const InfoWindow(title: 'Delivery Location'),
+        point: _deliveryLocation,
+        width: 40, height: 40,
+        child: const Icon(Icons.flag_rounded, color: Color(0xFF4CAF50), size: 30),
       ),
-    };
+    ];
     for (final station in _filteredStations) {
       markers.add(Marker(
-        markerId: MarkerId(station.id),
-        position: station.position,
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueOrange),
-        infoWindow: InfoWindow(
-          title: station.name,
-          snippet: station.pricePerLitre,
-        ),
+        point: station.position,
+        width: 44, height: 44,
+        child: const _StationMapPin(),
       ));
     }
     setState(() => _markers = markers);
@@ -954,45 +949,36 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   }
 
   void _setupMarkers() {
-    final markers = <Marker>{
+    final markers = <Marker>[
       Marker(
-        markerId: const MarkerId('user'),
-        position: _userLocation,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        infoWindow: const InfoWindow(title: 'You are here'),
+        point: _userLocation,
+        width: 40, height: 40,
+        child: const _PulsingDot(color: Color(0xFF4A90D9)),
       ),
       Marker(
-        markerId: const MarkerId('delivery'),
-        position: _deliveryLocation,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: const InfoWindow(title: 'Delivery Location'),
+        point: _deliveryLocation,
+        width: 40, height: 40,
+        child: const Icon(Icons.flag_rounded, color: Color(0xFF4CAF50), size: 30),
       ),
-    };
+    ];
     for (final station in kStations) {
       markers.add(Marker(
-        markerId: MarkerId(station.id),
-        position: station.position,
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueOrange),
-        infoWindow: InfoWindow(
-          title: station.name,
-          snippet: station.pricePerLitre,
-        ),
+        point: station.position,
+        width: 44, height: 44,
+        child: const _StationMapPin(),
       ));
     }
     setState(() => _markers = markers);
   }
 
   void _setupPolylines() {
-    _polylines = {
+    _polylines = [
       Polyline(
-        polylineId: const PolylineId('route'),
         points: [_userLocation, _deliveryLocation],
         color: const Color(0xFFC4963D),
-        width: 4,
-        patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+        strokeWidth: 4,
       ),
-    };
+    ];
   }
 
   @override
@@ -1400,29 +1386,26 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   }
 
   Widget _buildMap() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SizedBox(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          child: Image.asset(
-            'assets/images/map.png',
-            fit: BoxFit.cover,
-            alignment: const Alignment(0.5, -0.5),
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: const Color(0xFF1A1A1A),
-                child: const Center(
-                  child: Text(
-                    'Map Image Missing',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: _userLocation,
+        initialZoom: 14.5,
+        backgroundColor: const Color(0xFF1A1A1A),
+      ),
+      children: [
+        // Dark-themed OpenStreetMap tiles (free, no API key)
+        TileLayer(
+          urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          subdomains: const ['a', 'b', 'c', 'd'],
+          userAgentPackageName: 'com.fuelconnect.app',
+          maxZoom: 19,
+        ),
+        // Route polyline
+        PolylineLayer(polylines: _polylines),
+        // Station & user markers
+        MarkerLayer(markers: _markers),
+      ],
     );
   }
 
@@ -1885,3 +1868,142 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     );
   }
 }
+
+// ── Custom Map Marker Widgets ───────────────────────────────────────────────
+
+/// Animated pulsing dot for the user's location.
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scaleAnim;
+  late Animation<double> _opacityAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+    _scaleAnim = Tween<double>(begin: 1.0, end: 2.5)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _opacityAnim = Tween<double>(begin: 0.5, end: 0.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40, height: 40,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AnimatedBuilder(
+            animation: _ctrl,
+            builder: (_, __) => Transform.scale(
+              scale: _scaleAnim.value,
+              child: Opacity(
+                opacity: _opacityAnim.value,
+                child: Container(
+                  width: 16, height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.color.withOpacity(0.3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: 14, height: 14,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.color,
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withOpacity(0.4),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Premium fuel-station pin for map markers.
+class _StationMapPin extends StatelessWidget {
+  const _StationMapPin();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 34, height: 34,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFDBA84E), Color(0xFFC4963D)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFC4963D).withOpacity(0.45),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: const Icon(Icons.local_gas_station_rounded,
+              color: Colors.white, size: 18),
+        ),
+        // Pin tail
+        CustomPaint(
+          size: const Size(10, 6),
+          painter: _PinTailPainter(const Color(0xFFC4963D)),
+        ),
+      ],
+    );
+  }
+}
+
+class _PinTailPainter extends CustomPainter {
+  final Color color;
+  _PinTailPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}

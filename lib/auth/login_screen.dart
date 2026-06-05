@@ -38,6 +38,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
 
+    // DEMO BYPASS: Log in directly for offline click-through testing.
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    _goToHome();
+    return;
+
+    /* Original Integration:
     if (phone.isEmpty || password.isEmpty) {
       _showError('All fields are required');
       return;
@@ -74,6 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
       _showError('An error occurred: ${e.toString()}');
     }
+    */
   }
 
   Future<void> _handleGoogleSignIn() async {
@@ -118,204 +128,190 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-          child: Column(
-            children: [
-              // ============================================================
-              // LAYER 1: Logo Section (Top)
-              // ============================================================
-              const FuelConnectLogo(fontSize: 20),
-              const SizedBox(height: 12),
-              Text(
-                'FUEL CONNECT PORTAL',
-                style: TextStyle(
-                  color: theme.textTheme.bodyMedium?.color,
-                  fontSize: 10,
-                  letterSpacing: 2.0,
-                  fontWeight: FontWeight.w600,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // ============================================================
-              // LAYER 2: Login Form
-              // ============================================================
-              Container(
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.dividerColor),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Welcome back',
-                      style: TextStyle(
-                        color: theme.textTheme.bodyLarge?.color,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Please enter your phone number and password.',
-                      style: TextStyle(
-                        color: theme.textTheme.bodyMedium?.color,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Phone Field
-                    _buildLabel('PHONE NUMBER', theme),
-                    const SizedBox(height: 8),
-                    _buildTextField(
-                      controller: _phoneController,
-                      hintText: '+256 744 000 000',
-                      prefixIcon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      theme: theme,
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Password Field
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildLabel('PASSWORD', theme),
-                        GestureDetector(
-                          onTap: _goToForgotPassword,
-                          child: const Text(
-                            'FORGOT PASSWORD?',
-                            style: TextStyle(
-                              color: AppTheme.gold,
-                              fontSize: 10,
-                              letterSpacing: 1.0,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildTextField(
-                      controller: _passwordController,
-                      hintText: '••••••••',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: _obscurePassword,
-                      theme: theme,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                          size: 18,
-                        ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Login Button
-                    GoldButton(
-                      text: _isLoading ? 'LOGGING IN...' : 'LOG IN',
-                      onPressed: _isLoading ? () {} : _handleLogin,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Divider
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        const Center(child: FuelConnectLogo(fontSize: 40)),
+                        const SizedBox(height: 12),
+                        Center(
                           child: Text(
-                            'OR CONTINUE WITH',
+                            'FUEL CONNECT PORTAL',
                             style: TextStyle(
                               color: theme.textTheme.bodyMedium?.color,
                               fontSize: 10,
-                              letterSpacing: 1.2,
+                              letterSpacing: 2.0,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                        const SizedBox(height: 40),
+                        Text(
+                          'Welcome back',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.textTheme.bodyLarge?.color,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please enter your phone number and password.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.textTheme.bodyMedium?.color,
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 28),
 
-                    // Social Login Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'GOOGLE',
-                            icon: const _GoogleIcon(),
-                            theme: theme,
-                            onPressed: _handleGoogleSignIn,
+                        // Phone Field
+                        _buildLabel('PHONE NUMBER', theme),
+                        const SizedBox(height: 8),
+                        _buildTextField(
+                          controller: _phoneController,
+                          hintText: '+256 744 000 000',
+                          prefixIcon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          theme: theme,
+                        ),
+                        const SizedBox(height: 18),
+
+                        // Password Field
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildLabel('PASSWORD', theme),
+                            GestureDetector(
+                              onTap: _goToForgotPassword,
+                              child: const Text(
+                                'FORGOT PASSWORD?',
+                                style: TextStyle(
+                                  color: AppTheme.gold,
+                                  fontSize: 10,
+                                  letterSpacing: 1.0,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _buildTextField(
+                          controller: _passwordController,
+                          hintText: '••••••••',
+                          prefixIcon: Icons.lock_outline,
+                          obscureText: _obscurePassword,
+                          theme: theme,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                              size: 18,
+                            ),
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'APPLE',
-                            icon: _AppleIcon(isDark: isDark),
-                            theme: theme,
-                            onPressed: _handleAppleSignIn,
-                          ),
+                        const SizedBox(height: 32),
+
+                        // Login Button
+                        GoldButton(
+                          text: _isLoading ? 'LOGGING IN...' : 'LOG IN',
+                          onPressed: _isLoading ? () {} : _handleLogin,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Divider
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'OR CONTINUE WITH',
+                                style: TextStyle(
+                                  color: theme.textTheme.bodyMedium?.color,
+                                  fontSize: 10,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Social Login Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'GOOGLE',
+                                icon: const _GoogleIcon(),
+                                theme: theme,
+                                onPressed: _handleGoogleSignIn,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'APPLE',
+                                icon: _AppleIcon(isDark: isDark),
+                                theme: theme,
+                                onPressed: _handleAppleSignIn,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 48),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account? ",
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color,
+                                fontSize: 13,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _goToSignUp,
+                              child: const Text(
+                                'Create Account',
+                                style: TextStyle(
+                                  color: AppTheme.gold,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 32),
-
-              // ============================================================
-              // LAYER 3: Create Account (Bottom)
-              // ============================================================
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Don't have an account? ",
-                    style: TextStyle(
-                      color: theme.textTheme.bodyMedium?.color,
-                      fontSize: 13,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _goToSignUp,
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(
-                        color: AppTheme.gold,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

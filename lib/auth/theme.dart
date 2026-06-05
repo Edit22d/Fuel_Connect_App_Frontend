@@ -395,27 +395,7 @@ class OtpInfoDialog extends StatelessWidget {
     );
   }
 }
-oundColor: AppTheme.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: Text(
-                  'OK',
-                  style: TextStyle(
-                    color: AppTheme.gold,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+
 
 
 

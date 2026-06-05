@@ -21,17 +21,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   void _handleNext() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email or phone number'), backgroundColor: Colors.redAccent),
-      );
-      return;
-    }
+    final targetEmail = email.isEmpty ? 'demo@fuelconnect.com' : email;
 
     setState(() => _isLoading = true);
-    
-    // Simulate API call for sending OTP
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 600));
     
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -40,7 +33,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => OtpScreen(
-          email: email,
+          email: targetEmail,
           fromForgotPassword: true, 
         ),
       ),
@@ -66,67 +59,55 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // ==================== HEADER ====================
-            Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 24),
-              child: Column(
-                children: [
-                  const FuelConnectLogo(fontSize: 16),
-                  const SizedBox(height: 8),
-                  Text(
-                    'FUEL CONNECT PORTAL',
-                    style: TextStyle(
-                      color: theme.textTheme.bodyMedium?.color,
-                      fontSize: 10,
-                      letterSpacing: 2.0,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ==================== CARD ====================
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: theme.dividerColor),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Padlock Icon
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: AppTheme.buttonGradient,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.gold.withOpacity(0.4),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
+                        const Center(child: FuelConnectLogo(fontSize: 32)),
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(
+                            'FUEL CONNECT PORTAL',
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color,
+                              fontSize: 10,
+                              letterSpacing: 2.0,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          child: const Icon(Icons.lock_outline, color: Colors.black, size: 32),
+                        ),
+                        const SizedBox(height: 40),
+
+                        // Padlock Icon
+                        Center(
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppTheme.buttonGradient,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.gold.withOpacity(0.4),
+                                  blurRadius: 20,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.lock_outline, color: Colors.black, size: 32),
+                          ),
                         ),
                         const SizedBox(height: 24),
 
@@ -134,7 +115,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         Text(
                           'Forgot your password?',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.w800),
+                          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 22, fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 12),
 
@@ -147,16 +128,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         const SizedBox(height: 32),
 
                         // Email Field
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'EMAIL OR PHONE NUMBER',
-                            style: TextStyle(
-                              color: theme.textTheme.bodyMedium?.color,
-                              fontSize: 10,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        Text(
+                          'EMAIL OR PHONE NUMBER',
+                          style: TextStyle(
+                            color: theme.textTheme.bodyMedium?.color,
+                            fontSize: 10,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -193,41 +171,40 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         // Return to Login
                         GestureDetector(
                           onTap: () => Navigator.maybePop(context),
-                          child: Text(
-                            'Return to Login',
-                            style: TextStyle(
-                              color: theme.textTheme.bodyMedium?.color,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                          child: Center(
+                            child: Text(
+                              'Return to Login',
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 48),
+
+                        // Footer
+                        Column(
+                          children: [
+                            Text(
+                              'PRIVACY PROTECTED • HELP CENTER',
+                              style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '© FUELCONNECT. SYSTEM SECURE',
+                              style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
-
-            // ==================== FOOTER ====================
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24, top: 16),
-              child: Column(
-                children: [
-                  Text(
-                    'PRIVACY PROTECTED • HELP CENTER',
-                    style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '© FUELCONNECT. SYSTEM SECURE',
-                    style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
