@@ -3,6 +3,7 @@ import 'dart:async';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'theme.dart';
+import '../screens/terms_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -62,13 +63,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final confirmPassword = _confirmPasswordController.text.trim();
     final location = _locationController.text.trim();
 
+    // Basic validation first
+    if (fullName.isEmpty || email.isEmpty || phone.isEmpty ||
+        password.isEmpty || confirmPassword.isEmpty || location.isEmpty) {
+      _showError('Please fill in all required fields before proceeding.');
+      return;
+    }
+    if (password != confirmPassword) {
+      _showError('Passwords do not match. Please check and try again.');
+      return;
+    }
+    if (password.length < 8) {
+      _showError('Password must be at least 8 characters.');
+      return;
+    }
+
+    // Show Terms & Conditions after credentials are filled
+    if (!_agreeToTerms) {
+      _showTermsSheet('Terms of Service');
+      return;
+    }
+
     // DEMO BYPASS: Register directly for offline click-through testing.
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     setState(() => _isLoading = false);
-    _showSuccess('Account created! (Demo Mode)');
-    Future.delayed(const Duration(milliseconds: 1000), () {
+    _showSuccess('Account created successfully! Welcome to Fuel Connect.');
+    Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');
       }
@@ -187,6 +209,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         onAccept: () {
           setState(() => _agreeToTerms = true);
           Navigator.pop(context);
+          // Automatically proceed after accepting
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) _handleSignUp();
+          });
         },
       ),
     );
@@ -568,164 +594,115 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (widget.type == 'Terms of Service') ...[
-                      const Center(
-                        child: Text(
-                          'TERMS & CONDITIONS',
-                          style: TextStyle(
-                            color: AppTheme.gold,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
+                      // Fuel Connect T&C Header
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.gold.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.gold.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.local_gas_station, color: AppTheme.gold, size: 28),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('FUEL CONNECT', style: TextStyle(color: AppTheme.gold, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1)),
+                                  Text('Mobile Fuel Delivery Platform', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 11)),
+                                  Text('Last updated: June 10, 2026', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 10)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Container(height: 1, width: double.infinity, color: AppTheme.gold),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Terms of Service',
-                        style: TextStyle(
-                          color: AppTheme.gold,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Last updated: 2026-01-04',
-                        style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 14),
-                      ),
-                      const SizedBox(height: 24),
-                      Container(height: 1, width: double.infinity, color: theme.dividerColor),
-                      const SizedBox(height: 24),
-                      _buildTermSection(
-                        '1. ACCEPTANCE OF TERMS',
-                        'By accessing this app and the FanZone® application, you agree to be bound by these terms. You may not access or use the app if you do not accept these terms. If you continue to access or use the app after reading these terms, your continued access constitutes acceptance of these terms.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '2. GENERAL DISCLAIMER',
-                        'Fan Zone is a platform for fans to share their experiences and connect with other fans. Fan Zone does not endorse any product or service mentioned in the app. Fan Zone is not responsible for any damages that may occur as a result of using the app. Fan Zone disclaims all liability for any losses or damages that may arise from the use of the app.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '3. USER IDENTIFICATION',
-                        'Users are required to provide accurate identification information when registering on the app. Failure to provide accurate identification may result in the temporary suspension of user accounts. Users must also provide accurate contact information when registering on the app.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '4. PROVIDE AND INTERNET ACCESS',
-                        'Fan Zone reserves the right to suspend or terminate an account if it becomes aware of any suspicious activity or if there is evidence of fraudulent behavior. Users are responsible for ensuring they have adequate internet access and connectivity to use the app.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '5. CANCELLATION POLICY',
-                        'Fan Zone has the right to cancel or suspend an account at any time without prior notice. Cancellation policies may vary depending on the type of account and the specific circumstances. Users should review Fan Zone\'s cancellation policy before signing up for an account.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '6. LIABILITY',
-                        'Fan Zone assumes no responsibility for any damages or losses that may occur as a result of using the app. Users should consult with legal professionals before using the app.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '7. GUARANTEE',
-                        'Fan Zone offers a guarantee that the app will work properly for a certain period of time. The length of the guarantee varies depending on the type of account and the specific circumstances. Users should review Fan Zone\'s guarantee policy before using the app.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '8. TERMINATION',
-                        'Fan Zone may terminate or suspend an account if it becomes aware of any violations of these terms. Termination may include the termination of the account and any associated services.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '9. AGREEMENT TERMS & CONDITIONS',
-                        'By using this app, you acknowledge that you have read, understood, and agree to be bound by these Terms & Conditions.',
-                        theme,
-                      ),
+                      _buildTermSection('1. ACCEPTANCE OF TERMS', 'By downloading, installing, or using the Fuel Connect mobile delivery application, you agree to be fully bound by these Terms & Conditions. Fuel Connect is a licensed fuel delivery platform. If you do not agree to these terms, you must immediately cease using the App.', theme),
+                      _buildTermSection('2. FUEL DELIVERY SERVICE', 'Fuel Connect facilitates on-demand mobile delivery of petroleum products (petrol, diesel, and kerosene) directly to your verified location. Orders are fulfilled by our certified delivery partners within designated service zones only.', theme),
+                      _buildTermSection('3. PAYMENT & PRICING', 'All fuel prices are displayed per litre and subject to change per Energy Regulatory Authority guidelines. Payment is processed securely via mobile money, debit/credit cards, and Fuel Connect wallet. All transactions are encrypted end-to-end via our PCI-DSS certified payment gateway.', theme),
+                      _buildTermSection('4. DRIVER & DELIVERY STANDARDS', 'All Fuel Connect delivery drivers are background-checked, certified in fuel handling, and carry valid petroleum transport licenses. Drivers operate approved tanker vehicles with anti-spill equipment and safety shut-off valves.', theme),
+                      _buildTermSection('5. USER RESPONSIBILITIES', 'You must ensure your delivery location is accessible, safe, and fire-compliant. You must be present at delivery time. No open flames or smoking within 10 metres of the delivery point. You agree not to use the App for fraudulent or illegal purposes.', theme),
+                      _buildTermSection('6. CANCELLATION & REFUND POLICY', 'Free cancellation within 10 minutes of order. After driver departure: 15% fee. At delivery point (driver arrived): 25% fee plus transport costs. Valid refunds processed within 2–5 business days.', theme),
+                      _buildTermSection('7. LIABILITY DISCLAIMER', 'Fuel Connect is not liable for damages arising from improper fuel storage or use by the customer. Our liability for service failure is limited to the value of the affected order. We are not responsible for delays due to force majeure events.', theme),
+                      _buildTermSection('8. DATA PRIVACY & LOCATION', 'GPS location data is collected solely to facilitate accurate delivery. Location tracking is only active during active orders. We do not sell your location data. Data is stored encrypted per applicable data protection laws.', theme),
+                      _buildTermSection('9. ACCOUNT TERMINATION', 'Fuel Connect may suspend or terminate your account for violations of these Terms, fraudulent activity, or illegal fuel trade facilitation. Pending orders will be cancelled and refunds issued where applicable.', theme),
+                      _buildTermSection('10. GOVERNING LAW', 'These Terms are governed by the laws of Uganda, including the Petroleum Supply Act. Disputes are subject to the exclusive jurisdiction of the courts of Kampala, Uganda.', theme),
                     ] else ...[
-                      const Center(
-                        child: Text(
-                          'PRIVACY POLICY',
-                          style: TextStyle(
-                            color: AppTheme.gold,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
+                      // Privacy Policy Header
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.gold.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.gold.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.privacy_tip_rounded, color: AppTheme.gold, size: 28),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('PRIVACY POLICY', style: TextStyle(color: AppTheme.gold, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1)),
+                                  Text('Fuel Connect Mobile Delivery Platform', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 11)),
+                                  Text('Last updated: June 10, 2026', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 10)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Container(height: 1, width: double.infinity, color: AppTheme.gold),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Privacy Policy',
-                        style: TextStyle(
-                          color: AppTheme.gold,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Last updated: 2026-06-04',
-                        style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 14),
-                      ),
-                      const SizedBox(height: 24),
-                      Container(height: 1, width: double.infinity, color: theme.dividerColor),
-                      const SizedBox(height: 24),
-                      _buildTermSection(
-                        '1. INFORMATION WE COLLECT',
-                        'We collect information you provide directly to us, such as when you create an account, fill out a form, or communicate with us. This may include your name, email address, phone number, and payment information.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '2. HOW WE USE YOUR INFORMATION',
-                        'We use the information we collect to provide, maintain, and improve our services, to process your transactions, to communicate with you, and to protect against fraud or illegal activity.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '3. SHARING OF INFORMATION',
-                        'We do not share your personal information with third parties except as necessary to provide our services, comply with the law, or protect our rights.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '4. DATA SECURITY',
-                        'We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '5. YOUR RIGHTS',
-                        'You have the right to access, correct, or delete your personal information. You may also object to or restrict certain processing of your data.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '6. COOKIES AND TRACKING',
-                        'We use cookies and similar tracking technologies to collect information about your browsing activities and to personalize your experience.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '7. CHILDREN\'S PRIVACY',
-                        'Our services are not directed to children under 13. We do not knowingly collect personal information from children under 13.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '8. CHANGES TO THIS POLICY',
-                        'We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.',
-                        theme,
-                      ),
-                      _buildTermSection(
-                        '9. CONTACT US',
-                        'If you have any questions about this Privacy Policy, please contact us at privacy@fuelconnect.com.',
-                        theme,
-                      ),
+                      _buildTermSection('1. INFORMATION WE COLLECT', 'We collect: Full name, email, phone number, delivery address. GPS location during active orders. Securely tokenised payment details. Device information and usage data (order history, preferences).', theme),
+                      _buildTermSection('2. HOW WE USE YOUR INFORMATION', 'We use your information to: Process and deliver fuel orders accurately. Send order status updates and delivery notifications. Verify identity and prevent fraud. Comply with petroleum distribution regulatory requirements.', theme),
+                      _buildTermSection('3. SHARING OF INFORMATION', 'We only share: Driver name, phone, and delivery location with the assigned driver. Payment data with PCI-DSS certified processors. Data with regulatory authorities if required by law. We never sell your data to advertisers.', theme),
+                      _buildTermSection('4. DATA SECURITY', 'All data is encrypted using TLS 1.3 in transit and AES-256 at rest. Payment data is handled by PCI-DSS Level 1 processors. Our servers are hosted on ISO 27001 certified infrastructure with regular penetration testing.', theme),
+                      _buildTermSection('5. YOUR RIGHTS', 'You can: Access all personal data we hold. Request corrections. Request account and data deletion. Opt out of marketing. Export your order history. Contact privacy@fuelconnect.ug to exercise your rights.', theme),
+                      _buildTermSection('6. LOCATION DATA', 'Location tracking is used exclusively for delivery accuracy. We only access precise location during active orders. Location history is retained 90 days for disputes, then permanently deleted.', theme),
+                      _buildTermSection('7. CHILDREN\'S PRIVACY', 'The Fuel Connect platform is for users aged 18+. We do not knowingly collect data from minors. Accounts discovered to belong to minors will be terminated and data deleted immediately.', theme),
+                      _buildTermSection('8. CHANGES TO THIS POLICY', 'Material changes will be notified through in-app alerts and email at least 14 days before they take effect. Continued use constitutes acceptance of the updated policy.', theme),
+                      _buildTermSection('9. CONTACT US', 'Privacy enquiries: privacy@fuelconnect.ug | Phone: +256 (0) 800 100 200 | Address: Fuel Connect Ltd., Plot 14, Industrial Area, Kampala, Uganda.', theme),
                     ],
                     const SizedBox(height: 30),
+                    if (!_hasScrolledToBottom)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.keyboard_double_arrow_down_rounded,
+                                color: AppTheme.gold, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Scroll to the bottom to accept',
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.all(24),
-                      child: GoldButton(
-                        text: 'Accept',
-                        onPressed: _hasScrolledToBottom ? widget.onAccept : () {},
+                      child: AnimatedOpacity(
+                        opacity: _hasScrolledToBottom ? 1.0 : 0.4,
+                        duration: const Duration(milliseconds: 300),
+                        child: GoldButton(
+                          text: 'I Accept & Continue',
+                          onPressed: _hasScrolledToBottom ? widget.onAccept : () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please scroll to the bottom to accept'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ],

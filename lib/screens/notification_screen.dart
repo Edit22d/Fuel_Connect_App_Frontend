@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../auth/theme.dart';
+import '../services/notification_service.dart';
 import 'home_screen.dart';
-import '/screens/order_screen.dart';
+import 'order_screen.dart';
 import 'profile_screen.dart';
+import 'settings_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -14,377 +17,386 @@ class _NotificationScreenState extends State<NotificationScreen> {
   int _selectedTab = 0;
   int _selectedIndex = 2;
 
-  final List<_NotifItem> _allNotifs = [
-    _NotifItem(
-      icon: Icons.local_shipping,
-      title: 'Order #6829 Shipped',
-      body: 'Your golden edition watch has been dispatched and is on its way to your address.',
-      time: '2m ago',
-      isRead: false,
-      category: 'orders',
-    ),
-    _NotifItem(
-      icon: Icons.local_offer,
-      title: 'Exclusive Weekend Offer',
-      body: 'Get 20% extra credit on all luxury accessories this weekend only. Use code GOLDEN.',
-      time: '1h ago',
-      isRead: false,
-      category: 'offers',
-    ),
-    _NotifItem(
-      icon: Icons.security,
-      title: 'Security Alert',
-      body: 'A new login was detected from a Chrome browser on Windows 11. Was this you?',
-      time: '3h ago',
-      isRead: false,
-      category: 'all',
-    ),
-    _NotifItem(
-      icon: Icons.check_circle,
-      title: 'Order #6812 Delivered',
-      body: 'Your package was delivered to the reception desk. Enjoy your purchase!',
-      time: '1d ago',
-      isRead: true,
-      category: 'orders',
-    ),
-    _NotifItem(
-      icon: Icons.account_balance_wallet,
-      title: 'Wallet Top-up Successful',
-      body: 'Successfully added \$500.00 to your wallet. Your new balance is \$1,240.50.',
-      time: '1d ago',
-      isRead: true,
-      category: 'all',
-    ),
-  ];
-
-  List<_NotifItem> get _filteredNotifs {
-    if (_selectedTab == 0) return _allNotifs;
-    if (_selectedTab == 1) {
-      return _allNotifs.where((n) => n.category == 'orders').toList();
+  List<AppNotification> get _filtered {
+    final all = NotificationService().notifications.value;
+    switch (_selectedTab) {
+      case 1:
+        return all.where((n) => n.type == NotifType.order).toList();
+      case 2:
+        return all.where((n) => n.type == NotifType.promo).toList();
+      case 3:
+        return all.where((n) => n.type == NotifType.security).toList();
+      default:
+        return all;
     }
-    if (_selectedTab == 2) {
-      return _allNotifs.where((n) => n.category == 'offers').toList();
-    }
-    return _allNotifs;
   }
 
-  List<_NotifItem> get _recentNotifs {
-    return _filteredNotifs.where((n) => n.time.contains('m') || n.time.contains('h')).toList();
-  }
+  List<AppNotification> get _recent =>
+      _filtered.where((n) => n.time.isAfter(DateTime.now().subtract(const Duration(hours: 24)))).toList();
 
-  List<_NotifItem> get _yesterdayNotifs {
-    return _filteredNotifs.where((n) => n.time.contains('d')).toList();
-  }
+  List<AppNotification> get _older =>
+      _filtered.where((n) => !n.time.isAfter(DateTime.now().subtract(const Duration(hours: 24)))).toList();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () => _showMoreOptions(),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                _buildTab('All', 0),
-                const SizedBox(width: 8),
-                _buildTab('Orders', 1),
-                const SizedBox(width: 8),
-                _buildTab('Offers', 2),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                if (_recentNotifs.isNotEmpty) ...[
-                  _sectionLabel('RECENT'),
-                  const SizedBox(height: 12),
-                  ..._recentNotifs.map((n) => _buildNotifCard(n)),
-                  const SizedBox(height: 20),
-                ],
-                if (_yesterdayNotifs.isNotEmpty) ...[
-                  _sectionLabel('YESTERDAY'),
-                  const SizedBox(height: 12),
-                  ..._yesterdayNotifs.map((n) => _buildNotifCard(n)),
-                  const SizedBox(height: 20),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFFC4963D),
-        unselectedItemColor: Colors.white54,
-        selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(fontSize: 10),
-        currentIndex: _selectedIndex,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt_long_rounded),
-            label: 'Orders',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            activeIcon: Icon(Icons.notifications_rounded),
-            label: 'Alerts',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline_rounded),
-            activeIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-          _navigateToScreen(index);
-        },
-      ),
-    );
-  }
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, mode, _) {
+        final isDark = mode == ThemeMode.dark;
+        final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF7F7F9);
+        final surface = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+        final textPrimary = isDark ? Colors.white : const Color(0xFF111111);
+        final textSecondary = isDark ? Colors.white54 : Colors.black54;
+        final divider = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5);
 
-  Widget _buildTab(String label, int index) {
-    final bool selected = _selectedTab == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTab = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFC4963D) : const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.black : Colors.white70,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
+        return ValueListenableBuilder<List<AppNotification>>(
+          valueListenable: NotificationService().notifications,
+          builder: (_, notifs, __) {
+            final unreadCount = notifs.where((n) => !n.isRead).length;
 
-  Widget _sectionLabel(String label) {
-    return Text(
-      label,
-      style: const TextStyle(
-        color: Color(0xFFC4963D),
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildNotifCard(_NotifItem item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-        border: !item.isRead
-            ? Border.all(color: const Color(0xFFC4963D).withOpacity(0.3))
-            : null,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: const Color(0xFF252525),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              item.icon,
-              color: const Color(0xFFC4963D),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            return Scaffold(
+              backgroundColor: bg,
+              appBar: AppBar(
+                backgroundColor: bg,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: textPrimary, size: 18),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: Text(
-                        item.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      item.time,
-                      style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 11,
-                      ),
-                    ),
+                    Text('Notifications', style: TextStyle(color: textPrimary, fontWeight: FontWeight.w700, fontSize: 17)),
+                    if (unreadCount > 0)
+                      Text('$unreadCount unread', style: const TextStyle(color: AppTheme.gold, fontSize: 11, fontWeight: FontWeight.w500)),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  item.body,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 12,
-                    height: 1.4,
+                centerTitle: true,
+                actions: [
+                  IconButton(
+                    icon: Icon(Icons.more_vert_rounded, color: textPrimary),
+                    onPressed: () => _showMoreOptions(surface, textPrimary),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                ],
+              ),
+              body: Column(
+                children: [
+                  // ── Tab bar ────────────────────────────────────────────
+                  Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _tab('All', 0, notifs.where((n) => !n.isRead).length, textPrimary),
+                        _tab('Orders', 1, notifs.where((n) => n.type == NotifType.order && !n.isRead).length, textPrimary),
+                        _tab('Offers', 2, notifs.where((n) => n.type == NotifType.promo && !n.isRead).length, textPrimary),
+                        _tab('Security', 3, notifs.where((n) => n.type == NotifType.security && !n.isRead).length, textPrimary),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Expanded(
+                    child: _filtered.isEmpty
+                        ? _emptyState(textSecondary)
+                        : ListView(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            children: [
+                              if (_recent.isNotEmpty) ...[
+                                _sectionLabel('RECENT', textSecondary),
+                                const SizedBox(height: 10),
+                                ..._recent.map((n) => _notifCard(n, surface, textPrimary, textSecondary, divider)),
+                                const SizedBox(height: 16),
+                              ],
+                              if (_older.isNotEmpty) ...[
+                                _sectionLabel('EARLIER', textSecondary),
+                                const SizedBox(height: 10),
+                                ..._older.map((n) => _notifCard(n, surface, textPrimary, textSecondary, divider)),
+                              ],
+                            ],
+                          ),
+                  ),
+                ],
+              ),
+              bottomNavigationBar: Container(
+                decoration: BoxDecoration(
+                  color: surface,
+                  border: Border(top: BorderSide(color: divider, width: 0.5)),
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                child: BottomNavigationBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  type: BottomNavigationBarType.fixed,
+                  selectedItemColor: AppTheme.gold,
+                  unselectedItemColor: textSecondary,
+                  selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                  unselectedLabelStyle: const TextStyle(fontSize: 10),
+                  currentIndex: _selectedIndex,
+                  items: const [
+                    BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'Home'),
+                    BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long_rounded), label: 'Orders'),
+                    BottomNavigationBarItem(icon: Icon(Icons.notifications_outlined), activeIcon: Icon(Icons.notifications_rounded), label: 'Alerts'),
+                    BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), activeIcon: Icon(Icons.person_rounded), label: 'Profile'),
+                  ],
+                  onTap: (index) {
+                    setState(() => _selectedIndex = index);
+                    switch (index) {
+                      case 0:
+                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (r) => false);
+                        break;
+                      case 1:
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const OrderScreen()));
+                        break;
+                      case 2:
+                        break;
+                      case 3:
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+                        break;
+                    }
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  void _showMoreOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _tab(String label, int index, int badge, Color textPrimary) {
+    final selected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.gold : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: selected ? AppTheme.gold : Colors.grey.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
           children: [
-            _menuOption('Mark all as read', Icons.done_all),
-            _menuOption('Notification settings', Icons.settings),
-            _menuOption('Clear all', Icons.delete_outline),
+            Text(label, style: TextStyle(
+              color: selected ? Colors.black : textPrimary,
+              fontSize: 13, fontWeight: FontWeight.w600,
+            )),
+            if (badge > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                width: 18, height: 18,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.black.withOpacity(0.2) : Colors.redAccent,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text('$badge', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _menuOption(String title, IconData icon) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFFC4963D)),
-      title: Text(
-        title,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
-      ),
-      onTap: () {
-        Navigator.pop(context);
-        if (title == 'Mark all as read') {
-          setState(() {
-            for (var notif in _allNotifs) {
-              notif.isRead = true;
-            }
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('All notifications marked as read'),
-              backgroundColor: Color(0xFFC4963D),
-            ),
-          );
-        } else if (title == 'Clear all') {
-          setState(() {
-            _allNotifs.clear();
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('All notifications cleared'),
-              backgroundColor: Color(0xFFC4963D),
-            ),
-          );
-        }
+  Widget _sectionLabel(String label, Color textSecondary) {
+    return Text(label, style: TextStyle(color: textSecondary, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2));
+  }
+
+  Widget _notifCard(AppNotification notif, Color surface, Color textPrimary, Color textSecondary, Color divider) {
+    return Dismissible(
+      key: Key(notif.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) {
+        NotificationService().removeNotification(notif.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Notification removed'), backgroundColor: AppTheme.gold, duration: const Duration(seconds: 2),
+            action: SnackBarAction(label: 'Undo', textColor: Colors.black, onPressed: () {}),
+          ),
+        );
       },
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(14)),
+        alignment: Alignment.centerRight,
+        child: const Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 26),
+      ),
+      child: GestureDetector(
+        onTap: () {
+          NotificationService().markAsRead(notif.id);
+          _showNotifDetail(notif, surface, textPrimary, textSecondary);
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: notif.isRead ? divider : notif.color.withOpacity(0.4),
+              width: notif.isRead ? 0.5 : 1.5,
+            ),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: notif.color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(notif.icon, color: notif.color, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(notif.title,
+                            style: TextStyle(color: textPrimary, fontWeight: notif.isRead ? FontWeight.w500 : FontWeight.w700, fontSize: 13),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(notif.timeAgo, style: TextStyle(color: textSecondary, fontSize: 10)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(notif.body,
+                      style: TextStyle(color: textSecondary, fontSize: 12, height: 1.4),
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (!notif.isRead) ...[
+                const SizedBox(width: 8),
+                Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(color: notif.color, shape: BoxShape.circle),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  void _navigateToScreen(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-        break;
-      case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OrderScreen()),
-        );
-        break;
-      case 2:
-        // Already on notifications
-        break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        );
-        break;
-    }
+  Widget _emptyState(Color textSecondary) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.gold.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.notifications_off_rounded, color: AppTheme.gold, size: 48),
+          ),
+          const SizedBox(height: 16),
+          const Text('All Caught Up!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 8),
+          Text('No notifications in this category.', style: TextStyle(color: textSecondary, fontSize: 13)),
+        ],
+      ),
+    );
   }
-}
 
-class _NotifItem {
-  final IconData icon;
-  final String title;
-  final String body;
-  final String time;
-  bool isRead;
-  final String category;
+  void _showNotifDetail(AppNotification notif, Color surface, Color textPrimary, Color textSecondary) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: notif.color.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(notif.icon, color: notif.color, size: 32),
+            ),
+            const SizedBox(height: 16),
+            Text(notif.title, style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 17), textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(notif.timeAgo, style: TextStyle(color: textSecondary, fontSize: 12)),
+            const SizedBox(height: 16),
+            Container(height: 1, color: AppTheme.gold.withOpacity(0.2)),
+            const SizedBox(height: 16),
+            Text(notif.body, style: TextStyle(color: textSecondary, fontSize: 14, height: 1.6), textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.gold, foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
 
-  _NotifItem({
-    required this.icon,
-    required this.title,
-    required this.body,
-    required this.time,
-    required this.isRead,
-    required this.category,
-  });
+  void _showMoreOptions(Color surface, Color textPrimary) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Container(width: 36, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
+          _menuOption('Mark all as read', Icons.done_all_rounded, AppTheme.gold, () {
+            NotificationService().markAllAsRead();
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All notifications marked as read'), backgroundColor: AppTheme.gold));
+          }),
+          _menuOption('Clear all notifications', Icons.delete_sweep_rounded, Colors.redAccent, () {
+            NotificationService().clearAll();
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All notifications cleared'), backgroundColor: Colors.redAccent));
+          }),
+          _menuOption('Notification settings', Icons.tune_rounded, AppTheme.gold, () {
+            Navigator.pop(context);
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          }),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _menuOption(String title, IconData icon, Color color, VoidCallback onTap) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+      onTap: () { Navigator.pop(context); onTap(); },
+    );
+  }
 }
