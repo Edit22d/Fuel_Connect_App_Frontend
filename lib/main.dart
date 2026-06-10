@@ -49,34 +49,35 @@ class FuelConnectApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, mode, child) {
-        return NotificationPopupOverlay(
-          child: MaterialApp(
-            title: 'Fuel Connect',
-            debugShowCheckedModeBanner: false,
-            themeMode: mode,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            // ✅ Auto-login: go straight to HomeScreen if token is valid
-            home: isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
-            routes: {
-              '/onboarding':      (context) => const OnboardingScreen(),
-              '/login':           (context) => const LoginScreen(),
-              '/signup':          (context) => const SignUpScreen(),
-              '/home':            (context) => const HomeScreen(),
-              '/station':         (context) => const StationScreen(),
-              '/profile':         (context) => const ProfileScreen(),
-              '/orders':          (context) => const OrderScreen(),
-              '/support':         (context) => const SupportScreen(),
-              '/settings':        (context) => const SettingsScreen(),
-              '/notifications':   (context) => const NotificationScreen(),
-              '/terms':           (context) => const TermsScreen(section: 'terms'),
-              '/privacy':         (context) => const TermsScreen(section: 'privacy'),
-              '/forgot-password': (context) => const ForgotPasswordScreen(),
-              '/otp':             (context) => const OtpScreen(email: ''), // placeholder
-            },
-          ),
+        return MaterialApp(
+          title: 'Fuel Connect',
+          debugShowCheckedModeBanner: false,
+          themeMode: mode,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          // ✅ Auto-login: go straight to HomeScreen if token is valid
+          home: isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
+          routes: {
+            '/onboarding':      (context) => const OnboardingScreen(),
+            '/login':           (context) => const LoginScreen(),
+            '/signup':          (context) => const SignUpScreen(),
+            '/home':            (context) => const HomeScreen(),
+            '/station':         (context) => const StationScreen(),
+            '/profile':         (context) => const ProfileScreen(),
+            '/orders':          (context) => const OrderScreen(),
+            '/support':         (context) => const SupportScreen(),
+            '/settings':        (context) => const SettingsScreen(),
+            '/notifications':   (context) => const NotificationScreen(),
+            '/terms':           (context) => const TermsScreen(section: 'terms'),
+            '/privacy':         (context) => const TermsScreen(section: 'privacy'),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
+            '/otp':             (context) => const OtpScreen(email: ''), // placeholder
+          },
+          builder: (context, child) {
+            return NotificationPopupOverlay(child: child!);
+          },
         );
       },
     );
   }
-}
+}
