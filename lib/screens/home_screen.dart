@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
@@ -614,6 +616,17 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   List<FuelStation> _filteredStations = kStations;
   bool _isSearching = false;
 
+  // Location search state
+  bool _isLocationSearchMode = true; // true = search any location, false = filter stations
+  LatLng? _searchedLocation;
+  String? _searchedLocationName;
+  bool _isGeocodingLoading = false;
+
+  // Real OSM fuel stations from Overpass API
+  List<Map<String, dynamic>> _overpassStations = [];
+  bool _isFetchingStations = false;
+  Map<String, dynamic>? _selectedOSMStation;
+
   late AnimationController _drawerController;
   late Animation<double>   _drawerSlideAnim;
   late Animation<double>   _contentScaleAnim;
@@ -880,14 +893,465 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
 
   void _onSearchChanged() {
     final query = _searchController.text.trim();
+    if (!_isLocationSearchMode) {
+      // Station filter mode
+      setState(() {
+        _isSearching      = query.isNotEmpty;
+        _filteredStations = query.isEmpty
+            ? kStations
+            : kStations.where((s) => s.matchesQuery(query)).toList();
+        _activeStationId  = null;
+      });
+      _updateMapMarkers();
+    } else {
+      // Location search mode — just update searching state
+      setState(() {
+        _isSearching = query.isNotEmpty;
+        if (query.isEmpty) {
+          _searchedLocation = null;
+          _searchedLocationName = null;
+          _filteredStations = kStations;
+          _updateMapMarkers();
+        }
+      });
+    }
+  }
+
+  Future<void> _geocodeAndFlyTo(String query) async {
+    if (query.trim().isEmpty) return;
     setState(() {
-      _isSearching      = query.isNotEmpty;
-      _filteredStations = query.isEmpty
-          ? kStations
-          : kStations.where((s) => s.matchesQuery(query)).toList();
-      _activeStationId  = null;
+      _isGeocodingLoading = true;
+      _overpassStations = [];
     });
-    _updateMapMarkers();
+    try {
+      // Step 1: Geocode the location (supports villages, hamlets, any place)
+      final geoUri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search'
+        '?q=${Uri.encodeComponent(query)}'
+        '&format=json&limit=1&addressdetails=1&extratags=1',
+      );
+      final geoResponse = await http.get(
+        geoUri,
+        headers: {'User-Agent': 'FuelConnectApp/1.0 (fuel.connect@app)'},
+      );
+
+      if (geoResponse.statusCode != 200) {
+        setState(() => _isGeocodingLoading = false);
+        return;
+      }
+
+      final geoData = jsonDecode(geoResponse.body) as List;
+      if (geoData.isEmpty) {
+        setState(() => _isGeocodingLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('"$query" not found. Try adding a country name (e.g. "$query, Uganda")'),
+              backgroundColor: const Color(0xFFC4963D),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+
+      final lat = double.parse(geoData[0]['lat'] as String);
+      final lon = double.parse(geoData[0]['lon'] as String);
+      final displayName = geoData[0]['display_name'] as String;
+      final shortName = displayName.split(',').take(2).join(',').trim();
+      final newCenter = LatLng(lat, lon);
+
+      setState(() {
+        _searchedLocation = newCenter;
+        _searchedLocationName = shortName;
+        _isGeocodingLoading = false;
+        _isFetchingStations = true;
+      });
+
+      // Fly map to found location
+      _mapController.move(newCenter, 13.5);
+      _updateMapMarkersWithSearchPin(newCenter);
+
+      // Step 2: Query Overpass API for real fuel stations within 5km radius
+      await _fetchFuelStationsFromOverpass(lat, lon);
+
+    } catch (e) {
+      setState(() {
+        _isGeocodingLoading = false;
+        _isFetchingStations = false;
+      });
+    }
+  }
+
+  Future<void> _fetchFuelStationsFromOverpass(double lat, double lon) async {
+    try {
+      // Overpass API: find fuel stations within 5000m radius
+      const radius = 5000;
+      final overpassQuery =
+          '[out:json][timeout:25];'
+          '(node["amenity"="fuel"](around:$radius,$lat,$lon);'
+          'way["amenity"="fuel"](around:$radius,$lat,$lon););'
+          'out body center;';
+
+      final overpassUri = Uri.parse('https://overpass-api.de/api/interpreter');
+      final response = await http.post(
+        overpassUri,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'FuelConnectApp/1.0',
+        },
+        body: 'data=${Uri.encodeComponent(overpassQuery)}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final elements = data['elements'] as List? ?? [];
+
+        final stations = <Map<String, dynamic>>[];
+        for (final el in elements) {
+          double? elLat, elLon;
+          if (el['type'] == 'node') {
+            elLat = (el['lat'] as num?)?.toDouble();
+            elLon = (el['lon'] as num?)?.toDouble();
+          } else if (el['center'] != null) {
+            elLat = (el['center']['lat'] as num?)?.toDouble();
+            elLon = (el['center']['lon'] as num?)?.toDouble();
+          }
+          if (elLat == null || elLon == null) continue;
+
+          final tags = el['tags'] as Map<String, dynamic>? ?? {};
+          final name = (tags['name'] ?? tags['operator'] ?? tags['brand'] ?? 'Fuel Station') as String;
+          final brand = (tags['brand'] ?? tags['operator'] ?? '') as String;
+          final opening = (tags['opening_hours'] ?? 'Unknown') as String;
+
+          stations.add({
+            'id': 'osm_${el['id']}',
+            'name': name,
+            'brand': brand,
+            'lat': elLat,
+            'lon': elLon,
+            'opening_hours': opening,
+            'fuel': tags['fuel:diesel'] == 'yes' || tags['fuel:octane_95'] == 'yes'
+                ? 'Diesel / Petrol'
+                : 'Fuel',
+          });
+        }
+
+        setState(() {
+          _overpassStations = stations;
+          _isFetchingStations = false;
+        });
+
+        // Add real station markers to map
+        _updateMapMarkersWithRealStations(_searchedLocation!, stations);
+
+        if (mounted && stations.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No fuel stations found within 5km. Try a larger city nearby.'),
+              backgroundColor: Color(0xFF555555),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        setState(() => _isFetchingStations = false);
+      }
+    } catch (e) {
+      setState(() => _isFetchingStations = false);
+    }
+  }
+
+  void _updateMapMarkersWithSearchPin(LatLng location) {
+    final markers = <Marker>[
+      Marker(
+        point: _userLocation,
+        width: 40, height: 40,
+        child: const _PulsingDot(color: Color(0xFF4A90D9)),
+      ),
+      Marker(
+        point: location,
+        width: 48, height: 56,
+        child: const _SearchLocationPin(),
+      ),
+    ];
+    setState(() => _markers = markers);
+  }
+
+  void _updateMapMarkersWithRealStations(
+      LatLng searchPin, List<Map<String, dynamic>> stations) {
+    final markers = <Marker>[
+      Marker(
+        point: _userLocation,
+        width: 40, height: 40,
+        child: const _PulsingDot(color: Color(0xFF4A90D9)),
+      ),
+      Marker(
+        point: searchPin,
+        width: 48, height: 56,
+        child: const _SearchLocationPin(),
+      ),
+    ];
+    for (final s in stations) {
+      final station = s;
+      markers.add(Marker(
+        point: LatLng(station['lat'] as double, station['lon'] as double),
+        width: 52, height: 58,
+        child: GestureDetector(
+          onTap: () => _showStationDetailSheet(station),
+          child: const _RealStationPin(),
+        ),
+      ));
+    }
+    setState(() => _markers = markers);
+  }
+
+  void _showStationDetailSheet(Map<String, dynamic> station) {
+    setState(() => _selectedOSMStation = station);
+    final name    = station['name']    as String? ?? 'Fuel Station';
+    final brand   = station['brand']   as String? ?? '';
+    final hours   = station['opening_hours'] as String? ?? 'Unknown hours';
+    final fuelStr = station['fuel']    as String? ?? 'Fuel';
+    final isOpen  = hours.toLowerCase().contains('24') ||
+        hours.toLowerCase().contains('open');
+    final fuelTypes = fuelStr.split('/').map((e) => e.trim()).toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Header row
+            Row(
+              children: [
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withOpacity(0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: const Color(0xFF4CAF50).withOpacity(0.4)),
+                  ),
+                  child: const Icon(Icons.local_gas_station_rounded,
+                      color: Color(0xFF4CAF50), size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700)),
+                      if (brand.isNotEmpty && brand != name)
+                        Text(brand,
+                            style: const TextStyle(
+                                color: Color(0xFF4CAF50),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+                // Open / Closed badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isOpen
+                        ? const Color(0xFF1A3D1A)
+                        : const Color(0xFF3D1A1A),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7, height: 7,
+                        decoration: BoxDecoration(
+                          color: isOpen
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFE53935),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        isOpen ? 'Open' : 'Closed',
+                        style: TextStyle(
+                          color: isOpen
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFE53935),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Hours row
+            _sheetRow(Icons.access_time_rounded, 'Hours', hours),
+            const SizedBox(height: 12),
+            // Fuel types section
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.local_gas_station_outlined,
+                    color: Color(0xFF888888), size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Available Fuel Types',
+                          style: TextStyle(
+                              color: Color(0xFF888888), fontSize: 12)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: fuelTypes.map((ft) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC4963D).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: const Color(0xFFC4963D)
+                                      .withOpacity(0.4)),
+                            ),
+                            child: Text('⛽ $ft',
+                                style: const TextStyle(
+                                    color: Color(0xFFC4963D),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600)),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _mapController.move(
+                        LatLng(station['lat'] as double,
+                            station['lon'] as double),
+                        16.0,
+                      );
+                    },
+                    icon: const Icon(Icons.zoom_in_map_rounded,
+                        size: 16, color: Colors.white70),
+                    label: const Text('Locate',
+                        style: TextStyle(
+                            color: Colors.white70, fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                          color: Colors.white.withOpacity(0.15)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FuelTypeScreen(
+                            stationName: name,
+                            stationAddress: brand.isNotEmpty
+                                ? brand
+                                : _searchedLocationName ?? '',
+                            fuelTypes: fuelTypes,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.shopping_bag_rounded,
+                        size: 16, color: Colors.white),
+                    label: const Text('Order Fuel',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFC4963D),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ).whenComplete(() => setState(() => _selectedOSMStation = null));
+  }
+
+  Widget _sheetRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: const Color(0xFF888888), size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      color: Color(0xFF888888), fontSize: 12)),
+              const SizedBox(height: 2),
+              Text(value,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 14)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _updateMapMarkers() {
@@ -916,6 +1380,16 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   void _clearSearch() {
     _searchController.clear();
     FocusScope.of(context).unfocus();
+    setState(() {
+      _searchedLocation = null;
+      _searchedLocationName = null;
+      _filteredStations = kStations;
+      _overpassStations = [];
+      _isFetchingStations = false;
+    });
+    _updateMapMarkers();
+    // Fly back to default location
+    _mapController.move(_userLocation, 14.5);
   }
 
   void _startScroll() {
@@ -1029,7 +1503,11 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
                   children: [
                     _buildTopBar(),
                     _buildSearchBar(),
-                    Expanded(child: _buildMap()),
+                    // Map takes 40% of available height — clearly visible
+                    Flexible(
+                      flex: 5,
+                      child: _buildMap(),
+                    ),
                     _buildFuelTypeSection(),
                     _buildNearbySection(),
                     _buildBottomNav(),
@@ -1323,89 +1801,317 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Container(
-        height: 46,
-        decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
-        ),
-        child: Row(
-          children: [
-            const SizedBox(width: 12),
-            const Icon(Icons.search_rounded,
-                color: Color(0xFF888888), size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                style:
-                    const TextStyle(color: Colors.white, fontSize: 14),
-                cursorColor: const Color(0xFFC4963D),
-                decoration: const InputDecoration(
-                  hintText: 'Find a fuel station near you',
-                  hintStyle: TextStyle(
-                      color: Color(0xFF666666), fontSize: 14),
-                  border: InputBorder.none,
-                  isCollapsed: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Mode toggle
+          Row(
+            children: [
+              _buildSearchModeChip(
+                label: '\uD83D\uDCCD Find Location',
+                active: _isLocationSearchMode,
+                onTap: () => setState(() {
+                  _isLocationSearchMode = true;
+                  _searchController.clear();
+                  _onSearchChanged();
+                }),
+              ),
+              const SizedBox(width: 8),
+              _buildSearchModeChip(
+                label: '\u26FD Filter Stations',
+                active: !_isLocationSearchMode,
+                onTap: () => setState(() {
+                  _isLocationSearchMode = false;
+                  _searchController.clear();
+                  _onSearchChanged();
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Search input
+          Container(
+            height: 46,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A2A2A),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                _isGeocodingLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFFC4963D),
+                        ),
+                      )
+                    : Icon(
+                        _isLocationSearchMode
+                            ? Icons.travel_explore_rounded
+                            : Icons.search_rounded,
+                        color: const Color(0xFF888888),
+                        size: 20,
+                      ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    cursorColor: const Color(0xFFC4963D),
+                    decoration: InputDecoration(
+                      hintText: _isLocationSearchMode
+                          ? 'Search any location (e.g. Nairobi)'
+                          : 'Filter fuel stations near you',
+                      hintStyle: const TextStyle(
+                          color: Color(0xFF666666), fontSize: 14),
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                    ),
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (query) {
+                      FocusScope.of(context).unfocus();
+                      if (_isLocationSearchMode && query.trim().isNotEmpty) {
+                        _geocodeAndFlyTo(query.trim());
+                      }
+                    },
+                  ),
                 ),
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                if (_searchController.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: _clearSearch,
+                    child: Container(
+                      margin: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.clear_rounded,
+                          color: Color(0xFF888888), size: 14),
+                    ),
+                  )
+                else if (_isLocationSearchMode)
+                  GestureDetector(
+                    onTap: () {
+                      final q = _searchController.text.trim();
+                      if (q.isNotEmpty) {
+                        FocusScope.of(context).unfocus();
+                        _geocodeAndFlyTo(q);
+                      }
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4A90D9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.travel_explore_rounded,
+                          color: Colors.white, size: 16),
+                    ),
+                  )
+                else
+                  Container(
+                    margin: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC4963D),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.my_location_rounded,
+                        color: Colors.white, size: 16),
+                  ),
+              ],
+            ),
+          ),
+          // Searched location name chip
+          if (_searchedLocationName != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on,
+                      color: Color(0xFF4A90D9), size: 14),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      _searchedLocationName!,
+                      style: const TextStyle(
+                          color: Color(0xFF4A90D9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
-            if (_searchController.text.isNotEmpty)
-              GestureDetector(
-                onTap: _clearSearch,
-                child: Container(
-                  margin: const EdgeInsets.all(6),
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(Icons.clear_rounded,
-                      color: Color(0xFF888888), size: 14),
-                ),
-              )
-            else
-              Container(
-                margin: const EdgeInsets.all(6),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC4963D),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.my_location_rounded,
-                    color: Colors.white, size: 16),
-              ),
-          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchModeChip({
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFFC4963D).withOpacity(0.18)
+              : const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: active
+                ? const Color(0xFFC4963D).withOpacity(0.6)
+                : Colors.white.withOpacity(0.08),
+            width: active ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? const Color(0xFFC4963D) : Colors.white38,
+            fontSize: 11,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+          ),
         ),
       ),
     );
   }
 
   Widget _buildMap() {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: _userLocation,
-        initialZoom: 14.5,
-        backgroundColor: const Color(0xFF1A1A1A),
-      ),
+    return Stack(
       children: [
-        // Dark-themed OpenStreetMap tiles (free, no API key)
-        TileLayer(
-          urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
-          userAgentPackageName: 'com.fuelconnect.app',
-          maxZoom: 19,
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: _userLocation,
+            initialZoom: 14.5,
+            backgroundColor: const Color(0xFFF5F5F5),
+            onTap: (_, __) {
+              // Dismiss any selected station on blank map tap
+              setState(() => _selectedOSMStation = null);
+            },
+          ),
+          children: [
+            // Light CartoDB Positron tiles — covers every village worldwide
+            TileLayer(
+              urlTemplate:
+                  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+              subdomains: const ['a', 'b', 'c', 'd'],
+              userAgentPackageName: 'com.fuelconnect.app',
+              maxZoom: 19,
+              retinaMode: RetinaMode.isHighDensity(context),
+            ),
+            PolylineLayer(polylines: _polylines),
+            MarkerLayer(markers: _markers),
+          ],
         ),
-        // Route polyline
-        PolylineLayer(polylines: _polylines),
-        // Station & user markers
-        MarkerLayer(markers: _markers),
+        // Map legend overlay (bottom-right)
+        Positioned(
+          bottom: 10, right: 10,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.92),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _legendItem(
+                    const Color(0xFF4A90D9), 'Your Location'),
+                const SizedBox(height: 4),
+                _legendItem(
+                    const Color(0xFFC4963D), 'Kampala Stations'),
+                if (_overpassStations.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  _legendItem(
+                      const Color(0xFF4CAF50),
+                      '${_overpassStations.length} Found Stations'),
+                ],
+              ],
+            ),
+          ),
+        ),
+        // Zoom controls (top-right)
+        Positioned(
+          top: 10, right: 10,
+          child: Column(
+            children: [
+              _mapButton(Icons.add, () => _mapController.move(
+                  _mapController.camera.center,
+                  _mapController.camera.zoom + 1)),
+              const SizedBox(height: 4),
+              _mapButton(Icons.remove, () => _mapController.move(
+                  _mapController.camera.center,
+                  _mapController.camera.zoom - 1)),
+              const SizedBox(height: 4),
+              _mapButton(Icons.my_location_rounded, () => _mapController.move(
+                  _userLocation, 14.5)),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _legendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10, height: 10,
+          decoration: BoxDecoration(
+              color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 10,
+                color: Color(0xFF333333),
+                fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+
+  Widget _mapButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 6,
+                offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Icon(icon, size: 18, color: const Color(0xFF333333)),
+      ),
     );
   }
 
@@ -1489,7 +2195,13 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   }
 
   Widget _buildNearbySection() {
-    if (_isSearching && _filteredStations.isEmpty) {
+    // ── LOCATION SEARCH MODE: show real Overpass stations ──────────────────
+    if (_isLocationSearchMode && _searchedLocation != null) {
+      return _buildOverpassStationsSection();
+    }
+
+    // ── STATION FILTER MODE: no results ────────────────────────────────────
+    if (!_isLocationSearchMode && _isSearching && _filteredStations.isEmpty) {
       return Container(
         color: const Color(0xFF1A1A1A),
         padding: const EdgeInsets.all(24),
@@ -1529,6 +2241,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
       );
     }
 
+    // ── DEFAULT: Kampala hardcoded stations ─────────────────────────────────
     return Container(
       color: const Color(0xFF1A1A1A),
       child: Column(
@@ -1539,7 +2252,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
             child: Row(
               children: [
                 Text(
-                  _isSearching
+                  !_isLocationSearchMode && _isSearching
                       ? 'Search Results'
                       : 'Nearby Petrol Stations',
                   style: const TextStyle(
@@ -1599,6 +2312,259 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
           ),
           const SizedBox(height: 10),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOverpassStationsSection() {
+    return Container(
+      color: const Color(0xFF1A1A1A),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.local_gas_station_rounded,
+                    color: Color(0xFF4CAF50), size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _isFetchingStations
+                        ? 'Finding fuel stations...'
+                        : '${_overpassStations.length} Stations Found'
+                            '${_searchedLocationName != null ? " near ${_searchedLocationName!.split(',').first}" : ""}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: _clearSearch,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text('Clear',
+                        style: TextStyle(
+                            color: Colors.white54, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_isFetchingStations)
+            Container(
+              height: 130,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 32, height: 32,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Color(0xFF4CAF50),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Scanning OpenStreetMap data...',
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12),
+                  ),
+                ],
+              ),
+            )
+          else if (_overpassStations.isEmpty)
+            Container(
+              height: 120,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.ev_station_outlined,
+                      color: Color(0xFF555555), size: 40),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No fuel stations mapped within 5km.\nTry searching a larger nearby town.',
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.45),
+                        fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else
+            SizedBox(
+              height: 152,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(
+                    left: 16, right: 4, bottom: 4),
+                itemCount: _overpassStations.length,
+                itemBuilder: (context, index) =>
+                    _buildRealStationCard(_overpassStations[index]),
+              ),
+            ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRealStationCard(Map<String, dynamic> station) {
+    final name = station['name'] as String? ?? 'Fuel Station';
+    final brand = station['brand'] as String? ?? '';
+    final hours = station['opening_hours'] as String? ?? 'Unknown';
+    final fuel = station['fuel'] as String? ?? 'Fuel';
+
+    return GestureDetector(
+      onTap: () {
+        // Fly map to this station
+        _mapController.move(
+          LatLng(station['lat'] as double, station['lon'] as double),
+          15.5,
+        );
+      },
+      child: Container(
+        width: 200,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1E2D1E), Color(0xFF252525)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF4CAF50).withOpacity(0.3),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF4CAF50).withOpacity(0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.local_gas_station_rounded,
+                      color: Color(0xFF4CAF50), size: 18),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (brand.isNotEmpty && brand != name)
+                        Text(
+                          brand,
+                          style: const TextStyle(
+                              color: Color(0xFF4CAF50),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                const Icon(Icons.access_time_rounded,
+                    color: Colors.white38, size: 11),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    hours,
+                    style: const TextStyle(
+                        color: Colors.white54, fontSize: 10),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4CAF50).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                    color: const Color(0xFF4CAF50).withOpacity(0.25)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('⛽', style: TextStyle(fontSize: 10)),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      fuel,
+                      style: const TextStyle(
+                          color: Color(0xFF4CAF50),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Icon(Icons.navigation_rounded,
+                    color: Color(0xFF4A90D9), size: 11),
+                const SizedBox(width: 3),
+                const Text('Tap to locate',
+                    style: TextStyle(
+                        color: Color(0xFF4A90D9), fontSize: 10)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1983,6 +2949,85 @@ class _StationMapPin extends StatelessWidget {
         CustomPaint(
           size: const Size(10, 6),
           painter: _PinTailPainter(const Color(0xFFC4963D)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Blue search-result location pin dropped when user searches a location.
+class _SearchLocationPin extends StatelessWidget {
+  const _SearchLocationPin();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF5AABFF), Color(0xFF2E7FD9)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4A90D9).withOpacity(0.5),
+                blurRadius: 10,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: const Icon(Icons.location_on_rounded,
+              color: Colors.white, size: 20),
+        ),
+        // Pin tail
+        CustomPaint(
+          size: const Size(10, 6),
+          painter: _PinTailPainter(const Color(0xFF2E7FD9)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Green pin for real OSM fuel stations found via Overpass API.
+class _RealStationPin extends StatelessWidget {
+  const _RealStationPin();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 34, height: 34,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF66BB6A), Color(0xFF388E3C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4CAF50).withOpacity(0.5),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: const Icon(Icons.local_gas_station_rounded,
+              color: Colors.white, size: 17),
+        ),
+        CustomPaint(
+          size: const Size(10, 6),
+          painter: _PinTailPainter(const Color(0xFF388E3C)),
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/screens/home_screen.dart';
+import '/screens/tracking_order_screen.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -23,20 +24,52 @@ class MyApp extends StatelessWidget {
 
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  final String stationName;
+  final String fuelType;
+  final int quantityLitres;
+  final double totalAmount;
+  final String deliveryLocation;
+  final String deliveryTime;
+  final String vehicleModel;
+  final String licensePlate;
+
+  const PaymentScreen({
+    super.key,
+    this.stationName = 'Shell Station',
+    this.fuelType    = '95 Octane',
+    this.quantityLitres = 48,
+    this.totalAmount = 78.25,
+    this.deliveryLocation = 'Ntinda, Kampala',
+    this.deliveryTime = 'Deliver Now',
+    this.vehicleModel = 'Toyota Corolla',
+    this.licensePlate = 'UAS 452G',
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  int _selectedPaymentIndex = 0; 
+  int _selectedPaymentIndex = 0;
+
+  String get _ugxTotal {
+    return 'UGX ${widget.totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}' ;
+  }
 
   void _showSuccessDialog() {
     showDialog(
       context: context,
       barrierColor: Colors.white.withOpacity(0.85),
-      builder: (_) => const PaymentSuccessDialog(),
+      builder: (_) => PaymentSuccessDialog(
+        stationName: widget.stationName,
+        fuelType: widget.fuelType,
+        totalAmount: _ugxTotal,
+        deliveryLocation: widget.deliveryLocation,
+        deliveryTime: widget.deliveryTime,
+        vehicleModel: widget.vehicleModel,
+        licensePlate: widget.licensePlate,
+        quantityLitres: widget.quantityLitres,
+      ),
     );
   }
 
@@ -61,7 +94,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () => Navigator.pop(context),
                     child: Container(
                       width: 32,
                       height: 32,
@@ -102,19 +135,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         children: [
                           _OrderRow(
                               label: 'Station',
-                              value: 'Shell Station Downtown',
+                              value: widget.stationName,
                               valueColor: Colors.white),
                           const SizedBox(height: 10),
                           _OrderRow(
                             label: 'Fuel Type',
-                            value: '95 Octane',
+                            value: widget.fuelType,
                             valueColor: const Color(0xFFE8A020),
                             valueBackground: const Color(0xFF2E2510),
                           ),
                           const SizedBox(height: 10),
                           _OrderRow(
                               label: 'Fuel Amount',
-                              value: '48.5 Liters',
+                              value: '${widget.quantityLitres} Litres',
+                              valueColor: Colors.white70),
+                          const SizedBox(height: 10),
+                          _OrderRow(
+                              label: 'Delivery Location',
+                              value: widget.deliveryLocation,
+                              valueColor: Colors.white70),
+                          const SizedBox(height: 10),
+                          _OrderRow(
+                              label: 'Delivery Time',
+                              value: widget.deliveryTime,
+                              valueColor: Colors.white70),
+                          const SizedBox(height: 10),
+                          _OrderRow(
+                              label: 'Vehicle Details',
+                              value: '${widget.vehicleModel} (${widget.licensePlate})',
                               valueColor: Colors.white70),
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 10),
@@ -127,10 +175,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   style: TextStyle(
                                       color: Colors.white70, fontSize: 13)),
                               Text(
-                                '\$78.25',
+                                _ugxTotal,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 22,
+                                  fontSize: 19,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -465,7 +513,26 @@ class _PaymentOption extends StatelessWidget {
 
 
 class PaymentSuccessDialog extends StatelessWidget {
-  const PaymentSuccessDialog({super.key});
+  final String stationName;
+  final String fuelType;
+  final String totalAmount;
+  final String deliveryLocation;
+  final String deliveryTime;
+  final String vehicleModel;
+  final String licensePlate;
+  final int quantityLitres;
+
+  const PaymentSuccessDialog({
+    super.key,
+    this.stationName = 'Shell Station',
+    this.fuelType    = 'Fuel',
+    this.totalAmount = 'UGX 78,250',
+    this.deliveryLocation = 'Ntinda, Kampala',
+    this.deliveryTime = 'Deliver Now',
+    this.vehicleModel = 'Toyota Corolla',
+    this.licensePlate = 'UAS 452G',
+    this.quantityLitres = 20,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -507,10 +574,10 @@ class PaymentSuccessDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Your transaction of \$78.25 for\n#UG-1 Liter at Shell Station\nDowntown has been confirmed.',
+            Text(
+              'Your fuel order at $stationName\n($fuelType) has been confirmed.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFF8E8E93),
                 fontSize: 13,
                 height: 1.5,
@@ -528,10 +595,16 @@ class PaymentSuccessDialog extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _TxDetail(label: 'DATE & TIME', value: 'APR 16, 2026 • 02:32'),
+                  _TxDetail(label: 'DATE & TIME', value: () {
+                    final now = DateTime.now();
+                    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+                    final h = now.hour.toString().padLeft(2,'0');
+                    final m = now.minute.toString().padLeft(2,'0');
+                    return '${months[now.month-1]} ${now.day}, ${now.year} • $h:$m';
+                  }()),
                   _TxDetail(
                       label: 'TOTAL PAYMENT',
-                      value: '\$78.25',
+                      value: totalAmount,
                       valueColor: const Color(0xFFE8A020)),
                 ],
               ),
@@ -545,9 +618,21 @@ class PaymentSuccessDialog extends StatelessWidget {
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
+                  Navigator.of(context).pop(); // Dismiss dialog
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => TrackOrderScreen(
+                        stationName: stationName,
+                        deliveryLocation: deliveryLocation,
+                        deliveryTime: deliveryTime,
+                        vehicleModel: vehicleModel,
+                        licensePlate: licensePlate,
+                        fuelType: fuelType,
+                        quantityLitres: quantityLitres,
+                        totalAmount: double.tryParse(totalAmount.replaceAll(RegExp(r'[^0-9]'), '')) ?? 100000.0,
+                      ),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -557,11 +642,39 @@ class PaymentSuccessDialog extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: const Text(
-                  'BACK TO HOME',
+                  'TRACK DELIVERY',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    (route) => false,
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF3A3A3C), width: 1.2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'BACK TO HOME',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                   ),
                 ),

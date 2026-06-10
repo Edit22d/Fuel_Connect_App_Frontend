@@ -155,6 +155,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     */
   }
 
+  Future<void> _handleGoogleSignUp() async {
+    _showError('Google Sign-Up coming soon!');
+  }
+
+  Future<void> _handleAppleSignUp() async {
+    _showError('Apple Sign-Up coming soon!');
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -370,6 +378,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         GoldButton(
                           text: _isLoading ? 'SIGNING UP...' : 'SIGN UP',
                           onPressed: _isLoading ? () {} : _handleSignUp,
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'OR SIGN UP WITH',
+                                style: TextStyle(
+                                  color: theme.textTheme.bodyMedium?.color,
+                                  fontSize: 10,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'GOOGLE',
+                                icon: const _GoogleIcon(),
+                                theme: theme,
+                                onPressed: _handleGoogleSignUp,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _SocialButton(
+                                label: 'APPLE',
+                                icon: _AppleIcon(isDark: isDark),
+                                theme: theme,
+                                onPressed: _handleAppleSignUp,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 32),
 
@@ -714,4 +763,189 @@ class _TermsBottomSheetState extends State<_TermsBottomSheet> {
       ],
     );
   }
+}
+
+class _SocialButton extends StatelessWidget {
+  final String label;
+  final Widget icon;
+  final ThemeData theme;
+  final VoidCallback? onPressed;
+
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.theme,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: theme.textTheme.bodyLarge?.color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 18,
+      height: 18,
+      child: CustomPaint(painter: _GooglePainter()),
+    );
+  }
+}
+
+class _GooglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width / 2;
+
+    canvas.drawCircle(Offset(cx, cy), r, Paint()..color = Colors.white);
+
+    const segments = [
+      (0.0, 1.57, Color(0xFF4285F4)),
+      (1.57, 3.14, Color(0xFF34A853)),
+      (3.14, 4.71, Color(0xFFFBBC05)),
+      (4.71, 6.28, Color(0xFFEA4335)),
+    ];
+    for (final seg in segments) {
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7),
+        seg.$1,
+        seg.$2 - seg.$1,
+        false,
+        Paint()
+          ..color = seg.$3
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = size.width * 0.2,
+      );
+    }
+
+    canvas.drawCircle(Offset(cx, cy), r * 0.45, Paint()..color = Colors.white);
+
+    canvas.drawLine(
+      Offset(cx, cy),
+      Offset(cx + r * 0.65, cy),
+      Paint()
+        ..color = const Color(0xFF4285F4)
+        ..strokeWidth = size.height * 0.18
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _AppleIcon extends StatelessWidget {
+  final bool isDark;
+  const _AppleIcon({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 18,
+      height: 18,
+      child: CustomPaint(painter: _ApplePainter(isDark: isDark)),
+    );
+  }
+}
+
+class _ApplePainter extends CustomPainter {
+  final bool isDark;
+  _ApplePainter({required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path();
+    final color = isDark ? Colors.white : Colors.black;
+
+    path.moveTo(size.width * 0.5, size.height * 0.15);
+    path.cubicTo(
+      size.width * 0.5, size.height * 0.15,
+      size.width * 0.42, size.height * 0.05,
+      size.width * 0.3, size.height * 0.08,
+    );
+    path.cubicTo(
+      size.width * 0.18, size.height * 0.11,
+      size.width * 0.12, size.height * 0.25,
+      size.width * 0.15, size.height * 0.38,
+    );
+    path.cubicTo(
+      size.width * 0.18, size.height * 0.51,
+      size.width * 0.32, size.height * 0.62,
+      size.width * 0.45, size.height * 0.6,
+    );
+    path.cubicTo(
+      size.width * 0.58, size.height * 0.58,
+      size.width * 0.7, size.height * 0.48,
+      size.width * 0.72, size.height * 0.4,
+    );
+    path.cubicTo(
+      size.width * 0.74, size.height * 0.32,
+      size.width * 0.68, size.height * 0.22,
+      size.width * 0.58, size.height * 0.2,
+    );
+    path.cubicTo(
+      size.width * 0.48, size.height * 0.18,
+      size.width * 0.5, size.height * 0.15,
+      size.width * 0.5, size.height * 0.15,
+    );
+    path.close();
+
+    path.moveTo(size.width * 0.58, size.height * 0.18);
+    path.cubicTo(
+      size.width * 0.65, size.height * 0.12,
+      size.width * 0.75, size.height * 0.1,
+      size.width * 0.8, size.height * 0.15,
+    );
+    path.cubicTo(
+      size.width * 0.85, size.height * 0.2,
+      size.width * 0.78, size.height * 0.3,
+      size.width * 0.7, size.height * 0.32,
+    );
+    path.close();
+
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
