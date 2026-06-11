@@ -84,20 +84,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    // DEMO BYPASS: Register directly for offline click-through testing.
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    _showSuccess('Account created successfully! Welcome to Fuel Connect.');
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    });
-    return;
-
-    /* Original Integration:
     if (fullName.isEmpty || email.isEmpty || phone.isEmpty || 
         password.isEmpty || confirmPassword.isEmpty || location.isEmpty) {
       _showError('All fields are required');
@@ -174,7 +160,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       setState(() => _isLoading = false);
       _showError('Registration failed: ${e.toString()}');
     }
-    */
   }
 
   Future<void> _handleGoogleSignUp() async {

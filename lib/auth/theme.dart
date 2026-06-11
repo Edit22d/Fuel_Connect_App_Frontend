@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Theme State Notifier ──────────────────────────────────
@@ -51,6 +52,8 @@ class AppTheme {
     end: Alignment.centerRight,
   );
 
+
+
   static ThemeData get lightTheme {
     return ThemeData(
       brightness: Brightness.light,
@@ -67,20 +70,21 @@ class AppTheme {
         iconTheme: IconThemeData(color: lightTextPrimary),
         titleTextStyle: TextStyle(color: lightTextPrimary, fontSize: 18, fontWeight: FontWeight.bold),
       ),
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: lightTextPrimary),
-        bodyMedium: TextStyle(color: lightTextSecondary),
-      ),
+      iconTheme: const IconThemeData(color: gold),
+      textTheme: GoogleFonts.interTextTheme(),
       dividerColor: lightBorder,
-      fontFamily: 'sans-serif',
+      fontFamily: null,
     );
   }
+
+
 
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: darkBg,
       primaryColor: gold,
+      iconTheme: const IconThemeData(color: darkGold),
       colorScheme: const ColorScheme.dark(
         primary: gold,
         surface: darkSurface,
@@ -155,7 +159,7 @@ class FuelAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   const FuelAppBar({super.key, required this.title});
 
-  @override
+
   Size get preferredSize => const Size.fromHeight(56);
 
   @override
@@ -167,7 +171,7 @@ class FuelAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color ?? Colors.black),
         onPressed: () => Navigator.maybePop(context),
       ),
       title: Text(
@@ -287,7 +291,7 @@ class OtpTopBar extends StatelessWidget {
             onPressed: () => Navigator.maybePop(context),
           ),
           const Spacer(),
-          const ThemeToggleButton(),
+          ThemeToggleButton(),
           IconButton(
             icon: Icon(Icons.home, color: iconColor),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),

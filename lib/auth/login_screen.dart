@@ -38,15 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
 
-    // DEMO BYPASS: Log in directly for offline click-through testing.
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    _goToHome();
-    return;
-
-    /* Original Integration:
     if (phone.isEmpty || password.isEmpty) {
       _showError('All fields are required');
       return;
@@ -83,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
       _showError('An error occurred: ${e.toString()}');
     }
-    */
   }
 
   Future<void> _handleGoogleSignIn() async {

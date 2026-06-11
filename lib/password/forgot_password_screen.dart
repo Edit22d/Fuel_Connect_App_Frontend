@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'otp_screen.dart';
 import '../auth/theme.dart';
+import '../services/auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -19,25 +20,40 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  final _auth = AuthService();
+
   void _handleNext() async {
     final email = _emailController.text.trim();
-    final targetEmail = email.isEmpty ? 'demo@fuelconnect.com' : email;
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter an email or phone number')));
+      return;
+    }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
     
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    try {
+      final result = await _auth.forgotPassword(email: email);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OtpScreen(
-          email: targetEmail,
-          fromForgotPassword: true, 
-        ),
-      ),
-    );
+      if (result['success'] == true) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpScreen(
+              email: email,
+              fromForgotPassword: true, 
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Failed to send OTP')));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+    }
   }
 
   @override

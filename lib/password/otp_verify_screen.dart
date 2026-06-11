@@ -38,36 +38,17 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
   }
 
   Future<void> _resetPassword() async {
-    // DEMO BYPASS: Reset directly for offline click-through testing.
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    _showPopup(
-      title: 'Password Reset!',
-      message: 'Your password has been reset successfully. Please log in with your new password.',
-      isSuccess: true,
-      onConfirm: () {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      },
-    );
-    return;
-
-    /* Original Integration:
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // API integration for later implementation. Right now we simulate success.
-      await Future.delayed(const Duration(seconds: 2));
-      final result = {'success': true};
+      final result = await _auth.resetPassword(
+        email: widget.email,
+        token: widget.otp,
+        newPassword: _newPassController.text.trim(),
+        confirmNewPassword: _confirmPassController.text.trim(),
+      );
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -101,7 +82,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
         isSuccess: false,
       );
     }
-    */
   }
 
   void _showPopup({

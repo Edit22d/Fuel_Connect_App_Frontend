@@ -7,6 +7,9 @@ import 'settings_screen.dart';
 import 'order_screen.dart';
 import 'home_screen.dart';
 import 'terms_screen.dart';
+import '../services/auth_service.dart';
+import '../services/order_service.dart';
+import '../models/order_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -35,16 +38,21 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool _loginAlertsEnabled = true;
 
   // User data
-  String _fullName = 'Alex Johnson';
-  String _email = 'alex.johnson@fuelconnect.ug';
-  String _phone = '+256 744 692 050';
-  String _location = 'Kampala, Uganda';
-  String _memberSince = 'March 2024';
+  String _fullName = 'Loading...';
+  String _email = 'Loading...';
+  String _phone = 'Loading...';
+  String _location = 'Not Set';
+  String _memberSince = 'Recent';
 
   // Stats
-  int _totalOrders = 24;
-  String _totalLitres = '487L';
-  String _totalSavings = 'UGX 12,400';
+  int _totalOrders = 0;
+  String _totalLitres = '0L';
+  String _totalSavings = 'UGX 0';
+  List<OrderModel> _recentOrders = [];
+  bool _isLoadingData = true;
+
+  final AuthService _authService = AuthService();
+  final OrderService _orderService = OrderService();
 
   @override
   void initState() {
@@ -61,7 +69,58 @@ class _ProfileScreenState extends State<ProfileScreen>
       _biometricEnabled = prefs.getBool('sec_biometric') ?? false;
       _twoFactorEnabled = prefs.getBool('sec_2fa') ?? false;
       _loginAlertsEnabled = prefs.getBool('sec_login_alerts') ?? true;
+      _loginAlertsEnabled = prefs.getBool('sec_login_alerts') ?? true;
     });
+
+    // Fetch dynamic user data and orders
+    await _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) {
+        setState(() {
+          _fullName = user.fullName;
+          _email = user.email;
+          _phone = user.phoneNumber ?? 'Not set';
+          _location = user.location ?? 'Not set';
+        });
+      }
+      
+      // Also fetch from API to get latest
+      final userResponse = await _authService.getMe();
+      if (userResponse['success'] == true && userResponse['data'] != null) {
+        final data = userResponse['data'];
+        if (mounted) {
+          setState(() {
+            _fullName = data['full_name'] ?? _fullName;
+            _email = data['email'] ?? _email;
+            _phone = data['phone_number'] ?? _phone;
+            _location = data['location'] ?? _location;
+          });
+        }
+      }
+
+      final orders = await _orderService.getOrders();
+      if (mounted) {
+        setState(() {
+          _totalOrders = orders.length;
+          double totalLiters = 0;
+          for (var o in orders) {
+            totalLiters += o.quantity;
+          }
+          _totalLitres = '${totalLiters.toStringAsFixed(1)}L';
+          _recentOrders = orders.take(3).toList();
+          _isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      print('Failed to load profile data: $e');
+      if (mounted) {
+        setState(() => _isLoadingData = false);
+      }
+    }
   }
 
   Future<void> _saveNotifPref(String key, bool value) async {
@@ -94,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             title: Text('Profile', style: TextStyle(color: textPrimary, fontWeight: FontWeight.w700, fontSize: 18)),
             centerTitle: true,
             actions: [
-              const ThemeToggleButton(),
+              ThemeToggleButton(),
               ValueListenableBuilder<List<AppNotification>>(
                 valueListenable: NotificationService().notifications,
                 builder: (_, notifs, __) {
@@ -247,9 +306,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                   textSecondary: textSecondary,
                   dividerColor: dividerColor,
                   children: [
-                    _buildOrderItem('#FC-2024-0891', 'Jun 8, 2026', '20L Petrol', 'UGX 97,000', 'Delivered', cardColor, textPrimary, textSecondary),
-                    _buildOrderItem('#FC-2024-0876', 'Jun 3, 2026', '15L Diesel', 'UGX 71,250', 'Delivered', cardColor, textPrimary, textSecondary),
-                    _buildOrderItem('#FC-2024-0865', 'May 29, 2026', '30L Petrol', 'UGX 145,500', 'Processing', cardColor, textPrimary, textSecondary),
+                    if (_isLoadingData)
+                      const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator(color: AppTheme.gold)))
+                    else if (_recentOrders.isEmpty)
+                      const Padding(padding: EdgeInsets.all(16), child: Center(child: Text('No orders yet', style: TextStyle(color: Colors.grey))))
+                    else
+                      ..._recentOrders.map((o) => _buildOrderItem(
+                        '#FC-${o.id}',
+                        o.createdAt.isNotEmpty ? o.createdAt.split('T').first : 'Recent',
+                        '${o.quantity}${o.quantityUnit.substring(0, 1)} ${o.fuelType}',
+                        '${o.currency} ${o.totalPrice}',
+                        o.status,
+                        cardColor, textPrimary, textSecondary
+                      )).toList(),
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: TextButton.icon(

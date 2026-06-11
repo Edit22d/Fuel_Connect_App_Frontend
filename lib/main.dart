@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'auth/theme.dart'; // ✅ Import theme definitions
+import 'package:fuel_app/auth/theme.dart'; // Theme import // ✅ Import theme definitions
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // Firebase configuration
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'screens/onboarding_screen.dart';
@@ -29,6 +31,9 @@ void main() async {
   ]);
 
   // ✅ Check if user is already logged in before showing any screen
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Initialize Firebase services
+
   final authService = AuthService();
   final isLoggedIn = await authService.isLoggedIn();
 

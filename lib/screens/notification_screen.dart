@@ -77,6 +77,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     icon: Icon(Icons.more_vert_rounded, color: textPrimary),
                     onPressed: () => _showMoreOptions(surface, textPrimary),
                   ),
+                  ThemeToggleButton(),
                 ],
               ),
               body: Column(

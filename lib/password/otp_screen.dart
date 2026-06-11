@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'otp_verify_screen.dart';
 import '../auth/theme.dart';
+import '../services/auth_service.dart';
 
 class OtpScreen extends StatefulWidget {
   final String email;
@@ -23,9 +25,34 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isLoading = false;
+  
+  Timer? _timer;
+  int _secondsRemaining = 300; // 5 minutes
+  final AuthService _auth = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _secondsRemaining = 300;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        setState(() {
+          _secondsRemaining--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (final c in _controllers) c.dispose();
     for (final f in _focusNodes) f.dispose();
     super.dispose();
@@ -40,34 +67,64 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
-  void _resendOtp() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('✓ Code resent successfully'),
-        backgroundColor: AppTheme.gold,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    for (var c in _controllers) c.clear();
-    _focusNodes[0].requestFocus();
+  void _resendOtp() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _auth.forgotPassword(email: widget.email);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Code resent successfully'),
+            backgroundColor: AppTheme.gold,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        for (var c in _controllers) c.clear();
+        _focusNodes[0].requestFocus();
+        _startTimer();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Failed to resend OTP')));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+    }
   }
 
-  void _verifyOtp() async {
+  void _verifyOtp() {
+    if (_secondsRemaining <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OTP has expired. Please resend a new code.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     final otpCode = _controllers.map((c) => c.text).join();
-    final targetOtp = otpCode.isEmpty ? '123456' : otpCode;
+    if (otpCode.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the full 6-digit OTP.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
+    // Pass the entered OTP to the next screen
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => OtpVerifyScreen(
           email: widget.email,
-          otp: targetOtp,
+          otp: otpCode,
         ),
       ),
     );
@@ -210,23 +267,39 @@ class _OtpScreenState extends State<OtpScreen> {
                         const SizedBox(height: 32),
 
                         // Resend
-                        Row(
+                        Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              "Didn't receive the code? ",
-                              style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12),
-                            ),
-                            GestureDetector(
-                              onTap: _resendOtp,
-                              child: const Text(
-                                'Resend OTP',
-                                style: TextStyle(
-                                  color: AppTheme.gold,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                            if (_secondsRemaining > 0)
+                              Text(
+                                "Code expires in ${(_secondsRemaining ~/ 60).toString().padLeft(2, '0')}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}",
+                                style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                              )
+                            else
+                              const Text(
+                                "OTP Expired",
+                                style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold),
                               ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Didn't receive the code? ",
+                                  style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 12),
+                                ),
+                                GestureDetector(
+                                  onTap: _secondsRemaining <= 0 || _isLoading ? _resendOtp : null,
+                                  child: Text(
+                                    'Resend OTP',
+                                    style: TextStyle(
+                                      color: _secondsRemaining <= 0 ? AppTheme.gold : theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

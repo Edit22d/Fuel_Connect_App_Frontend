@@ -9,7 +9,12 @@ import '/screens/support_screen.dart';
 import '/screens/profile_screen.dart';
 import '/screens/fuel_type_screen.dart';
 import '../services/auth_service.dart';
+import '../services/station_service.dart';
 import '../auth/login_screen.dart';
+import 'package:fuel_app/auth/theme.dart';
+import '../models/station_model.dart';
+import '../models/fuel_type_model.dart';
+import '../models/dummy_data.dart';
 
 void main() => runApp(const HomeScreen());
 
@@ -33,146 +38,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
-
-class FuelStation {
-  final String id;
-  final String name;
-  final String address;
-  final double rating;
-  final int reviewCount;
-  final String distance;
-  final String imageUrl;
-  final LatLng position;  // latlong2 LatLng
-  final bool isOpen;
-  final String pricePerLitre;
-  final List<String> fuelTypes;
-  final String phone;
-  final String openingHours;
-
-  const FuelStation({
-    required this.id,
-    required this.name,
-    required this.address,
-    required this.rating,
-    required this.reviewCount,
-    required this.distance,
-    required this.imageUrl,
-    required this.position,
-    required this.isOpen,
-    required this.pricePerLitre,
-    this.fuelTypes = const [],
-    this.phone = '',
-    this.openingHours = '',
-  });
-
-  bool matchesQuery(String query) {
-    final lowerQuery = query.toLowerCase();
-    return name.toLowerCase().contains(lowerQuery) ||
-        address.toLowerCase().contains(lowerQuery) ||
-        fuelTypes.any((f) => f.toLowerCase().contains(lowerQuery));
-  }
-}
-
-class FuelType {
-  final String name;
-  final String icon;
-  final Color color;
-
-  const FuelType({
-    required this.name,
-    required this.icon,
-    required this.color,
-  });
-}
-
-final List<FuelType> kFuelTypes = [
-  const FuelType(name: 'V-Power', icon: '⚡', color: Color(0xFFC4963D)),
-  const FuelType(name: 'Petrol 98', icon: '⛽', color: Color(0xFFFF8C00)),
-  const FuelType(name: 'Diesel', icon: '🛢️', color: Color(0xFFFF8C00)),
-  const FuelType(name: 'Kerosene', icon: '💧', color: Color(0xFFFF8C00)),
-  const FuelType(name: 'LPG', icon: '🔥', color: Color(0xFFFF8C00)),
-  const FuelType(name: 'Electric', icon: '⚡', color: Color(0xFFFF8C00)),
-];
-
-final List<FuelStation> kStations = [
-  FuelStation(
-    id: '1',
-    name: 'Shell Ntinda',
-    address: 'Ntinda Road, Kampala',
-    rating: 4.6,
-    reviewCount: 342,
-    distance: '0.3 km',
-    imageUrl: 'assets/images/Shel.png',
-    position: const LatLng(0.3476, 32.5825),
-    isOpen: true,
-    pricePerLitre: 'UGX 4,850',
-    fuelTypes: ['Petrol 95', 'Petrol 98', 'Diesel'],
-    phone: '+256 414 123456',
-    openingHours: '24 Hours',
-  ),
-  FuelStation(
-    id: '2',
-    name: 'TotalEnergies',
-    address: 'Kampala Road, Kampala',
-    rating: 4.5,
-    reviewCount: 289,
-    distance: '0.7 km',
-    imageUrl: 'assets/images/Totall.png',
-    position: const LatLng(0.3460, 32.5840),
-    isOpen: true,
-    pricePerLitre: 'UGX 4,800',
-    fuelTypes: ['Petrol 95', 'Diesel', 'Kerosene'],
-    phone: '+256 414 234567',
-    openingHours: '6:00 AM - 10:00 PM',
-  ),
-  FuelStation(
-    id: '3',
-    name: 'Stabex',
-    address: 'Jinja Road, Kampala',
-    rating: 4.3,
-    reviewCount: 156,
-    distance: '1.1 km',
-    imageUrl: 'assets/images/Stabe.png',
-    position: const LatLng(0.3490, 32.5810),
-    isOpen: false,
-    pricePerLitre: 'UGX 4,780',
-    fuelTypes: ['Petrol 95', 'Diesel', 'LPG'],
-    phone: '+256 414 345678',
-    openingHours: '7:00 AM - 9:00 PM',
-  ),
-  FuelStation(
-    id: '4',
-    name: 'Rubis',
-    address: 'Bombo Road, Kampala',
-    rating: 4.4,
-    reviewCount: 198,
-    distance: '1.5 km',
-    imageUrl: 'assets/images/Rubi.png',
-    position: const LatLng(0.3510, 32.5800),
-    isOpen: true,
-    pricePerLitre: 'UGX 4,820',
-    fuelTypes: ['Petrol 95', 'Petrol 98', 'Diesel', 'Electric'],
-    phone: '+256 414 456789',
-    openingHours: '24 Hours',
-  ),
-  FuelStation(
-    id: '5',
-    name: 'City Oil',
-    address: 'Entebbe Road, Kampala',
-    rating: 4.2,
-    reviewCount: 134,
-    distance: '2.0 km',
-    imageUrl: 'assets/images/cityoil.png',
-    position: const LatLng(0.3445, 32.5790),
-    isOpen: true,
-    pricePerLitre: 'UGX 4,790',
-    fuelTypes: ['Petrol 95', 'Diesel', 'Kerosene'],
-    phone: '+256 414 567890',
-    openingHours: '6:00 AM - 11:00 PM',
-  ),
-];
-
 
 class StationDetailScreen extends StatefulWidget {
   final FuelStation station;
@@ -214,7 +79,6 @@ class _StationDetailScreenState extends State<StationDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: CustomScrollView(
@@ -222,18 +86,8 @@ class _StationDetailScreenState extends State<StationDetailScreen>
             SliverAppBar(
               expandedHeight: 280,
               pinned: true,
-              backgroundColor: const Color(0xFF1A1A1A),
-              leading: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back, color: Colors.white),
-                ),
-              ),
+              leading: const BackButton(),
+              actions: [ThemeToggleButton()],
               flexibleSpace: FlexibleSpaceBar(
                 background: Stack(
                   fit: StackFit.expand,
@@ -591,6 +445,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     with TickerProviderStateMixin {
 
   final _auth = AuthService();
+  final StationService _stationService = StationService();
 
   final LatLng _userLocation     = const LatLng(0.3476, 32.5825);
   final LatLng _deliveryLocation = const LatLng(0.3530, 32.5870);
@@ -613,6 +468,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
   late Animation<double>   _fadeAnim;
 
   final TextEditingController _searchController = TextEditingController();
+  List<FuelStation> _allStations = kStations;
   List<FuelStation> _filteredStations = kStations;
   bool _isSearching = false;
 
@@ -681,6 +537,31 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
 
     _searchController.addListener(_onSearchChanged);
     _startScroll();
+    _fetchBackendStations();
+  }
+
+  Future<void> _fetchBackendStations() async {
+    setState(() {
+      _isFetchingStations = true;
+    });
+    try {
+      final backendStations = await _stationService.getStations();
+      if (backendStations.isNotEmpty) {
+        setState(() {
+          _allStations = backendStations;
+          _filteredStations = backendStations;
+          _setupMarkers(); // Re-setup markers with backend data
+        });
+      }
+    } catch (e) {
+      print("Error fetching backend stations: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetchingStations = false;
+        });
+      }
+    }
   }
 
   void _openDrawer() {
@@ -898,8 +779,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
       setState(() {
         _isSearching      = query.isNotEmpty;
         _filteredStations = query.isEmpty
-            ? kStations
-            : kStations.where((s) => s.matchesQuery(query)).toList();
+            ? _allStations
+            : _allStations.where((s) => s.matchesQuery(query)).toList();
         _activeStationId  = null;
       });
       _updateMapMarkers();
@@ -910,7 +791,9 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
         if (query.isEmpty) {
           _searchedLocation = null;
           _searchedLocationName = null;
-          _filteredStations = kStations;
+          if (!_isLocationSearchMode) {
+            _filteredStations = _allStations;
+          }
           _updateMapMarkers();
         }
       });
@@ -1383,7 +1266,8 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
     setState(() {
       _searchedLocation = null;
       _searchedLocationName = null;
-      _filteredStations = kStations;
+      _isLocationSearchMode = true;
+      _filteredStations = _allStations;
       _overpassStations = [];
       _isFetchingStations = false;
     });
@@ -1435,7 +1319,7 @@ class _StationsNearYouScreenState extends State<StationsNearYouScreen>
         child: const Icon(Icons.flag_rounded, color: Color(0xFF4CAF50), size: 30),
       ),
     ];
-    for (final station in kStations) {
+    for (final station in _filteredStations) {
       markers.add(Marker(
         point: station.position,
         width: 44, height: 44,

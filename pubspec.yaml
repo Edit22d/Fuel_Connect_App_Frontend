@@ -28,6 +28,14 @@ dependencies:
 
   # Icons
   cupertino_icons: ^1.0.8
+  firebase_core: ^2.15.0
+  firebase_auth: ^4.10.0
+  cloud_firestore: ^4.9.0
+  firebase_messaging: ^14.9.0
+  flutter_stripe: ^13.0.0
+  google_fonts: ^6.0.0
+  flutter_glass_morphism: ^1.0.2
+  animations: ^2.0.5
 
 dev_dependencies:
   flutter_test:

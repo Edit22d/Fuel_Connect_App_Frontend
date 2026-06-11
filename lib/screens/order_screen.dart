@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'tracking_order_screen.dart';
 import '/screens/fuel_type_screen.dart';
+import 'package:fuel_app/auth/theme.dart';
+import '../services/order_service.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -13,41 +15,14 @@ class _OrderScreenState extends State<OrderScreen> {
   int _selectedTab = 0;
   int _selectedIndex = 2; // 2 is the 'Orders' tab index in the bottom nav
 
-  final List<_OrderItem> _orders = [
-    _OrderItem(
-      name: 'Shell Super Petrol',
-      date: 'Daily, Mar 20 – Apr 14, 2024',
-      quantity: '48.5 Liters',
-      price: 'UGX\n\$64.20',
-      status: 'DELIVERED',
-      statusColor: Color(0xFF00C853),
-      showOrderAgain: true,
-    ),
-    _OrderItem(
-      name: 'TotalEnergies Diesel',
-      date: 'Daily, Mar 20 – Mar 14, 2024',
-      quantity: '92.5 Liters',
-      price: 'UGX\n\$95.20',
-      status: 'PENDING',
-      statusColor: Color(0xFFC4963D),
-      showTrackOrder: true,
-      showCancel: true,
-    ),
-    _OrderItem(
-      name: 'Rubis Kerosene',
-      date: 'Daily, Mar 20 – Apr 14, 2024',
-      quantity: '15.6 Liters',
-      price: 'UGX\n\$10.8',
-      status: 'DELIVERED',
-      statusColor: Color(0xFF00C853),
-      showOrderAgain: true,
-    ),
-  ];
+  final _orderService = OrderService();
+  bool _isLoading = true;
+  List<_OrderItem> _orders = [];
 
   List<_OrderItem> get _filteredOrders {
     switch (_selectedTab) {
       case 1:
-        return _orders.where((order) => order.status == 'PENDING').toList();
+        return _orders.where((order) => order.status == 'ONGOING').toList();
       case 2:
         return _orders.where((order) => order.status == 'PENDING').toList();
       case 3:
@@ -58,11 +33,41 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    setState(() => _isLoading = true);
+    final models = await _orderService.getOrders();
+    setState(() {
+      _orders = models.map((m) {
+        Color sColor = const Color(0xFFC4963D); // PENDING
+        if (m.status == 'DELIVERED') sColor = const Color(0xFF00C853);
+        if (m.status == 'CANCELLED') sColor = Colors.red;
+        if (m.status == 'ONGOING') sColor = Colors.blue;
+
+        return _OrderItem(
+          name: '${m.stationName} ${m.fuelType}',
+          date: m.createdAt.isNotEmpty ? m.createdAt.split('T').first : 'Recent',
+          quantity: '${m.quantity} ${m.quantityUnit}',
+          price: '${m.currency}\n${m.totalPrice}',
+          status: m.status,
+          statusColor: sColor,
+          showTrackOrder: m.status == 'ONGOING' || m.status == 'PENDING',
+          showCancel: m.status == 'PENDING',
+          showOrderAgain: m.status == 'DELIVERED' || m.status == 'CANCELLED',
+        );
+      }).toList();
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -83,6 +88,7 @@ class _OrderScreenState extends State<OrderScreen> {
             icon: const Icon(Icons.notifications_none, color: Colors.white),
             onPressed: () {},
           ),
+          ThemeToggleButton(),
         ],
       ),
       body: Column(
@@ -104,13 +110,17 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _filteredOrders.length,
-              itemBuilder: (context, index) {
-                return _buildOrderCard(_filteredOrders[index]);
-              },
-            ),
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFFC4963D)))
+              : _filteredOrders.isEmpty
+                  ? const Center(child: Text("No orders found.", style: TextStyle(color: Colors.white54)))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filteredOrders.length,
+                      itemBuilder: (context, index) {
+                        return _buildOrderCard(_filteredOrders[index]);
+                      },
+                    ),
           ),
         ],
       ),

@@ -3,7 +3,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '/screens/home_screen.dart';
 import '/screens/profile_screen.dart';
 import '/screens/settings_screen.dart';
-import '/screens/order_screen.dart';
+import 'package:fuel_app/auth/theme.dart';
+import '../auth/login_screen.dart';
+import '/screens/fuel_type_screen.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -11,9 +13,7 @@ class SupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
@@ -28,6 +28,7 @@ class SupportScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        actions: [ThemeToggleButton()],
       ),
       body: SingleChildScrollView(
         child: Column(

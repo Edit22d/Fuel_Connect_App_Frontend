@@ -73,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             title: Text('Settings', style: TextStyle(color: textPrimary, fontWeight: FontWeight.w700, fontSize: 18)),
             centerTitle: true,
-            actions: [const ThemeToggleButton()],
+            actions: [ThemeToggleButton()],
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
