@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
-import 'theme.dart'; // ✅ Import theme system
+import 'theme.dart';
+import '../widgets/theme_toggle_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,12 +17,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = false;
   bool _isLoading = false;
 
-  // Regex for Phone only
-  static final _phoneRegex = RegExp(
-    r'^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$',
-  );
+  static final _phoneRegex = RegExp(r'^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$');
 
   @override
   void dispose() {
@@ -31,278 +30,245 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _goToHome() => Navigator.pushReplacementNamed(context, '/home');
-  void _goToSignUp() => Navigator.pushNamed(context, '/signup');
+  void _goToSignUp() => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SignUpScreen()));
   void _goToForgotPassword() => Navigator.pushNamed(context, '/forgot-password');
 
   Future<void> _handleLogin() async {
-    final phone = _phoneController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (phone.isEmpty || password.isEmpty) {
-      _showError('All fields are required');
-      return;
-    }
-
-    if (!_phoneRegex.hasMatch(phone)) {
-      _showError('Please enter a valid phone number (e.g. +256 744 000 000)');
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      final result = await _auth
-          .login(phoneNumber: phone, password: password)
-          .timeout(
-            const Duration(seconds: 15),
-            onTimeout: () => throw TimeoutException('Connection timed out'),
-          );
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      if (result['success'] == true) {
-        _goToHome();
-      } else {
-        _showError(result['message'] ?? 'Login failed. Please try again.');
-      }
-    } on TimeoutException {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showError('Request timed out. Check your internet connection.');
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showError('An error occurred: ${e.toString()}');
-    }
+    // Integration temporarily disconnected for layout testing.
+    _goToHome();
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    _showError('Google Sign-In coming soon!');
-  }
-
-  Future<void> _handleAppleSignIn() async {
-    _showError('Apple Sign-In coming soon!');
-  }
+  Future<void> _handleGoogleSignIn() async => _showError('Google Sign-In coming soon!');
+  Future<void> _handleAppleSignIn() async => _showError('Apple Sign-In coming soon!');
 
   void _showError(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+    SnackBar(content: Text(msg), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 4)),
+  );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              Navigator.pushReplacementNamed(context, '/onboarding');
-            }
-          },
-        ),
-        actions: const [
-          ThemeToggleButton(),
-        ],
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
+      body: Stack(
+        children: [
+          // Top Logo Banner
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: size.height * 0.45,
+            child: Container(
+              color: isDark ? const Color(0xFF1A1A1A) : AppTheme.gold.withOpacity(0.1),
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 20,
+                bottom: 60,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
+                        width: size.width * 0.8, // Increased logo size
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Log in to your account',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87, // Solid color for visibility
+                      fontSize: 18, // Increased font size
+                      fontWeight: FontWeight.w600, // Thicker weight
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Theme Toggle
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: const CustomThemeToggle(
+              iconColor: Colors.white,
+              bgColor: Colors.black26,
+            ),
+          ),
+
+          // Form Container
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: size.height * 0.65,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Phone Number Field
+                    _buildLabel('Phone Number', theme),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      controller: _phoneController,
+                      hintText: '+256 744 000 000',
+                      theme: theme,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Password Field
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Center(child: FuelConnectLogo(fontSize: 40)),
-                        const SizedBox(height: 12),
-                        Center(
-                          child: Text(
-                            'FUEL CONNECT PORTAL',
+                        _buildLabel('Password', theme),
+                        GestureDetector(
+                          onTap: _goToForgotPassword,
+                          child: const Text(
+                            'Forgot Password?',
                             style: TextStyle(
-                              color: theme.textTheme.bodyMedium?.color,
-                              fontSize: 10,
-                              letterSpacing: 2.0,
+                              color: AppTheme.gold,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 40),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      controller: _passwordController,
+                      hintText: '••••••••',
+                      theme: theme,
+                      obscureText: _obscurePassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                        ),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Remember Me
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
                         Text(
-                          'Welcome back',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: theme.textTheme.bodyLarge?.color,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
+                          'Remember me next time',
+                          style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 13),
+                        ),
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: _rememberMe,
+                            onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                            activeColor: AppTheme.gold,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Please enter your phone number and password.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: theme.textTheme.bodyMedium?.color,
-                            fontSize: 13,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-
-                        // Phone Field
-                        _buildLabel('PHONE NUMBER', theme),
-                        const SizedBox(height: 8),
-                        _buildTextField(
-                          controller: _phoneController,
-                          hintText: '+256 744 000 000',
-                          prefixIcon: Icons.phone_outlined,
-                          keyboardType: TextInputType.phone,
-                          theme: theme,
-                        ),
-                        const SizedBox(height: 18),
-
-                        // Password Field
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildLabel('PASSWORD', theme),
-                            GestureDetector(
-                              onTap: _goToForgotPassword,
-                              child: const Text(
-                                'FORGOT PASSWORD?',
-                                style: TextStyle(
-                                  color: AppTheme.gold,
-                                  fontSize: 10,
-                                  letterSpacing: 1.0,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTextField(
-                          controller: _passwordController,
-                          hintText: '••••••••',
-                          prefixIcon: Icons.lock_outline,
-                          obscureText: _obscurePassword,
-                          theme: theme,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                              size: 18,
-                            ),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Login Button
-                        GoldButton(
-                          text: _isLoading ? 'LOGGING IN...' : 'LOG IN',
-                          onPressed: _isLoading ? () {} : _handleLogin,
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Divider
-                        Row(
-                          children: [
-                            Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              child: Text(
-                                'OR CONTINUE WITH',
-                                style: TextStyle(
-                                  color: theme.textTheme.bodyMedium?.color,
-                                  fontSize: 10,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Social Login Buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _SocialButton(
-                                label: 'GOOGLE',
-                                icon: const _GoogleIcon(),
-                                theme: theme,
-                                onPressed: _handleGoogleSignIn,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _SocialButton(
-                                label: 'APPLE',
-                                icon: _AppleIcon(isDark: isDark),
-                                theme: theme,
-                                onPressed: _handleAppleSignIn,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 48),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: TextStyle(
-                                color: theme.textTheme.bodyMedium?.color,
-                                fontSize: 13,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: _goToSignUp,
-                              child: const Text(
-                                'Create Account',
-                                style: TextStyle(
-                                  color: AppTheme.gold,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 32),
+
+                    // Login Button
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.gold,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                          elevation: 0,
+                        ),
+                        child: _isLoading 
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Log in', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Divider
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: theme.dividerColor)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('or', style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5))),
+                        ),
+                        Expanded(child: Divider(color: theme.dividerColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Social Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'Google Play',
+                            icon: const _GoogleIcon(),
+                            theme: theme,
+                            onPressed: _handleGoogleSignIn,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'Apple Store',
+                            icon: _AppleIcon(isDark: isDark),
+                            theme: theme,
+                            onPressed: _handleAppleSignIn,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Sign up
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Don\'t have an account? ', style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 13)),
+                        GestureDetector(
+                          onTap: _goToSignUp,
+                          child: const Text('Sign up', style: TextStyle(color: AppTheme.gold, fontSize: 13, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -311,10 +277,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Text(
       text,
       style: TextStyle(
-        color: theme.textTheme.bodyMedium?.color,
-        fontSize: 10,
-        letterSpacing: 1.2,
-        fontWeight: FontWeight.w700,
+        color: theme.textTheme.bodyLarge?.color,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
       ),
     );
   }
@@ -322,89 +287,70 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
-    required IconData prefixIcon,
     required ThemeData theme,
-    TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
     Widget? suffixIcon,
   }) {
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0);
-
     return Container(
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.dividerColor),
       ),
       child: TextField(
         controller: controller,
-        keyboardType: keyboardType,
         obscureText: obscureText,
-        style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
+        keyboardType: keyboardType,
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), fontSize: 14),
-          prefixIcon: Icon(prefixIcon, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
-          suffixIcon: suffixIcon,
+          hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          suffixIcon: suffixIcon,
         ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Custom UI Components
-// ─────────────────────────────────────────────────────────────────────
-
 class _SocialButton extends StatelessWidget {
   final String label;
   final Widget icon;
   final ThemeData theme;
-  final VoidCallback? onPressed;
+  final VoidCallback onPressed;
 
-  const _SocialButton({
-    required this.label,
-    required this.icon,
-    required this.theme,
-    this.onPressed,
-  });
+  const _SocialButton({required this.label, required this.icon, required this.theme, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          height: 44,
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: theme.dividerColor),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              icon,
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: theme.textTheme.bodyLarge?.color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(25),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(color: theme.dividerColor),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: theme.textTheme.bodyLarge?.color,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -413,12 +359,10 @@ class _SocialButton extends StatelessWidget {
 
 class _GoogleIcon extends StatelessWidget {
   const _GoogleIcon();
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 18,
-      height: 18,
+      width: 18, height: 18,
       child: CustomPaint(painter: _GooglePainter()),
     );
   }
@@ -430,40 +374,14 @@ class _GooglePainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
     final r = size.width / 2;
-
     canvas.drawCircle(Offset(cx, cy), r, Paint()..color = Colors.white);
-
-    const segments = [
-      (0.0, 1.57, Color(0xFF4285F4)),
-      (1.57, 3.14, Color(0xFF34A853)),
-      (3.14, 4.71, Color(0xFFFBBC05)),
-      (4.71, 6.28, Color(0xFFEA4335)),
-    ];
+    const segments = [(0.0, 1.57, Color(0xFF4285F4)), (1.57, 3.14, Color(0xFF34A853)), (3.14, 4.71, Color(0xFFFBBC05)), (4.71, 6.28, Color(0xFFEA4335))];
     for (final seg in segments) {
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7),
-        seg.$1,
-        seg.$2 - seg.$1,
-        false,
-        Paint()
-          ..color = seg.$3
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = size.width * 0.2,
-      );
+      canvas.drawArc(Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7), seg.$1, seg.$2 - seg.$1, false, Paint()..color = seg.$3..style = PaintingStyle.stroke..strokeWidth = size.width * 0.2);
     }
-
     canvas.drawCircle(Offset(cx, cy), r * 0.45, Paint()..color = Colors.white);
-
-    canvas.drawLine(
-      Offset(cx, cy),
-      Offset(cx + r * 0.65, cy),
-      Paint()
-        ..color = const Color(0xFF4285F4)
-        ..strokeWidth = size.height * 0.18
-        ..strokeCap = StrokeCap.round,
-    );
+    canvas.drawLine(Offset(cx, cy), Offset(cx + r * 0.65, cy), Paint()..color = const Color(0xFF4285F4)..strokeWidth = size.height * 0.18..strokeCap = StrokeCap.round);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
@@ -471,12 +389,10 @@ class _GooglePainter extends CustomPainter {
 class _AppleIcon extends StatelessWidget {
   final bool isDark;
   const _AppleIcon({required this.isDark});
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 18,
-      height: 18,
+      width: 18, height: 18,
       child: CustomPaint(painter: _ApplePainter(isDark: isDark)),
     );
   }
@@ -485,61 +401,24 @@ class _AppleIcon extends StatelessWidget {
 class _ApplePainter extends CustomPainter {
   final bool isDark;
   _ApplePainter({required this.isDark});
-
   @override
   void paint(Canvas canvas, Size size) {
     final path = Path();
     final color = isDark ? Colors.white : Colors.black;
-
     path.moveTo(size.width * 0.5, size.height * 0.15);
-    path.cubicTo(
-      size.width * 0.5, size.height * 0.15,
-      size.width * 0.42, size.height * 0.05,
-      size.width * 0.3, size.height * 0.08,
-    );
-    path.cubicTo(
-      size.width * 0.18, size.height * 0.11,
-      size.width * 0.12, size.height * 0.25,
-      size.width * 0.15, size.height * 0.38,
-    );
-    path.cubicTo(
-      size.width * 0.18, size.height * 0.51,
-      size.width * 0.32, size.height * 0.62,
-      size.width * 0.45, size.height * 0.6,
-    );
-    path.cubicTo(
-      size.width * 0.58, size.height * 0.58,
-      size.width * 0.7, size.height * 0.48,
-      size.width * 0.72, size.height * 0.4,
-    );
-    path.cubicTo(
-      size.width * 0.74, size.height * 0.32,
-      size.width * 0.68, size.height * 0.22,
-      size.width * 0.58, size.height * 0.2,
-    );
-    path.cubicTo(
-      size.width * 0.48, size.height * 0.18,
-      size.width * 0.5, size.height * 0.15,
-      size.width * 0.5, size.height * 0.15,
-    );
+    path.cubicTo(size.width * 0.5, size.height * 0.15, size.width * 0.42, size.height * 0.05, size.width * 0.3, size.height * 0.08);
+    path.cubicTo(size.width * 0.18, size.height * 0.11, size.width * 0.12, size.height * 0.25, size.width * 0.15, size.height * 0.38);
+    path.cubicTo(size.width * 0.18, size.height * 0.51, size.width * 0.32, size.height * 0.62, size.width * 0.45, size.height * 0.6);
+    path.cubicTo(size.width * 0.58, size.height * 0.58, size.width * 0.7, size.height * 0.48, size.width * 0.72, size.height * 0.4);
+    path.cubicTo(size.width * 0.74, size.height * 0.32, size.width * 0.68, size.height * 0.22, size.width * 0.58, size.height * 0.2);
+    path.cubicTo(size.width * 0.48, size.height * 0.18, size.width * 0.5, size.height * 0.15, size.width * 0.5, size.height * 0.15);
     path.close();
-
     path.moveTo(size.width * 0.58, size.height * 0.18);
-    path.cubicTo(
-      size.width * 0.65, size.height * 0.12,
-      size.width * 0.75, size.height * 0.1,
-      size.width * 0.8, size.height * 0.15,
-    );
-    path.cubicTo(
-      size.width * 0.85, size.height * 0.2,
-      size.width * 0.78, size.height * 0.3,
-      size.width * 0.7, size.height * 0.32,
-    );
+    path.cubicTo(size.width * 0.65, size.height * 0.12, size.width * 0.75, size.height * 0.1, size.width * 0.8, size.height * 0.15);
+    path.cubicTo(size.width * 0.85, size.height * 0.2, size.width * 0.78, size.height * 0.3, size.width * 0.7, size.height * 0.32);
     path.close();
-
     canvas.drawPath(path, Paint()..color = color);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+}

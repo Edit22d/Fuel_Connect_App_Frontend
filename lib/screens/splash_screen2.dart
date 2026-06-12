@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import 'home_screen.dart';
+import '../auth/theme.dart';
+import '../widgets/theme_toggle_button.dart';
 
 class SplashScreen2 extends StatefulWidget {
   const SplashScreen2({super.key});
@@ -12,49 +14,9 @@ class SplashScreen2 extends StatefulWidget {
 
 class _SplashScreen2State extends State<SplashScreen2> {
   final _auth = AuthService();
-
-  String _tagline = 'Always On Demand';
-  String _description =
-      'No more waiting in lines. Our \n professional fleet delivers high-\n quality fuel directly to your location, wherever \n you need it.';
-
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadAppInfo();
-  }
-
-  Future<void> _loadAppInfo() async {
-    final result = await _auth.getAppInfo();
-    if (result['success'] == true && mounted) {
-      setState(() {
-        _tagline     = result['data']['tagline']     ?? _tagline;
-        _description = result['data']['description'] ?? _description;
-      });
-    }
-  }
-
-  // ✅ "Get Started" — check auth first, go to Home or Login
   Future<void> _handleGetStarted() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-
-    final loggedIn = await _auth.isLoggedIn();
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => loggedIn ? const HomeScreen() : const LoginScreen(),
-      ),
-    );
-  }
-
-  // ✅ "Log in" link — same auth check
-  Future<void> _goToLogin() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
 
@@ -73,208 +35,173 @@ class _SplashScreen2State extends State<SplashScreen2> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          // Top Full Image
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: size.height * 0.55,
+            child: Image.asset(
+              'assets/images/shell_station.png', // Using shell_station as the best fit
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[300],
+                child: const Icon(Icons.local_gas_station, size: 80, color: Colors.grey),
+              ),
+            ),
+          ),
 
-                Center(
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    width: 150,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.local_gas_station,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                  ),
+          // Theme Toggle at Top Right safely padded
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: const CustomThemeToggle(
+              iconColor: Colors.white,
+              bgColor: Colors.black26,
+            ),
+          ),
+
+          // Bottom Card
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: size.height * 0.50,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
-
-                const SizedBox(height: 18),
-
-                Container(
-                  width: double.infinity,
-                  height: 350,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Image.asset(
-                        'assets/images/car.png',
-                        height: 350,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.directions_car,
-                          size: 150,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: const TextSpan(
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
                     children: [
-                      TextSpan(
-                        text: 'Always ',
+                      Text(
+                        'Real-Time Prices. Smarter\nFueling Decisions',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
+                          color: theme.textTheme.bodyLarge?.color,
+                          fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          height: 1.2,
+                          height: 1.3,
                         ),
                       ),
-                      TextSpan(
-                        text: 'On\n',
+                      const SizedBox(height: 16),
+                      Text(
+                        'A smart fuel tracker with advanced features that you\ncan control from a mobile application',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xFFC4963D),
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'Demand',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
+                          color: theme.textTheme.bodyMedium?.color,
+                          fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
                     ],
                   ),
-                ),
 
-                const SizedBox(height: 16),
-
-                Text(
-                  _description,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFFAAAAAA),
-                    fontSize: 13,
-                    height: 1.6,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Row(
+                  // Dots Indicator
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildTag('Premium Fuel'),
-                      const SizedBox(width: 12),
-                      _buildTag('Fast Delivery'),
+                      _buildDot(true),
+                      const SizedBox(width: 6),
+                      _buildDot(false),
+                      const SizedBox(width: 6),
+                      _buildDot(false),
                     ],
                   ),
-                ),
 
-                const SizedBox(height: 28),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: SizedBox(
+                  // Get Started Button
+                  SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 56,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleGetStarted,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFC4963D),
+                        backgroundColor: AppTheme.gold,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            const Color(0xFFC4963D).withOpacity(0.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(30),
                         ),
                         elevation: 0,
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                              width: 22,
-                              height: 22,
+                              width: 24,
+                              height: 24,
                               child: CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Text(
-                              'Get Started',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.3,
-                              ),
+                          : Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                const Center(
+                                  child: Text(
+                                    'Get Started',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.arrow_forward,
+                                      color: AppTheme.gold,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 14),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Already have an account? ',
-                      style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 12),
-                    ),
-                    GestureDetector(
-                      onTap: _isLoading ? null : _goToLogin,
-                      child: Text(
-                        'Log in',
-                        style: TextStyle(
-                          color: _isLoading
-                              ? const Color(0xFFC4963D).withOpacity(0.5)
-                              : const Color(0xFFC4963D),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildTag(String label) {
+  Widget _buildDot(bool isActive) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      width: isActive ? 20 : 8,
+      height: 8,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFC4963D)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFFC4963D),
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
+        color: isActive ? AppTheme.gold : Colors.grey.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(4),
       ),
     );
   }

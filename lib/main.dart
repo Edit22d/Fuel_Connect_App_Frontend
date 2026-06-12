@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fuel_app/auth/theme.dart'; // Theme import // ✅ Import theme definitions
@@ -57,10 +58,16 @@ class FuelConnectApp extends StatelessWidget {
         return MaterialApp(
           title: 'Fuel Connect',
           debugShowCheckedModeBanner: false,
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            dragDevices: {
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.touch,
+              PointerDeviceKind.trackpad,
+            },
+          ),
           themeMode: mode,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          // ✅ Auto-login: go straight to HomeScreen if token is valid
           home: isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
           routes: {
             '/onboarding':      (context) => const OnboardingScreen(),

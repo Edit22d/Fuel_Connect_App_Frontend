@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
+import 'package:fuel_app/auth/theme.dart' hide ThemeToggleButton;
+import 'package:fuel_app/widgets/theme_toggle_button.dart';
+import 'package:fuel_app/widgets/custom_bottom_nav.dart';
+
 import '/screens/home_screen.dart';
-import '/screens/order_screen.dart';
 import '/screens/profile_screen.dart';
-import '/screens/support_screen.dart';
+import '/screens/top_stations_screen.dart';
 import '/screens/station_detail_screen1.dart';
 import '/screens/station_detail_screen2.dart';
 import '/screens/station_detail_screen3.dart';
 import '/screens/station_detail_screen4.dart';
-
-
 
 class StationScreen extends StatefulWidget {
   const StationScreen({super.key});
@@ -23,514 +24,475 @@ class _StationScreenState extends State<StationScreen> {
   final MapController _mapController = MapController();
   int _currentIndex = 1;
 
-  final List<_StationData> _stations = const [
-    _StationData(
-      name: 'Stabex - Waiyaki Way',
-      distance: '0.8 km',
-      price: 'KSh 1.82/L',
-      rating: '4.9',
-      imageName: 'stabex',
-      tag: 'Open Now',
-    ),
-    _StationData(
-      name: 'Rubis - Limuru Rd',
-      distance: '1.2 km',
-      price: 'KSh 1.82/L',
-      rating: '4.8',
-      imageName: 'Rubis',
-      tag: 'Open Now',
-    ),
-    _StationData(
-      name: 'Shell - Ntanda Rd',
-      distance: '0.6 km',
-      price: 'KSh 1.82/L',
-      rating: '4.6',
-      imageName: 'shell',
-      tag: 'Open Now',
-    ),
-        _StationData(
-      name: 'TotalEnergies - kyambando Rd',
-      distance: '0.6 km',
-      price: 'KSh 1.82/L',
-      rating: '4.6',
-      imageName: 'total',
-      tag: 'Open Now',
-    ),
+  final List<Map<String, dynamic>> _nearbyStations = [
+    {
+      'name': 'Aloha Petroleum',
+      'rating': '4.3',
+      'reviews': '(420)',
+      'distance': '2 km',
+      'time': '5 mins',
+      'image': 'assets/images/stabe.png',
+      'target': const StationDetailScreen1(),
+    },
+    {
+      'name': 'American Gas',
+      'rating': '4.5',
+      'reviews': '(670)',
+      'distance': '2 km',
+      'time': '5 mins',
+      'image': 'assets/images/shel.png',
+      'target': const StationDetailScreen2(),
+    },
+    {
+      'name': 'Rubis Station',
+      'rating': '4.8',
+      'reviews': '(890)',
+      'distance': '3 km',
+      'time': '8 mins',
+      'image': 'assets/images/Rubi.png',
+      'target': const StationDetailScreen3(),
+    },
   ];
 
+  List<Map<String, dynamic>> _filteredNearbyStations = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredNearbyStations = List.from(_nearbyStations);
+    _searchController.addListener(() {
+      setState(() {
+        final query = _searchController.text.toLowerCase();
+        _filteredNearbyStations = _nearbyStations.where((station) {
+          final name = station['name'].toString().toLowerCase();
+          return name.contains(query);
+        }).toList();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+
   void _onNavTap(int i) {
-    if (i == _currentIndex && i != 0) return;
-    switch (i) {
-      case 0:
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (route) => false,
-        );
-        break;
-      case 1:
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const OrderScreen()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-        );
-        break;
+    if (i == _currentIndex) return;
+    Widget? nextScreen;
+    if (i == 0) nextScreen = const HomeScreen();
+    if (i == 2) nextScreen = const TopStationsScreen();
+    // i == 3 is Favorites (placeholder)
+    if (i == 4) nextScreen = const ProfileScreen();
+
+    if (nextScreen != null) {
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => nextScreen!,
+          transitionDuration: Duration.zero,
+        ),
+      );
     }
-    setState(() => _currentIndex = i);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppTheme.darkBg : AppTheme.lightBg;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── App bar ───────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        'Select Station',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+      backgroundColor: bgColor,
+      body: Stack(
+        children: [
+          // Map Background
+          Positioned.fill(
+            child: FlutterMap(
+              mapController: _mapController,
+              options: const MapOptions(
+                initialCenter: LatLng(0.3476, 32.5825), // Kampala example
+                initialZoom: 14,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
+                ),
+                MarkerLayer(
+                  markers: [
+                    _buildStationMarker(const LatLng(0.3476, 32.5825), 'assets/images/shel.png'),
+                    _buildStationMarker(const LatLng(0.3520, 32.5800), 'assets/images/stabe.png'),
+                    _buildStationMarker(const LatLng(0.3450, 32.5880), 'assets/images/Rubi.png'),
+                    _buildStationMarker(const LatLng(0.3410, 32.5750), 'assets/images/Totall.png'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Header & Search Overlays
+          SafeArea(
+            child: Column(
+              children: [
+                // Top Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: cardColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: Icon(Icons.arrow_back, color: textColor, size: 20),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 36),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ── Map ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: SizedBox(
-                  height: 200,
-                  child: FlutterMap(
-                    mapController: _mapController,
-                    options: const MapOptions(
-                      initialCenter: LatLng(-1.268, 36.807),
-                      initialZoom: 14,
-                      backgroundColor: Color(0xFF1A1A1A),
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                        subdomains: const ['a', 'b', 'c', 'd'],
-                        userAgentPackageName: 'com.fuelconnect.app',
-                        maxZoom: 19,
+                      Expanded(
+                        child: Text(
+                          'Station Near You',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: const LatLng(-1.268, 36.807),
-                            width: 34, height: 34,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFDBA84E), Color(0xFFC4963D)],
-                                ),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const Icon(Icons.local_gas_station_rounded,
-                                  color: Colors.white, size: 16),
-                            ),
-                          ),
-                          Marker(
-                            point: const LatLng(-1.274, 36.815),
-                            width: 34, height: 34,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFDBA84E), Color(0xFFC4963D)],
-                                ),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const Icon(Icons.local_gas_station_rounded,
-                                  color: Colors.white, size: 16),
-                            ),
-                          ),
-                          Marker(
-                            point: const LatLng(-1.262, 36.800),
-                            width: 34, height: 34,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFDBA84E), Color(0xFFC4963D)],
-                                ),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const Icon(Icons.local_gas_station_rounded,
-                                  color: Colors.white, size: 16),
-                            ),
-                          ),
-                        ],
+                      CustomThemeToggle(
+                        iconColor: textColor,
+                        bgColor: cardColor,
                       ),
                     ],
                   ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 18),
-
-            // ── Recently Stations label ────────────────────────────────
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Recently Stations',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── Station cards list ────────────────────────────────────
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _stations.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final s = _stations[index];
-                  
-                  Widget targetScreen;
-                  switch (index) {
-                    case 0:
-                      targetScreen = const StationDetailScreen1();
-                      break;
-                    case 1:
-                      targetScreen = const StationDetailScreen2();
-                      break;
-                    case 2:
-                      targetScreen = const StationDetailScreen3();
-                      break;
-                    case 3:
-                      targetScreen = const StationDetailScreen4();
-                      break;
-                    default:
-                      targetScreen = const StationDetailScreen1();
-                  }
-
-                  return _StationCard(station: s, targetScreen: targetScreen);
-                },
-              ),
-            ),
-
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-
-      // ── Bottom nav bar ───────────────────────────────────────────────
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _currentIndex,
-        onTap: _onNavTap,
-      ),
-    );
-  }
-}
-
-// ── Station Data Model ────────────────────────────────────────────────────────
-class _StationData {
-  final String name;
-  final String distance;
-  final String price;
-  final String rating;
-  final String imageName;
-  final String tag;
-
-  const _StationData({
-    required this.name,
-    required this.distance,
-    required this.price,
-    required this.rating,
-    required this.imageName,
-    required this.tag,
-  });
-}
-
-        class _StationCard extends StatelessWidget {
-          final _StationData station;
-          final Widget targetScreen;
-          const _StationCard({required this.station, required this.targetScreen});
-
-          @override
-          Widget build(BuildContext context) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => targetScreen,
-                  ),
-                );
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: const Color(0xFF2A2A2A)),
-                ),
-                child: Row(
-                  children: [
-                    // Station image
-                    ClipRRect(
-                      borderRadius:
-                          const BorderRadius.horizontal(left: Radius.circular(10)),
-                      child: Image.asset(
-                        'assets/images/${station.imageName}.png',
-                        width: 150,
-                        height: 110, 
-                        fit: BoxFit.cover,
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.search, color: Colors.grey[400], size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  style: TextStyle(color: textColor, fontSize: 14),
+                                  decoration: InputDecoration(
+                                    hintText: 'Find a station by name or...',
+                                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(width: 25),
-
-                    // Info column
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Name
-                            Text(
-                              station.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-
-                            // Rating + distance
-                            Row(
-                              children: [
-                                const Icon(Icons.star,
-                                    color: Color(0xFFC8A84B), size: 13),
-                                const SizedBox(width: 3),
-                                Text(
-                                  station.rating,
-                                  style: const TextStyle(
-                                    color: Color(0xFFCCCCCC),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                const Icon(Icons.location_on_outlined,
-                                    color: Color(0xFF888888), size: 13),
-                                Text(
-                                  station.distance,
-                                  style: const TextStyle(
-                                    color: Color(0xFF888888),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Price + Open tag
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFC8A84B).withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                        color:
-                                            const Color(0xFFC8A84B).withOpacity(0.4)),
-                                  ),
-                                  child: Text(
-                                    station.price,
-                                    style: const TextStyle(
-                                      color: Color(0xFFC8A84B),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                        color: Colors.green.withOpacity(0.4)),
-                                  ),
-                                  child: Text(
-                                    station.tag,
-                                    style: const TextStyle(
-                                      color: Color(0xFF4CAF50),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            SizedBox(
-                              width: double.infinity,
-                              height: 34,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => targetScreen,
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFC8A84B),
-                                  foregroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: const Text(
-                                  'SELECT & ORDER',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
+                      const SizedBox(width: 12),
+                      Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
+                        child: Icon(Icons.tune, color: textColor, size: 20),
                       ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    // Arrow
-                    const Padding(
-                      padding: EdgeInsets.only(right: 12),
-                      child: Icon(
-                        Icons.chevron_right,
-                        color: Color(0xFF555555),
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-        }
-            
-
-// ── Bottom Nav Bar ───────────────────────────────────────────────────────────
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-  const _BottomNav({required this.currentIndex, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      {'icon': Icons.home_outlined, 'label': 'Home'},
-      {'icon': Icons.local_gas_station_outlined, 'label': 'Stations'},
-      {'icon': Icons.receipt_long_outlined, 'label': 'Orders'},
-      {'icon': Icons.person_outline, 'label': 'Profile'},
-    ];
-
-    return Container(
-      height: 68,
-      decoration: const BoxDecoration(
-        color: Color(0xFF141414),
-        border: Border(top: BorderSide(color: Color(0xFF2A2A2A))),
-      ),
-      child: Row(
-        children: List.generate(items.length, (i) {
-          final selected = i == currentIndex;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(i),
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    items[i]['icon'] as IconData,
-                    color: selected
-                        ? const Color(0xFFC8A84B)
-                        : const Color(0xFF555555),
-                    size: 22,
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    items[i]['label'] as String,
-                    style: TextStyle(
-                      color: selected
-                          ? const Color(0xFFC8A84B)
-                          : const Color(0xFF555555),
-                      fontSize: 10,
-                      fontWeight: selected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
+                ),
+              ],
+            ),
+          ),
+
+          // Bottom Sheet Overlay
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: 380, // Enough height for the bottom nav and the content
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Nearby Petrol Stations',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'See all',
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Horizontal Scrollable Cards
+                  SizedBox(
+                    height: 210, // Increased height to fix overflow
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filteredNearbyStations.length,
+                      itemBuilder: (context, index) {
+                        final station = _filteredNearbyStations[index];
+                        return _buildStationCard(station, textColor, cardColor);
+                      },
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Text(
+                      'Most Nearest',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  // Bottom Nav space
+                ],
+              ),
+            ),
+          ),
+
+          // Custom Bottom Nav
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomBottomNav(
+              currentIndex: _currentIndex,
+              onTap: _onNavTap,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStationCard(Map<String, dynamic> station, Color textColor, Color cardColor) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => station['target']),
+        );
+      },
+      child: Container(
+        width: 220,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: Stack(
+                children: [
+                  Image.asset(
+                    station['image'],
+                    height: 100,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 100, color: Colors.grey[300],
+                      child: const Icon(Icons.image),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'GASOLINE',
+                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        }),
+            
+            // Details
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    station['name'],
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: AppTheme.gold, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${station['rating']} ${station['reviews']}',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.grey, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        station['distance'],
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(Icons.access_time, color: Colors.grey, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        station['time'],
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Marker _buildStationMarker(LatLng point, String imageAsset) {
+    return Marker(
+      point: point,
+      width: 50,
+      height: 60,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                imageAsset,
+                width: 36,
+                height: 28,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox(
+                  width: 36, height: 28, child: Icon(Icons.local_gas_station, size: 20),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppTheme.gold, // Replaced green dot with gold to match theme
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+          ),
+        ],
       ),
     );
   }
