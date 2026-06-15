@@ -24,8 +24,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _twoFactorEnabled = false;
   bool _loginAlertsEnabled = true;
 
-  String _fullName = 'Loading...';
-  String _email = 'Loading...';
+  String _fullName = '';
+  String _email = '';
+  bool _isLoading = true;
 
   final TextEditingController _editNameController = TextEditingController();
   final TextEditingController _editEmailController = TextEditingController();
@@ -54,16 +55,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUserData() async {
     try {
+      // First, try loading the locally cached user info for instantaneous UX
       final user = await _authService.getCurrentUser();
       if (user != null) {
         if (mounted) {
           setState(() {
             _fullName = user.fullName;
             _email = user.email;
+            _isLoading = false; // Disable skeleton loading if we have cached details
           });
         }
       }
       
+      // Then, query the remote backend to refresh details
       final userResponse = await _authService.getMe();
       if (userResponse['success'] == true && userResponse['data'] != null) {
         final data = userResponse['data'];
@@ -75,10 +79,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && _fullName.isEmpty) {
         setState(() {
           _fullName = 'Muhammad';
           _email = 'example@gmail.com';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
         });
       }
     }
@@ -133,6 +143,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Pull Bar indicator
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               Text(
                 'Edit Profile',
                 style: TextStyle(
@@ -326,48 +348,139 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             // ── Profile Card ──────────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: isDark 
+                      ? [const Color(0xFF1E1E1E), const Color(0xFF141414)] 
+                      : [Colors.white, const Color(0xFFFAFAFA)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.04),
+                  width: 1.5,
+                ),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  )
                 ],
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: AppTheme.gold.withOpacity(0.2),
-                    child: const Icon(Icons.person, color: AppTheme.gold, size: 30),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _fullName,
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  Row(
+                    children: [
+                      // Glow Ring around Avatar
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.gold, AppTheme.darkGold],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.gold.withOpacity(0.2),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            )
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(2),
+                        child: CircleAvatar(
+                          radius: 30,
+                          backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+                          child: Icon(
+                            Icons.person_outline, 
+                            color: isDark ? Colors.white : Colors.black87, 
+                            size: 30,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _email,
-                          style: TextStyle(
-                            color: isDark ? Colors.white54 : Colors.black54,
-                            fontSize: 13,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Shimmer / Pulse skeleton loader or real name
+                            _isLoading && _fullName.isEmpty
+                                ? const PulseSkeleton(width: 140, height: 16)
+                                : Text(
+                                    _fullName,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : Colors.black,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                            const SizedBox(height: 6),
+                            _isLoading && _email.isEmpty
+                                ? const PulseSkeleton(width: 180, height: 12)
+                                : Text(
+                                    _email,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white60 : Colors.black54,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.edit_outlined, 
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            size: 18,
                           ),
                         ),
-                      ],
-                    ),
+                        onPressed: _showEditProfileModal,
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: Icon(Icons.edit_outlined, color: isDark ? Colors.white54 : Colors.black54),
-                    onPressed: _showEditProfileModal,
+                  const SizedBox(height: 20),
+                  Divider(
+                    color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08),
+                    height: 1,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Statistics Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatItem(
+                        value: '15',
+                        label: 'Total Orders',
+                        icon: Icons.local_gas_station_outlined,
+                        isDark: isDark,
+                      ),
+                      _buildStatDivider(isDark),
+                      _buildStatItem(
+                        value: '240 L',
+                        label: 'Fuel Saved',
+                        icon: Icons.water_drop_outlined,
+                        isDark: isDark,
+                      ),
+                      _buildStatDivider(isDark),
+                      _buildStatItem(
+                        value: '450',
+                        label: 'Loyalty Points',
+                        icon: Icons.star_outline_rounded,
+                        isDark: isDark,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -375,14 +488,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 30),
 
             // ── General Section ───────────────────────────────────────────
-            Text('General', style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+            _buildSectionHeader('GENERAL SETTINGS', isDark),
             const SizedBox(height: 12),
             Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-              ),
+              decoration: _buildSectionDecoration(isDark),
               child: Column(
                 children: [
                   _buildListTile(
@@ -406,21 +515,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isDark: isDark,
                   ),
                   _buildDivider(isDark),
-                  ListTile(
-                    leading: Icon(Icons.notifications_none_outlined, color: isDark ? Colors.white70 : Colors.black87),
-                    title: Text(
-                      'Push Notifications',
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    trailing: Switch(
-                      value: _notificationsEnabled,
-                      activeColor: AppTheme.gold,
-                      onChanged: (val) {
-                        setState(() => _notificationsEnabled = val);
-                        _savePref('notif_orders', val);
-                        _showToast(val ? 'Notifications Enabled' : 'Notifications Disabled');
-                      },
-                    ),
+                  _buildSwitchTile(
+                    icon: Icons.notifications_none_outlined,
+                    title: 'Push Notifications',
+                    value: _notificationsEnabled,
+                    onChanged: (val) {
+                      setState(() => _notificationsEnabled = val);
+                      _savePref('notif_orders', val);
+                      _showToast(val ? 'Notifications Enabled' : 'Notifications Disabled');
+                    },
+                    isDark: isDark,
                   ),
                 ],
               ),
@@ -428,62 +532,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 30),
 
             // ── Security Section ───────────────────────────────────────────
-            Text('Security', style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+            _buildSectionHeader('SECURITY', isDark),
             const SizedBox(height: 12),
             Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-              ),
+              decoration: _buildSectionDecoration(isDark),
               child: Column(
                 children: [
-                  ListTile(
-                    leading: Icon(Icons.fingerprint, color: isDark ? Colors.white70 : Colors.black87),
-                    title: Text(
-                      'Biometric Login',
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    trailing: Switch(
-                      value: _biometricEnabled,
-                      activeColor: AppTheme.gold,
-                      onChanged: (val) {
-                        setState(() => _biometricEnabled = val);
-                        _savePref('sec_biometric', val);
-                      },
-                    ),
+                  _buildSwitchTile(
+                    icon: Icons.fingerprint_rounded,
+                    title: 'Biometric Login',
+                    value: _biometricEnabled,
+                    onChanged: (val) {
+                      setState(() => _biometricEnabled = val);
+                      _savePref('sec_biometric', val);
+                      _showToast(val ? 'Biometrics Enabled' : 'Biometrics Disabled');
+                    },
+                    isDark: isDark,
                   ),
                   _buildDivider(isDark),
-                  ListTile(
-                    leading: Icon(Icons.security, color: isDark ? Colors.white70 : Colors.black87),
-                    title: Text(
-                      'Two-Factor Authentication',
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    trailing: Switch(
-                      value: _twoFactorEnabled,
-                      activeColor: AppTheme.gold,
-                      onChanged: (val) {
-                        setState(() => _twoFactorEnabled = val);
-                        _savePref('sec_2fa', val);
-                      },
-                    ),
+                  _buildSwitchTile(
+                    icon: Icons.security_rounded,
+                    title: 'Two-Factor Authentication',
+                    value: _twoFactorEnabled,
+                    onChanged: (val) {
+                      setState(() => _twoFactorEnabled = val);
+                      _savePref('sec_2fa', val);
+                      _showToast(val ? '2FA Enabled' : '2FA Disabled');
+                    },
+                    isDark: isDark,
                   ),
                   _buildDivider(isDark),
-                  ListTile(
-                    leading: Icon(Icons.phonelink_ring, color: isDark ? Colors.white70 : Colors.black87),
-                    title: Text(
-                      'Login Alerts',
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    trailing: Switch(
-                      value: _loginAlertsEnabled,
-                      activeColor: AppTheme.gold,
-                      onChanged: (val) {
-                        setState(() => _loginAlertsEnabled = val);
-                        _savePref('sec_login_alerts', val);
-                      },
-                    ),
+                  _buildSwitchTile(
+                    icon: Icons.phonelink_ring_rounded,
+                    title: 'Login Alerts',
+                    value: _loginAlertsEnabled,
+                    onChanged: (val) {
+                      setState(() => _loginAlertsEnabled = val);
+                      _savePref('sec_login_alerts', val);
+                      _showToast(val ? 'Login Alerts Enabled' : 'Login Alerts Disabled');
+                    },
+                    isDark: isDark,
                   ),
                 ],
               ),
@@ -491,18 +579,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 30),
 
             // ── Support & Legal Section ───────────────────────────────────────────
-            Text('Support & Legal', style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+            _buildSectionHeader('SUPPORT & LEGAL', isDark),
             const SizedBox(height: 12),
             Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-              ),
+              decoration: _buildSectionDecoration(isDark),
               child: Column(
                 children: [
                   _buildListTile(
-                    icon: Icons.rule,
+                    icon: Icons.rule_rounded,
                     title: 'Terms & Conditions',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsScreen(section: 'terms'))),
                     isDark: isDark,
@@ -516,7 +600,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   _buildDivider(isDark),
                   _buildListTile(
-                    icon: Icons.help_outline,
+                    icon: Icons.help_outline_rounded,
                     title: 'Help Center',
                     onTap: () => _showToast('Opening Help Center...'),
                     isDark: isDark,
@@ -524,28 +608,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
 
             // ── Log Out Button ────────────────────────────────────────────
             InkWell(
               onTap: _handleLogout,
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  color: isDark ? const Color(0xFF2C1E1E) : const Color(0xFFFFF5F5),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                  border: Border.all(
+                    color: isDark ? Colors.redAccent.withOpacity(0.15) : Colors.redAccent.withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.logout, color: isDark ? Colors.white70 : Colors.black87),
-                    const SizedBox(width: 16),
+                    const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+                    const SizedBox(width: 12),
                     Text(
                       'Log Out',
                       style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontSize: 14,
+                        color: isDark ? const Color(0xFFFF6B6B) : Colors.redAccent,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -553,26 +641,220 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 100), // padding for bottom nav
+            const SizedBox(height: 20), // padding for bottom nav
           ],
         ),
       ),
     );
   }
 
-  Widget _buildListTile({required IconData icon, required String title, required VoidCallback onTap, required bool isDark}) {
+  // ── Helper Widgets ─────────────────────────────────────────────────────────
+
+  Widget _buildSectionHeader(String title, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: isDark ? Colors.white60 : Colors.black54,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _buildSectionDecoration(bool isDark) {
+    return BoxDecoration(
+      color: isDark ? const Color(0xFF141414) : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03),
+        width: 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        )
+      ],
+    );
+  }
+
+  Widget _buildListTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    required bool isDark,
+    Color? iconColor,
+  }) {
     return ListTile(
-      leading: Icon(icon, color: isDark ? Colors.white70 : Colors.black87),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (iconColor ?? AppTheme.gold).withOpacity(isDark ? 0.1 : 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: iconColor ?? AppTheme.gold, size: 18),
+      ),
       title: Text(
         title,
-        style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          color: isDark ? Colors.white : Colors.black87,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
-      trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white54 : Colors.black38),
+      trailing: Icon(
+        Icons.chevron_right, 
+        color: isDark ? Colors.white30 : Colors.black38,
+        size: 18,
+      ),
       onTap: onTap,
     );
   }
 
+  Widget _buildSwitchTile({
+    required IconData icon,
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required bool isDark,
+    Color? iconColor,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (iconColor ?? AppTheme.gold).withOpacity(isDark ? 0.1 : 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: iconColor ?? AppTheme.gold, size: 18),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isDark ? Colors.white : Colors.black87,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      trailing: Switch.adaptive(
+        value: value,
+        activeColor: AppTheme.gold,
+        activeTrackColor: AppTheme.gold.withOpacity(0.4),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _buildStatItem({
+    required String value,
+    required String label,
+    required IconData icon,
+    required bool isDark,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, color: AppTheme.gold, size: 18),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            color: isDark ? Colors.white54 : Colors.black54,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatDivider(bool isDark) {
+    return Container(
+      height: 24,
+      width: 1,
+      color: isDark ? Colors.white12 : Colors.black12,
+    );
+  }
+
   Widget _buildDivider(bool isDark) {
-    return Divider(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05), height: 1, indent: 50, endIndent: 16);
+    return Divider(
+      color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04), 
+      height: 1, 
+      indent: 52, 
+      endIndent: 16,
+    );
+  }
+}
+
+// ── Pulse Skeleton Loader Widget ─────────────────────────────────────────────
+
+class PulseSkeleton extends StatefulWidget {
+  final double width;
+  final double height;
+  final BorderRadius borderRadius;
+
+  const PulseSkeleton({
+    super.key,
+    required this.width,
+    required this.height,
+    this.borderRadius = const BorderRadius.all(Radius.circular(6)),
+  });
+
+  @override
+  State<PulseSkeleton> createState() => _PulseSkeletonState();
+}
+
+class _PulseSkeletonState extends State<PulseSkeleton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _opacityAnimation = Tween<double>(begin: 0.2, end: 0.6).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnimatedBuilder(
+      animation: _opacityAnimation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacityAnimation.value,
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white12 : Colors.black12,
+              borderRadius: widget.borderRadius,
+            ),
+          ),
+        );
+      },
+    );
   }
 }

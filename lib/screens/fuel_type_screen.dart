@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '/payment/payment_screen.dart';
+import '/payment/confirm_order_screen.dart';
+import 'package:fuel_app/auth/theme.dart';
 
 class FuelTypeScreen extends StatefulWidget {
   final String stationName;
@@ -8,9 +9,9 @@ class FuelTypeScreen extends StatefulWidget {
 
   const FuelTypeScreen({
     super.key,
-    this.stationName = 'Shell Ntinda',
-    this.stationAddress = 'Ntinda Road, Kampala',
-    this.fuelTypes = const ['Petrol 95', 'Diesel', 'Kerosene'],
+    this.stationName = 'Aloha Petroleum, Ltd',
+    this.stationAddress = '1001 Bishop St. Ste 130',
+    this.fuelTypes = const ['Petrol 95', 'Diesel', 'Premium 98'],
   });
 
   @override
@@ -28,25 +29,21 @@ class _FuelTypeScreenState extends State<FuelTypeScreen> {
   bool _deliverNow = true;
   DateTime? _scheduledDateTime;
 
-  // Simulated price map (UGX per litre)
+  // Simulated price map
   static const Map<String, double> _fuelPrices = {
-    'Petrol 95':  4850,
-    'Diesel':     4650,
-    'Premium':    5100,
-    'Kerosene':   3900,
-    'Fuel':       4850,
-    'Diesel / Petrol': 4750,
+    'Petrol 95':  4.59,
+    'Diesel':     4.89,
+    'Premium 98': 5.19,
+    'Kerosene':   3.90,
   };
 
-  double get _pricePerLitre =>
-      _fuelPrices[_selectedFuel] ?? 4850.0;
+  double get _pricePerLitre => _fuelPrices[_selectedFuel] ?? 4.59;
   double get _fuelTotal  => _pricePerLitre * _quantity;
-  double get _deliveryFee => 5000.0;
+  double get _deliveryFee => 5.00;
   double get _gst         => _deliveryFee * 0.10;
   double get _total       => _fuelTotal + _deliveryFee + _gst;
 
-  String _ugx(double v) =>
-      'UGX ${v.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
+  String _formatCurrency(double v) => '\$${v.toStringAsFixed(2)}';
 
   @override
   void initState() {
@@ -71,66 +68,104 @@ class _FuelTypeScreenState extends State<FuelTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppTheme.darkBg : const Color(0xFFF4F4F6);
+    final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+    final textPrimary = isDark ? Colors.white : const Color(0xFF111111);
+    final textSecondary = isDark ? AppTheme.darkTextSecondary : const Color(0xFF666666);
+    final dividerColor = isDark ? AppTheme.darkBorder : const Color(0xFFE8E8E8);
+    final inputFill = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8F8FA);
+    final gold = AppTheme.gold;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
+        backgroundColor: cardBg,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: Color(0xFFC4963D), size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Confirm Order',
-          style: TextStyle(
-            color: Color(0xFFC4963D),
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+        scrolledUnderElevation: 0,
+        leading: Center(
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 36,
+              height: 36,
+              margin: const EdgeInsets.only(left: 8),
+              decoration: BoxDecoration(
+                color: cardBg,
+                shape: BoxShape.circle,
+                border: Border.all(color: dividerColor, width: 1.5),
+              ),
+              child: Icon(Icons.arrow_back, color: textPrimary, size: 16),
+            ),
           ),
         ),
         centerTitle: true,
+        title: Text(
+          'Order Fuel',
+          style: TextStyle(
+            color: textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+        ),
+        actions: const [ThemeToggleButton()],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1, color: dividerColor),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Station Card ──────────────────────────────────────────────
-            _sectionCard(
-              header: 'FUEL STATION',
-              headerIcon: Icons.local_gas_station_rounded,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: isDark ? Border.all(color: dividerColor) : null,
+                boxShadow: [
+                  if (!isDark)
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                ],
+              ),
               child: Row(
                 children: [
                   Container(
-                    width: 44, height: 44,
+                    width: 48, height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50).withOpacity(0.12),
-                      shape: BoxShape.circle,
+                      color: gold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.local_gas_station_rounded,
-                        color: Color(0xFF4CAF50), size: 22),
+                    child: Icon(Icons.local_gas_station_rounded, color: gold, size: 24),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           widget.stationName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         if (widget.stationAddress.isNotEmpty) ...[
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           Text(
                             widget.stationAddress,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 12,
+                              color: textSecondary,
+                              fontSize: 13,
                             ),
                           ),
                         ],
@@ -140,48 +175,59 @@ class _FuelTypeScreenState extends State<FuelTypeScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 24),
 
             // ── Fuel Type Selector ────────────────────────────────────────
-            _sectionCard(
-              header: 'SELECT FUEL TYPE',
-              headerIcon: Icons.oil_barrel_outlined,
-              child: Column(
-                children: widget.fuelTypes.isEmpty
-                    ? ['Petrol 95', 'Diesel', 'Kerosene']
-                        .map((f) => _fuelTile(f))
-                        .toList()
-                    : widget.fuelTypes.map((f) => _fuelTile(f)).toList(),
-              ),
+            _sectionHeader('Select Fuel Type', textPrimary),
+            const SizedBox(height: 12),
+            Column(
+              children: widget.fuelTypes.isEmpty
+                  ? ['Petrol 95', 'Diesel', 'Premium 98']
+                      .map((f) => _fuelTile(f, isDark, cardBg, textPrimary, textSecondary, dividerColor, gold))
+                      .toList()
+                  : widget.fuelTypes.map((f) => _fuelTile(f, isDark, cardBg, textPrimary, textSecondary, dividerColor, gold)).toList(),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 24),
 
             // ── Quantity Stepper ──────────────────────────────────────────
-            _sectionCard(
-              header: 'QUANTITY',
-              headerIcon: Icons.scale_outlined,
+            _sectionHeader('Quantity (Litres)', textPrimary),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: isDark ? Border.all(color: dividerColor) : null,
+                boxShadow: [
+                  if (!isDark)
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                    ),
+                ],
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Litres',
-                      style: TextStyle(
-                          color: Colors.white70, fontSize: 14)),
+                  Text('Volume', style: TextStyle(color: textSecondary, fontSize: 16)),
                   Row(
                     children: [
-                      _stepBtn(Icons.remove, () {
+                      _stepBtn(Icons.remove, isDark, textPrimary, () {
                         if (_quantity > 1) setState(() => _quantity--);
                       }),
-                      const SizedBox(width: 16),
-                      Text(
-                        '$_quantity L',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        width: 70,
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$_quantity L',
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      _stepBtn(Icons.add, () {
+                      _stepBtn(Icons.add, isDark, textPrimary, () {
                         if (_quantity < 200) setState(() => _quantity++);
                       }),
                     ],
@@ -189,310 +235,201 @@ class _FuelTypeScreenState extends State<FuelTypeScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
 
             // ── Delivery Location ─────────────────────────────────────────
-            _sectionCard(
-              header: 'DELIVERY LOCATION',
-              headerIcon: Icons.location_on_rounded,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _locationController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: 'Enter specific delivery spot (e.g. Parking Lot B)',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
-                      filled: true,
-                      fillColor: const Color(0xFF1E1E1E),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFC4963D)),
-                      ),
-                      prefixIcon: const Icon(Icons.my_location, color: Color(0xFFC4963D), size: 16),
-                    ),
-                  ),
-                ],
+            _sectionHeader('Delivery Location', textPrimary),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _locationController,
+              style: TextStyle(color: textPrimary, fontSize: 15),
+              decoration: _inputDecoration(
+                hint: 'Enter delivery spot',
+                icon: Icons.my_location_rounded,
+                isDark: isDark,
+                fillColor: inputFill,
+                dividerColor: dividerColor,
+                gold: gold,
+                textSecondary: textSecondary,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 24),
 
             // ── Delivery Time ─────────────────────────────────────────────
-            _sectionCard(
-              header: 'DELIVERY TIME',
-              headerIcon: Icons.access_time_filled_rounded,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _deliverNow = true),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _deliverNow
-                                  ? const Color(0xFFC4963D).withOpacity(0.12)
-                                  : const Color(0xFF252525),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _deliverNow
-                                    ? const Color(0xFFC4963D)
-                                    : Colors.white.withOpacity(0.08),
-                                width: _deliverNow ? 1.5 : 1.0,
-                              ),
-                            ),
-                            child: const Column(
-                              children: [
-                                Icon(Icons.bolt, color: Color(0xFFC4963D), size: 18),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Deliver Now',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Within 30 mins',
-                                  style: TextStyle(
-                                    color: Colors.white38,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            setState(() => _deliverNow = false);
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(const Duration(days: 7)),
-                              builder: (context, child) => Theme(
-                                data: ThemeData.dark().copyWith(
-                                  colorScheme: const ColorScheme.dark(
-                                    primary: Color(0xFFC4963D),
-                                    onPrimary: Colors.black,
-                                    surface: Color(0xFF1A1A1A),
-                                    onSurface: Colors.white,
-                                  ),
-                                ),
-                                child: child!,
-                              ),
-                            );
-                            if (date != null && mounted) {
-                              final time = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                                builder: (context, child) => Theme(
-                                  data: ThemeData.dark().copyWith(
-                                    colorScheme: const ColorScheme.dark(
-                                      primary: Color(0xFFC4963D),
-                                      onPrimary: Colors.black,
-                                      surface: Color(0xFF1A1A1A),
-                                      onSurface: Colors.white,
-                                    ),
-                                  ),
-                                  child: child!,
-                                ),
-                              );
-                              if (time != null) {
-                                setState(() {
-                                  _scheduledDateTime = DateTime(
-                                    date.year,
-                                    date.month,
-                                    date.day,
-                                    time.hour,
-                                    time.minute,
-                                  );
-                                });
-                              }
-                            }
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: !_deliverNow
-                                  ? const Color(0xFFC4963D).withOpacity(0.12)
-                                  : const Color(0xFF252525),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: !_deliverNow
-                                    ? const Color(0xFFC4963D)
-                                    : Colors.white.withOpacity(0.08),
-                                width: !_deliverNow ? 1.5 : 1.0,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                const Icon(Icons.calendar_month, color: Color(0xFFC4963D), size: 18),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Schedule Later',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _scheduledDateTime == null
-                                      ? 'Select Time'
-                                      : () {
-                                          final h = _scheduledDateTime!.hour.toString().padLeft(2, '0');
-                                          final m = _scheduledDateTime!.minute.toString().padLeft(2, '0');
-                                          return '${_scheduledDateTime!.day}/${_scheduledDateTime!.month} @ $h:$m';
-                                        }(),
-                                  style: TextStyle(
-                                    color: _scheduledDateTime == null ? Colors.white38 : const Color(0xFFC4963D),
-                                    fontSize: 10,
-                                    fontWeight: _scheduledDateTime != null ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+            _sectionHeader('Delivery Time', textPrimary),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _timeOptionCard(
+                    title: 'Deliver Now',
+                    subtitle: 'Within 30 mins',
+                    icon: Icons.bolt_rounded,
+                    isSelected: _deliverNow,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    dividerColor: dividerColor,
+                    gold: gold,
+                    onTap: () => setState(() => _deliverNow = true),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _timeOptionCard(
+                    title: 'Schedule',
+                    subtitle: _scheduledDateTime == null
+                        ? 'Select Time'
+                        : '${_scheduledDateTime!.month}/${_scheduledDateTime!.day} ${_scheduledDateTime!.hour.toString().padLeft(2, '0')}:${_scheduledDateTime!.minute.toString().padLeft(2, '0')}',
+                    icon: Icons.calendar_month_rounded,
+                    isSelected: !_deliverNow,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    dividerColor: dividerColor,
+                    gold: gold,
+                    onTap: () async {
+                      setState(() => _deliverNow = false);
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 7)),
+                        builder: (context, child) => Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: gold,
+                              onPrimary: Colors.white,
+                              onSurface: isDark ? Colors.white : Colors.black,
+                              surface: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(foregroundColor: gold),
+                            ),
+                          ),
+                          child: child!,
+                        ),
+                      );
+                      if (date != null && mounted) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                          builder: (context, child) => Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.light(
+                                primary: gold,
+                                onPrimary: Colors.white,
+                                onSurface: isDark ? Colors.white : Colors.black,
+                                surface: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                              ),
+                              textButtonTheme: TextButtonThemeData(
+                                style: TextButton.styleFrom(foregroundColor: gold),
+                              ),
+                            ),
+                            child: child!,
+                          ),
+                        );
+                        if (time != null && mounted) {
+                          setState(() {
+                            _scheduledDateTime = DateTime(
+                              date.year, date.month, date.day, time.hour, time.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 24),
 
             // ── Vehicle Details ───────────────────────────────────────────
-            _sectionCard(
-              header: 'VEHICLE FOR DELIVERY',
-              headerIcon: Icons.directions_car_filled_rounded,
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: _vehicleModelController,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
-                        labelText: 'Model & Color',
-                        labelStyle: const TextStyle(color: Colors.white38, fontSize: 11),
-                        filled: true,
-                        fillColor: const Color(0xFF1E1E1E),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFC4963D)),
-                        ),
-                      ),
+            _sectionHeader('Vehicle for Delivery', textPrimary),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _vehicleModelController,
+                    style: TextStyle(color: textPrimary, fontSize: 15),
+                    decoration: _inputDecoration(
+                      hint: 'Model & Color',
+                      isDark: isDark,
+                      fillColor: inputFill,
+                      dividerColor: dividerColor,
+                      gold: gold,
+                      textSecondary: textSecondary,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _licensePlateController,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
-                        labelText: 'License Plate',
-                        labelStyle: const TextStyle(color: Colors.white38, fontSize: 11),
-                        filled: true,
-                        fillColor: const Color(0xFF1E1E1E),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFC4963D)),
-                        ),
-                      ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _licensePlateController,
+                    style: TextStyle(color: textPrimary, fontSize: 15),
+                    decoration: _inputDecoration(
+                      hint: 'License Plate',
+                      isDark: isDark,
+                      fillColor: inputFill,
+                      dividerColor: dividerColor,
+                      gold: gold,
+                      textSecondary: textSecondary,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 32),
 
             // ── Payment Summary ───────────────────────────────────────────
-            const Text(
-              'Payment Summary',
-              style: TextStyle(
-                color: Color(0xFFC4963D),
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
+            _sectionHeader('Payment Summary', textPrimary),
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: const Color(0xFFC4963D).withOpacity(0.15)),
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: isDark ? Border.all(color: dividerColor) : null,
+                boxShadow: [
+                  if (!isDark)
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                    ),
+                ],
               ),
               child: Column(
                 children: [
-                  _payRow('$_selectedFuel × $_quantity L',
-                      _ugx(_fuelTotal)),
-                  const SizedBox(height: 10),
-                  _payRow('Delivery Fee', _ugx(_deliveryFee)),
-                  const SizedBox(height: 10),
-                  _payRow('Tax (10%)', _ugx(_gst)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Divider(
-                        color: Color(0xFFC4963D), height: 1),
+                  _payRow('$_selectedFuel × $_quantity L', _formatCurrency(_fuelTotal), textSecondary, textPrimary),
+                  const SizedBox(height: 12),
+                  _payRow('Delivery Fee', _formatCurrency(_deliveryFee), textSecondary, textPrimary),
+                  const SizedBox(height: 12),
+                  _payRow('Tax (10%)', _formatCurrency(_gst), textSecondary, textPrimary),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(color: dividerColor, height: 1),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('TOTAL',
-                          style: TextStyle(
-                              color: Color(0xFFC4963D),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.8)),
                       Text(
-                        _ugx(_total),
-                        style: const TextStyle(
-                          color: Color(0xFFC4963D),
-                          fontSize: 18,
+                        'Total Amount',
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        _formatCurrency(_total),
+                        style: TextStyle(
+                          color: gold,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -501,134 +438,235 @@ class _FuelTypeScreenState extends State<FuelTypeScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-            // ── Proceed to Payment ────────────────────────────────────────
-            ElevatedButton.icon(
-              onPressed: () {
-                final deliveryTimeStr = _deliverNow
-                    ? 'Deliver Now (Within 30 mins)'
-                    : (_scheduledDateTime == null
-                        ? 'Scheduled (Later)'
-                        : () {
-                            final h = _scheduledDateTime!.hour.toString().padLeft(2, '0');
-                            final m = _scheduledDateTime!.minute.toString().padLeft(2, '0');
-                            return 'Scheduled: ${_scheduledDateTime!.day}/${_scheduledDateTime!.month}/${_scheduledDateTime!.year} @ $h:$m';
-                          }());
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PaymentScreen(
-                      stationName: widget.stationName,
-                      fuelType: _selectedFuel,
-                      quantityLitres: _quantity,
-                      totalAmount: _total,
-                      deliveryLocation: _locationController.text.trim().isEmpty
-                          ? widget.stationAddress
-                          : _locationController.text.trim(),
-                      deliveryTime: deliveryTimeStr,
-                      vehicleModel: _vehicleModelController.text.trim(),
-                      licensePlate: _licensePlateController.text.trim(),
+            // ── Proceed to Confirm Order ──────────────────────────────────
+            SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ConfirmOrderScreen(
+                        stationName: widget.stationName,
+                        fuelType: _selectedFuel,
+                        quantityLitres: _quantity,
+                        totalAmount: _total,
+                        deliveryLocation: _locationController.text.trim().isEmpty
+                            ? widget.stationAddress
+                            : _locationController.text.trim(),
+                      ),
                     ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: gold,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text(
+                  'Confirm Order',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
                   ),
-                );
-              },
-              icon: const Icon(Icons.lock_outline,
-                  size: 18, color: Colors.white),
-              label: const Text(
-                'Proceed to Payment',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC4963D),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  Widget _fuelTile(String fuel) {
+  Widget _sectionHeader(String title, Color textPrimary) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: textPrimary,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String hint,
+    IconData? icon,
+    required bool isDark,
+    required Color fillColor,
+    required Color dividerColor,
+    required Color gold,
+    required Color textSecondary,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.6), fontSize: 15),
+      filled: true,
+      fillColor: fillColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      prefixIcon: icon != null ? Icon(icon, color: gold, size: 20) : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: dividerColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: dividerColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: gold, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _timeOptionCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required bool isDark,
+    required Color cardBg,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color dividerColor,
+    required Color gold,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? gold.withValues(alpha: 0.08) : cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? gold : dividerColor,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            if (!isDark && !isSelected)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 6,
+              ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? gold : textSecondary, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? textPrimary : textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: isSelected ? gold : textSecondary,
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _fuelTile(
+    String fuel,
+    bool isDark,
+    Color cardBg,
+    Color textPrimary,
+    Color textSecondary,
+    Color dividerColor,
+    Color gold,
+  ) {
     final selected = _selectedFuel == fuel;
-    final price = _fuelPrices[fuel] ?? 4850.0;
+    final price = _fuelPrices[fuel] ?? 4.59;
     return GestureDetector(
       onTap: () => setState(() => _selectedFuel = fuel),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFFC4963D).withOpacity(0.12)
-              : const Color(0xFF252525),
-          borderRadius: BorderRadius.circular(12),
+          color: selected ? gold.withValues(alpha: 0.08) : cardBg,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected
-                ? const Color(0xFFC4963D)
-                : Colors.white.withOpacity(0.08),
+            color: selected ? gold : dividerColor,
             width: selected ? 1.5 : 1.0,
           ),
+          boxShadow: [
+            if (!isDark && !selected)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 6,
+              ),
+          ],
         ),
         child: Row(
           children: [
-            Text('⛽',
-                style: TextStyle(
-                    fontSize: selected ? 20 : 16)),
-            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: selected ? gold : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF2F2F5)),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.water_drop_rounded,
+                color: selected ? Colors.white : textSecondary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
             Expanded(
-              child: Text(
-                fuel,
-                style: TextStyle(
-                  color: selected
-                      ? const Color(0xFFC4963D)
-                      : Colors.white,
-                  fontSize: 14,
-                  fontWeight: selected
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    fuel,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 16,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\$${price.toStringAsFixed(2)}/gal',
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              'UGX ${price.toStringAsFixed(0)}/L',
-              style: TextStyle(
-                color: selected
-                    ? const Color(0xFFC4963D)
-                    : Colors.white38,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(width: 8),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 18, height: 18,
+            Container(
+              width: 22, height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: selected
-                      ? const Color(0xFFC4963D)
-                      : Colors.white24,
+                  color: selected ? gold : textSecondary.withValues(alpha: 0.4),
                   width: 2,
                 ),
-                color: selected
-                    ? const Color(0xFFC4963D)
-                    : Colors.transparent,
+                color: selected ? gold : Colors.transparent,
               ),
-              child: selected
-                  ? const Icon(Icons.check,
-                      color: Colors.white, size: 11)
-                  : null,
+              child: selected ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
             ),
           ],
         ),
@@ -636,70 +674,26 @@ class _FuelTypeScreenState extends State<FuelTypeScreen> {
     );
   }
 
-  Widget _sectionCard({
-    required String header,
-    required IconData headerIcon,
-    required Widget child,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-            color: const Color(0xFFC4963D).withOpacity(0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(headerIcon,
-                  color: const Color(0xFFC4963D), size: 15),
-              const SizedBox(width: 6),
-              Text(header,
-                  style: const TextStyle(
-                      color: Color(0xFF888888),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _stepBtn(IconData icon, VoidCallback onTap) {
+  Widget _stepBtn(IconData icon, bool isDark, Color textPrimary, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36, height: 36,
+        width: 44, height: 44,
         decoration: BoxDecoration(
-          color: const Color(0xFF252525),
-          shape: BoxShape.circle,
-          border: Border.all(
-              color: const Color(0xFFC4963D).withOpacity(0.35)),
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F2),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child:
-            Icon(icon, color: const Color(0xFFC4963D), size: 18),
+        child: Icon(icon, color: textPrimary, size: 20),
       ),
     );
   }
 
-  Widget _payRow(String label, String value) {
+  Widget _payRow(String label, String value, Color textSecondary, Color textPrimary) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: Colors.white60, fontSize: 13)),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 13,
-                fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: textSecondary, fontSize: 15)),
+        Text(value, style: TextStyle(color: textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
       ],
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '/auth/login_screen.dart';
-import '/services/auth_service.dart';
+import '../auth/login_screen.dart';
+import '../services/auth_service.dart';
 import '../auth/theme.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
@@ -100,11 +100,12 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       barrierDismissible: false,
       barrierColor: Colors.black54,
       builder: (ctx) => AlertDialog(
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: isSuccess ? AppTheme.gold : Colors.redAccent.withOpacity(0.5),
+            width: 1.5,
           ),
         ),
         title: Row(
@@ -113,14 +114,14 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isSuccess
-                    ? AppTheme.gold.withOpacity(0.2)
-                    : Colors.redAccent.withOpacity(0.2),
+                    ? AppTheme.gold.withOpacity(0.15)
+                    : Colors.redAccent.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isSuccess ? Icons.check_circle_outline : Icons.error_outline,
                 color: isSuccess ? AppTheme.gold : Colors.redAccent,
-                size: 20,
+                size: 24,
               ),
             ),
             const SizedBox(width: 12),
@@ -128,9 +129,9 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
               child: Text(
                 title,
                 style: TextStyle(
-                  color: theme.textTheme.bodyLarge?.color,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
                 ),
               ),
             ),
@@ -138,9 +139,13 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
         ),
         content: Text(
           message,
-          style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 14, height: 1.4),
+          style: TextStyle(
+            color: isDark ? Colors.white70 : Colors.black54,
+            fontSize: 14,
+            height: 1.5,
+          ),
         ),
-        actionsPadding: const EdgeInsets.only(bottom: 12, right: 12),
+        actionsPadding: const EdgeInsets.only(bottom: 16, right: 16),
         actions: [
           ElevatedButton(
             onPressed: () {
@@ -150,9 +155,17 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.gold,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              elevation: 0,
             ),
-            child: const Text('OK', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
           ),
         ],
       ),
@@ -166,15 +179,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        actions: const [ThemeToggleButton()],
-      ),
+      appBar: WavyHeader(title: 'Change Password'),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -186,137 +191,207 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                   constraints: BoxConstraints(
                     minHeight: constraints.maxHeight,
                   ),
-                  child: Center(
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Center(child: FuelConnectLogo(fontSize: 32)),
-                          const SizedBox(height: 8),
-                          Center(
-                            child: Text(
-                              'SECURE PASSWORD RESET',
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 16),
+                            
+                            // Subtitle: "Enter New Password"
+                            Text(
+                              'Enter New Password',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: theme.textTheme.bodyMedium?.color,
-                                fontSize: 10,
-                                letterSpacing: 2.0,
-                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF2C2C2C),
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 40),
+                            const SizedBox(height: 12),
 
-                          Center(
-                            child: Container(
-                              width: 64, height: 64,
+                            // Description
+                            Text(
+                              'Your new password must be different\nfrom previously used password.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : const Color(0xFF757575),
+                                fontSize: 14,
+                                height: 1.5,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Password rules hint
+                            Container(
+                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
+                                color: isDark ? const Color(0xFF141414) : const Color(0xFFF5F6F9),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isDark ? AppTheme.darkBorder : const Color(0xFFE0E0E0),
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Password requirements:', 
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : const Color(0xFF2C2C2C),
+                                      fontSize: 12, 
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  _RuleRow(text: 'At least 8 characters', isDark: isDark),
+                                  _RuleRow(text: 'Uppercase letter (A-Z)', isDark: isDark),
+                                  _RuleRow(text: 'Lowercase letter (a-z)', isDark: isDark),
+                                  _RuleRow(text: 'Number (0-9)', isDark: isDark),
+                                  _RuleRow(text: 'Special character (!@#\$%^&*)', isDark: isDark),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // New Password Field
+                            _buildPasswordField(
+                              controller: _newPassController,
+                              label: 'Password',
+                              obscure: _obscureNew,
+                              onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                              theme: theme,
+                              isDark: isDark,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) return 'Password is required';
+                                if (!_passRegex.hasMatch(v.trim())) {
+                                  return 'Must meet all requirements above';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Confirm Password Field
+                            _buildPasswordField(
+                              controller: _confirmPassController,
+                              label: 'Confirm Password',
+                              obscure: _obscureConfirm,
+                              onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                              theme: theme,
+                              isDark: isDark,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) return 'Please confirm your password';
+                                if (v.trim() != _newPassController.text.trim()) return 'Passwords do not match';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Reset Password Text Button aligned right
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed: _isLoading ? null : _resetPassword,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppTheme.gold,
+                                    textStyle: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  child: const Text('Reset password'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Continue Button
+                            Container(
+                              width: double.infinity,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
                                 gradient: AppTheme.buttonGradient,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.gold.withOpacity(0.4),
-                                    blurRadius: 20, spreadRadius: 3,
+                                    color: AppTheme.gold.withOpacity(isDark ? 0.15 : 0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
-                              child: const Icon(Icons.lock_outline, color: Colors.black, size: 32),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          
-                          Text(
-                            'Create New Password',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 22, fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 8),
-                          
-                          Center(
-                            child: Text(
-                              'For ${widget.email}',
-                              style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Password rules hint
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: theme.dividerColor),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Password must contain:', 
-                                  style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w600)
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _resetPassword,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                                const SizedBox(height: 6),
-                                _RuleRow(text: 'At least 8 characters', theme: theme),
-                                _RuleRow(text: 'Uppercase letter (A-Z)', theme: theme),
-                                _RuleRow(text: 'Lowercase letter (a-z)', theme: theme),
-                                _RuleRow(text: 'Number (0-9)', theme: theme),
-                                _RuleRow(text: 'Special character (!@#\$%^&*)', theme: theme),
-                              ],
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Continue',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                              ),
                             ),
+                          ],
+                        ),
+                        
+                        // Bottom cancel button helper
+                        Padding(
+                          padding: const EdgeInsets.only(top: 32.0),
+                          child: Column(
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: AppTheme.gold,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                'PRIVACY PROTECTED • HELP CENTER',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white38 : Colors.black38,
+                                  fontSize: 10,
+                                  letterSpacing: 1.0,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 24),
-
-                          // New Password
-                          _buildPasswordField(
-                            controller: _newPassController,
-                            label: 'NEW PASSWORD',
-                            obscure: _obscureNew,
-                            onToggle: () => setState(() => _obscureNew = !_obscureNew),
-                            theme: theme,
-                            isDark: isDark,
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Password is required';
-                              if (!_passRegex.hasMatch(v.trim())) {
-                                return 'Must have 8+ chars, upper, lower, number & symbol';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Confirm Password
-                          _buildPasswordField(
-                            controller: _confirmPassController,
-                            label: 'CONFIRM PASSWORD',
-                            obscure: _obscureConfirm,
-                            onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                            theme: theme,
-                            isDark: isDark,
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Please confirm your password';
-                              if (v.trim() != _newPassController.text.trim()) return 'Passwords do not match';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Reset Button
-                          GoldButton(
-                            text: _isLoading ? 'RESETTING...' : 'RESET PASSWORD',
-                            onPressed: _isLoading ? () {} : _resetPassword,
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Center(
-                              child: Text('Cancel', style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w600)),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -337,69 +412,103 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     required bool isDark,
     required String? Function(String?) validator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label, 
-          style: TextStyle(
-            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8), 
-            fontSize: 10, 
-            letterSpacing: 1.0, 
-            fontWeight: FontWeight.w700,
+    return TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      style: TextStyle(
+        color: isDark ? Colors.white : Colors.black87,
+        fontSize: 16,
+      ),
+      validator: validator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      inputFormatters: [LengthLimitingTextInputFormatter(50)],
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          color: isDark ? Colors.white60 : Colors.black54,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        floatingLabelStyle: const TextStyle(
+          color: AppTheme.gold,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          color: AppTheme.gold,
+          size: 22,
+        ),
+        suffixIcon: GestureDetector(
+          onTap: onToggle,
+          child: Icon(
+            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            color: isDark ? Colors.white38 : Colors.black38,
+            size: 20,
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: theme.dividerColor),
-          ),
-          child: TextFormField(
-            controller: controller,
-            obscureText: obscure,
-            style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
-            validator: validator,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            inputFormatters: [LengthLimitingTextInputFormatter(50)],
-            decoration: InputDecoration(
-              hintText: '••••••••',
-              hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
-              prefixIcon: Icon(Icons.lock_outline, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 18),
-              suffixIcon: GestureDetector(
-                onTap: onToggle,
-                child: Icon(
-                  obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), 
-                  size: 18,
-                ),
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            ),
+        hintText: '••••••••',
+        hintStyle: TextStyle(
+          color: isDark ? Colors.white30 : Colors.black38,
+          fontSize: 16,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: isDark ? AppTheme.darkBorder : const Color(0xFFE0E0E0),
+            width: 1.5,
           ),
         ),
-      ],
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppTheme.gold,
+            width: 2.0,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Colors.redAccent,
+            width: 1.5,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Colors.redAccent,
+            width: 2.0,
+          ),
+        ),
+        filled: true,
+        fillColor: isDark ? const Color(0xFF141414) : Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      ),
     );
   }
 }
 
 class _RuleRow extends StatelessWidget {
   final String text;
-  final ThemeData theme;
+  final bool isDark;
   
-  const _RuleRow({required this.text, required this.theme});
+  const _RuleRow({required this.text, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.only(top: 6),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_outline, color: AppTheme.gold, size: 12),
-          const SizedBox(width: 6),
-          Text(text, style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 11)),
+          const Icon(Icons.check_circle_outline, color: AppTheme.gold, size: 14),
+          const SizedBox(width: 8),
+          Text(
+            text, 
+            style: TextStyle(
+              color: isDark ? Colors.white70 : const Color(0xFF555555), 
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );

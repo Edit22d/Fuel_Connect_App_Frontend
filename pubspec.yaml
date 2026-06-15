@@ -51,29 +51,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/logo.png
-    - assets/images/car.png
-    - assets/images/city.png
-    - assets/images/stabex.png
-    - assets/images/shell.png
-    - assets/images/total.png
-    - assets/images/rubis.png
-    - assets/images/station.png
-    - assets/images/avatar.png
-    - assets/images/petrol.png
-    - assets/images/diesel.png
-    - assets/images/kerosene.png
-    - assets/images/shell_station.png
-    - assets/images/stabex_station.png
-    - assets/images/total_station.png
-    - assets/images/Rubis_station.png
-    - assets/images/wave.png
-    - assets/images/shel.png
-    - assets/images/stabe.png
-    - assets/images/Totall.png
-    - assets/images/cityoil.png
-    - assets/images/Rubi.png
-    - assets/images/map.png
+    - assets/images/
 
   fonts:
     - family: Poppins

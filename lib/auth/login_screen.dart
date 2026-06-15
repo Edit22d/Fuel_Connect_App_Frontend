@@ -72,15 +72,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/fuel.png',
                         fit: BoxFit.contain,
-                        width: size.width * 0.8, // Increased logo size
+                        width: size.width * 12, // Increased logo size
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 10),
                   Text(
                     'Log in to your account',
                     style: TextStyle(
@@ -126,6 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
+              
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Column(
@@ -374,7 +375,7 @@ class _GooglePainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
     final r = size.width / 2;
-    canvas.drawCircle(Offset(cx, cy), r, Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(cx, cy), r, Paint()..color = const Color.fromARGB(255, 253, 251, 251));
     const segments = [(0.0, 1.57, Color(0xFF4285F4)), (1.57, 3.14, Color(0xFF34A853)), (3.14, 4.71, Color(0xFFFBBC05)), (4.71, 6.28, Color(0xFFEA4335))];
     for (final seg in segments) {
       canvas.drawArc(Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7), seg.$1, seg.$2 - seg.$1, false, Paint()..color = seg.$3..style = PaintingStyle.stroke..strokeWidth = size.width * 0.2);

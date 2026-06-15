@@ -33,16 +33,17 @@ class AppTheme {
   static const Color darkGold = Color(0xFF8C6E3F);
   
   // Dark Mode Colors
-  static const Color darkBg = Color(0xFF0D0D0D);
-  static const Color darkSurface = Color(0xFF141414);
-  static const Color darkBorder = Color(0xFF2A2A2A);
+  static const Color darkBg = Color(0xFF121417);
+  static const Color darkSurface = Color(0xFF181C22);
+  static const Color darkBorder = Color(0xFF2B3038);
   static const Color darkTextPrimary = Colors.white;
   static const Color darkTextSecondary = Color(0xFF888888);
   
   // Light Mode Colors
-  static const Color lightBg = Color(0xFFF7F7F9);
-  static const Color lightSurface = Colors.white;
-  static const Color lightBorder = Color(0xFFE5E5E5);
+  static const Color lightBg = Color(0xFFF3F4F7);
+  static const int otpLength = 6;
+  static const Color lightSurface = Color(0xFFF8F9FB);
+  static const Color lightBorder = Color(0xFFE6E8EE);
   static const Color lightTextPrimary = Color(0xFF111111);
   static const Color lightTextSecondary = Color(0xFF666666);
 
@@ -73,6 +74,11 @@ class AppTheme {
       iconTheme: const IconThemeData(color: gold),
       textTheme: GoogleFonts.interTextTheme(),
       dividerColor: lightBorder,
+      cardTheme: const CardThemeData(
+        color: lightSurface,
+        elevation: 0,
+        margin: EdgeInsets.all(0),
+      ),
       fontFamily: null,
     );
   }
@@ -101,6 +107,11 @@ class AppTheme {
         bodyMedium: TextStyle(color: darkTextSecondary),
       ),
       dividerColor: darkBorder,
+      cardTheme: const CardThemeData(
+        color: darkSurface,
+        elevation: 0,
+        margin: EdgeInsets.all(0),
+      ),
       fontFamily: 'sans-serif',
     );
   }
@@ -320,10 +331,10 @@ class _OtpInputRowState extends State<OtpInputRow> {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (i) {
+      children: List.generate(AppTheme.otpLength, (i) {
         return Container(
           width: 54,
-          height: 54,
+          height: 60,
           margin: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: AppTheme.gold.withOpacity(0.15),
@@ -339,7 +350,7 @@ class _OtpInputRowState extends State<OtpInputRow> {
             style: TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.bold),
             decoration: const InputDecoration(counterText: '', border: InputBorder.none),
             onChanged: (val) {
-              if (val.isNotEmpty && i < 3) {
+              if (val.isNotEmpty && i < AppTheme.otpLength - 1) {
                 widget.focusNodes[i + 1].requestFocus();
               } else if (val.isEmpty && i > 0) {
                 widget.focusNodes[i - 1].requestFocus();
@@ -373,6 +384,11 @@ class OtpInfoDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
+              'Reset password',
+              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Text(
               'A 4-digit OTP will be sent\nto your Registered Mobile\nNumber/Email ID',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w600, height: 1.5),
@@ -380,7 +396,7 @@ class OtpInfoDialog extends StatelessWidget {
             const SizedBox(height: 24),
             SizedBox(
               width: 100,
-              height: 40,
+              height: 120,
               child: ElevatedButton(
                 onPressed: onOk,
                 style: ElevatedButton.styleFrom(
@@ -399,6 +415,137 @@ class OtpInfoDialog extends StatelessWidget {
     );
   }
 }
+
+// ── WAVY HEADER CLIPPER ────────────────────────────────────
+class WavyHeaderClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 40);
+    
+    // Smooth S-curve wave points
+    final firstControlPoint = Offset(size.width * 0.35, size.height + 15);
+    final firstEndPoint = Offset(size.width * 0.65, size.height - 30);
+    
+    final secondControlPoint = Offset(size.width * 0.85, size.height - 65);
+    final secondEndPoint = Offset(size.width, size.height - 20);
+    
+    path.quadraticBezierTo(
+      firstControlPoint.dx, 
+      firstControlPoint.dy, 
+      firstEndPoint.dx, 
+      firstEndPoint.dy,
+    );
+    
+    path.quadraticBezierTo(
+      secondControlPoint.dx, 
+      secondControlPoint.dy, 
+      secondEndPoint.dx, 
+      secondEndPoint.dy,
+    );
+    
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+// ── WAVY HEADER THEME TOGGLE ────────────────────────────────
+class HeaderThemeToggle extends StatelessWidget {
+  final Color color;
+  const HeaderThemeToggle({super.key, this.color = Colors.white});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, mode, child) {
+        final isDark = mode == ThemeMode.dark;
+        return IconButton(
+          icon: Icon(
+            isDark ? Icons.light_mode : Icons.dark_mode,
+            color: color,
+          ),
+          onPressed: themeNotifier.toggleTheme,
+          tooltip: 'Toggle Theme',
+        );
+      },
+    );
+  }
+}
+
+// ── WAVY HEADER WIDGET ──────────────────────────────────────
+class WavyHeader extends StatelessWidget implements PreferredSizeWidget {
+  final String title;
+  final VoidCallback? onBack;
+
+  const WavyHeader({
+    super.key,
+    required this.title,
+    this.onBack,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    final gradient = LinearGradient(
+      colors: isDark 
+          ? [const Color(0xFF423314), const Color(0xFF281F0C)] // Premium dark gold gradient for dark mode
+          : [AppTheme.gold, AppTheme.darkGold], // Brand gold gradient for light mode
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+
+    return ClipPath(
+      clipper: WavyHeaderClipper(),
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          gradient: gradient,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+            onPressed: onBack ?? () => Navigator.maybePop(context),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          actions: const [
+            HeaderThemeToggle(),
+            SizedBox(width: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 
 

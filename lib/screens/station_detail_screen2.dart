@@ -1,361 +1,521 @@
 import 'package:flutter/material.dart';
-import '/payment/payment_screen.dart';
-import '/screens/station_screen.dart';
+import 'package:fuel_app/auth/theme.dart';
+import '/payment/order_summary_screen.dart';
 
-class StationDetailScreen2 extends StatelessWidget {
+class StationDetailScreen2 extends StatefulWidget {
   const StationDetailScreen2({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: Column(
-        children: [
-          // ── Header image with overlay ──
-          Stack(
-            children: [
-              SizedBox(
-                height: 200,
-                width: double.infinity,
-                child: Image.asset(
-                  'assets/images/total_station.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Container(
-                height: 200,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0xEE000000)],
-                  ),
-                ),
-              ),
-              // Top bar
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                        ),
-                      ),
-                      // KINETIC badge top-center
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD4A017),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'KINETIC',
-                          style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        child: const Icon(Icons.more_vert, color: Colors.white, size: 22),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Station name bottom-left
-              Positioned(
-                bottom: 16,
-                left: 16,
-                child: const Text(
-                  'TotalEnergies - Paris\nCentral',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-              // Location bottom-right area
-              Positioned(
-                bottom: 16,
-                right: 16,
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Color(0xFFD4A017), size: 12),
-                    const SizedBox(width: 3),
-                    Text(
-                      'Kyaliwajjala District',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 10),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+  State<StationDetailScreen2> createState() => _StationDetailScreen2State();
+}
 
-          // ── Content ──
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+class _StationDetailScreen2State extends State<StationDetailScreen2> {
+  bool _isPetrolExpanded = true;
+  String _selectedTruck = 'Medium';
+
+  final TextEditingController _litersController =
+      TextEditingController(text: '35.00');
+  final TextEditingController _amountController =
+      TextEditingController(text: '\$ 3.00');
+
+  @override
+  void dispose() {
+    _litersController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppTheme.darkBg : Colors.white;
+    final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+    final accordionBodyBg =
+        isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF4F4F4);
+    final textPrimary =
+        isDark ? Colors.white : const Color(0xFF111111);
+    final textSecondary =
+        isDark ? AppTheme.darkTextSecondary : const Color(0xFF8E8E93);
+    final borderColor =
+        isDark ? AppTheme.darkBorder : Colors.grey.withOpacity(0.15);
+    final gold = AppTheme.gold;
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Header Image & Overlay Buttons ──────────────────────────
+            Stack(
+              children: [
+                Container(
+                  height: 280,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    borderRadius:
+                        BorderRadius.vertical(bottom: Radius.circular(32)),
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/stabex_station.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 280,
+                  decoration: BoxDecoration(
+                    borderRadius:
+                        const BorderRadius.vertical(bottom: Radius.circular(32)),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.25),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _CircularButton(
+                          icon: Icons.arrow_back,
+                          onTap: () => Navigator.pop(context),
+                        ),
+                        const HeaderThemeToggle(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Fuel Volume + Total Amount row
+                  // ── Title & Rating ──────────────────────────────────────
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('FUEL VOLUME', style: TextStyle(color: Colors.grey[500], fontSize: 10, letterSpacing: 0.5)),
-                            const SizedBox(height: 2),
-                            const Text(
-                              '45.50 Ltrs',
-                              style: TextStyle(color: Color(0xFFD4A017), fontSize: 22, fontWeight: FontWeight.w800),
-                            ),
-                          ],
+                        child: Text(
+                          'Aloha Petroleum, Ltd',
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                          ),
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      Row(
                         children: [
-                          Text('TOTAL AMOUNT', style: TextStyle(color: Colors.grey[500], fontSize: 10, letterSpacing: 0.5)),
-                          const SizedBox(height: 2),
-                          const Text(
-                            '\$78.25',
-                            style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                          const Icon(Icons.star,
+                              color: Color(0xFFFFC107), size: 18),
+                          const SizedBox(width: 4),
+                          Text(
+                            '5.0',
+                            style: TextStyle(
+                              color: textPrimary.withOpacity(0.8),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
 
-                  // Payment method row (Visa + Change)
+                  // ── Address ─────────────────────────────────────────────
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          color: textSecondary, size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '1001 Bishop St. Ste 1300, HI 96813, US',
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ── Available Products ──────────────────────────────────
+                  Text(
+                    'Available Products',
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF2A2A2A)),
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.0 : 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1A1A6E),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Center(
-                                child: Text('VISA', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text('Visa Card', style: TextStyle(color: Colors.grey[300], fontSize: 13, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            backgroundColor: const Color(0xFF2A2A2A),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                          ),
-                          child: const Text('Change', style: TextStyle(color: Color(0xFFD4A017), fontSize: 11, fontWeight: FontWeight.w600)),
-                        ),
+                        _ProductCol(
+                            label: 'Gas',
+                            price: '1,200',
+                            showDivider: true,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary),
+                        _ProductCol(
+                            label: 'Petrol',
+                            price: '1,450',
+                            showDivider: true,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary),
+                        _ProductCol(
+                            label: 'Diesel',
+                            price: 'N/A',
+                            showDivider: false,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary),
                       ],
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // Select Fuel
-                  const Text('Select Fuel', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-
-                  _FuelOrderRow(label: 'Diesel', price: '₦ 865.00/litre'),
-                  const SizedBox(height: 8),
-                  _FuelOrderRow(label: 'Petrol', price: '₦ 617.00/litre'),
-                  const SizedBox(height: 8),
-                  _FuelOrderRow(label: 'Kerosene', price: '₦ 730.00/litre'),
-                  const SizedBox(height: 20),
-
-                  // Amenities
-                  Text('AVAILABLE AMENITIES', style: TextStyle(color: Colors.grey[500], fontSize: 10, letterSpacing: 1)),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _AmenityIcon(icon: Icons.atm, label: 'ATM'),
-                      _AmenityIcon(icon: Icons.restaurant, label: 'Canteen'),
-                      _AmenityIcon(icon: Icons.local_car_wash, label: 'Car Wash'),
-                      _AmenityIcon(icon: Icons.wifi, label: 'WiFi'),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // CTA
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD4A017),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PaymentScreen()),
-                      ),
-                      child: const Text(
-                        'CONFIRM & START FUELING  ▶',
-                        style: TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.5),
-                      ),
+                  // ── Petrol Accordion ────────────────────────────────────
+                  Container(
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.0 : 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        InkWell(
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                          onTap: () => setState(
+                              () => _isPetrolExpanded = !_isPetrolExpanded),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Petrol',
+                                  style: TextStyle(
+                                    color: textPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                AnimatedRotation(
+                                  turns: _isPetrolExpanded ? 0.5 : 0,
+                                  duration:
+                                      const Duration(milliseconds: 250),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: textSecondary,
+                                    size: 24,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        AnimatedCrossFade(
+                          firstChild: const SizedBox(
+                              width: double.infinity, height: 0),
+                          secondChild: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: accordionBodyBg,
+                              borderRadius: const BorderRadius.vertical(
+                                  bottom: Radius.circular(16)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Liters',
+                                    style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 8),
+                                _buildTextField(
+                                    _litersController, cardBg, textPrimary),
+                                const SizedBox(height: 14),
+                                Text('Amount',
+                                    style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 8),
+                                _buildTextField(
+                                    _amountController, cardBg, textPrimary),
+                                const SizedBox(height: 14),
+                                Text('Truck',
+                                    style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: accordionBodyBg,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: borderColor),
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  child: Row(
+                                    children: [
+                                      _buildTruckPill('Small', cardBg,
+                                          textPrimary, borderColor),
+                                      _buildTruckPill('Medium', cardBg,
+                                          textPrimary, borderColor),
+                                      _buildTruckPill('Large', cardBg,
+                                          textPrimary, borderColor),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          crossFadeState: _isPetrolExpanded
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          duration: const Duration(milliseconds: 250),
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-          ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: bg,
+        padding: EdgeInsets.fromLTRB(
+            20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
+        child: SizedBox(
+          height: 56,
+          child: ElevatedButton(
+            onPressed: () {
+              final litText = _litersController.text
+                  .replaceAll(RegExp(r'[^0-9.]'), '');
+              final amountText = _amountController.text
+                  .replaceAll(RegExp(r'[^0-9.]'), '');
+              final litres = double.tryParse(litText)?.toInt() ?? 35;
+              final amount = double.tryParse(amountText) ?? 93.00;
 
-          _BottomNav(activeIndex: 1),
-        ],
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrderSummaryScreen(
+                    stationName: 'Aloha Petroleum, Ltd',
+                    deliveryLocation: '1001 Bishop St. Ste 1300',
+                    fuelType: 'Petrol',
+                    quantityLitres: litres,
+                    baseAmount: amount,
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: gold,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text(
+              'View Order & Proceed',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, Color cardBg,
+      Color textPrimary) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        style: TextStyle(
+            color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTruckPill(
+      String size, Color cardBg, Color textPrimary, Color borderColor) {
+    final isSelected = _selectedTruck == size;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTruck = size),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? cardBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : [],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            size,
+            style: TextStyle(
+              color: textPrimary,
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _FuelOrderRow extends StatelessWidget {
+class _CircularButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CircularButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.92),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.black87, size: 20),
+      ),
+    );
+  }
+}
+
+class _ProductCol extends StatelessWidget {
   final String label;
   final String price;
-  const _FuelOrderRow({required this.label, required this.price});
+  final bool showDivider;
+  final Color textPrimary;
+  final Color textSecondary;
+
+  const _ProductCol({
+    required this.label,
+    required this.price,
+    required this.showDivider,
+    required this.textPrimary,
+    required this.textSecondary,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
+    return Expanded(
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-              Text(price, style: TextStyle(color: Colors.grey[500], fontSize: 11)),
-            ],
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PaymentScreen()),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  price,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD4A017),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-            ),
-            child: const Text('ORDER NOW', style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w800)),
           ),
+          if (showDivider)
+            Container(
+              height: 30,
+              width: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
         ],
-      ),
-    );
-  }
-}
-
-class _AmenityIcon extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _AmenityIcon({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF2A2A2A)),
-          ),
-          child: Icon(icon, color: const Color(0xFFD4A017), size: 24),
-        ),
-        const SizedBox(height: 5),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-      ],
-    );
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  final int activeIndex;
-  const _BottomNav({required this.activeIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      {'icon': Icons.home_outlined, 'label': 'Home'},
-      {'icon': Icons.local_gas_station_outlined, 'label': 'Stations'},
-      {'icon': Icons.receipt_long_outlined, 'label': 'Orders'},
-      {'icon': Icons.person_outline, 'label': 'Profile'},
-    ];
-    return Container(
-      height: 68,
-      decoration: const BoxDecoration(
-        color: Color(0xFF141414),
-        border: Border(top: BorderSide(color: Color(0xFF2A2A2A))),
-      ),
-      child: Row(
-        children: List.generate(items.length, (i) {
-          final active = i == activeIndex;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (i == 1) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const StationScreen()),
-                    (route) => false,
-                  );
-                }
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(items[i]['icon'] as IconData,
-                      color: active ? const Color(0xFFD4A017) : const Color(0xFF555555), size: 22),
-                  const SizedBox(height: 4),
-                  Text(items[i]['label'] as String,
-                      style: TextStyle(
-                        color: active ? const Color(0xFFD4A017) : const Color(0xFF555555),
-                        fontSize: 10,
-                        fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                      )),
-                ],
-              ),
-            ),
-          );
-        }),
       ),
     );
   }

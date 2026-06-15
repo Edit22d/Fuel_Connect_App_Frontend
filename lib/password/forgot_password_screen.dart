@@ -25,7 +25,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void _handleNext() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter an email or phone number')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email address'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
 
@@ -47,12 +52,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Failed to send OTP')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to send OTP'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An error occurred: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -63,17 +78,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        actions: const [
-          ThemeToggleButton(),
-        ],
-      ),
+      appBar: WavyHeader(title: 'Forgot Password'),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -83,139 +88,172 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight,
                 ),
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Center(child: FuelConnectLogo(fontSize: 32)),
-                        const SizedBox(height: 8),
-                        Center(
-                          child: Text(
-                            'FUEL CONNECT PORTAL',
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 16),
+                          
+                          // Subtitle: "Mail Address Here"
+                          Text(
+                            'Mail Address Here',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: theme.textTheme.bodyMedium?.color,
-                              fontSize: 10,
-                              letterSpacing: 2.0,
-                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF2C2C2C),
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.2,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 40),
+                          const SizedBox(height: 12),
 
-                        // Padlock Icon
-                        Center(
-                          child: Container(
-                            width: 64,
-                            height: 64,
+                          // Description
+                          Text(
+                            'Enter the email address associated\nwith your account.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : const Color(0xFF757575),
+                              fontSize: 14,
+                              height: 1.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+
+                          // Email Text Field
+                          TextFormField(
+                            controller: _emailController,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 16,
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              labelStyle: TextStyle(
+                                color: isDark ? Colors.white60 : Colors.black54,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              floatingLabelStyle: const TextStyle(
+                                color: AppTheme.gold,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.email_outlined,
+                                color: AppTheme.gold,
+                                size: 22,
+                              ),
+                              hintText: 'edith@gmail.com',
+                              hintStyle: TextStyle(
+                                color: isDark ? Colors.white30 : Colors.black38,
+                                fontSize: 16,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: isDark ? AppTheme.darkBorder : const Color(0xFFE0E0E0),
+                                  width: 1.5,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppTheme.gold,
+                                  width: 2.0,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF141414) : Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Recover Password Button
+                          Container(
+                            width: double.infinity,
+                            height: 54,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(12),
                               gradient: AppTheme.buttonGradient,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.gold.withOpacity(0.4),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
+                                  color: AppTheme.gold.withOpacity(isDark ? 0.15 : 0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.lock_outline, color: Colors.black, size: 32),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Title
-                        Text(
-                          'Forgot your password?',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 22, fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Subtitle
-                        Text(
-                          'No worries! Enter your registered email or phone number to receive a secure OTP.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 13, height: 1.5),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Email Field
-                        Text(
-                          'EMAIL OR PHONE NUMBER',
-                          style: TextStyle(
-                            color: theme.textTheme.bodyMedium?.color,
-                            fontSize: 10,
-                            letterSpacing: 1.2,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: theme.dividerColor),
-                          ),
-                          child: TextField(
-                            controller: _emailController,
-                            style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
-                            decoration: InputDecoration(
-                              hintText: 'example@email.com / +256...',
-                              hintStyle: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), fontSize: 14),
-                              prefixIcon: Icon(Icons.email_outlined, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? () {} : _handleNext,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Recover Password',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
                             ),
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.done,
                           ),
-                        ),
-                        const SizedBox(height: 28),
-
-                        // Next Button
-                        GoldButton(
-                          text: _isLoading ? 'SENDING OTP...' : 'NEXT',
-                          onPressed: _isLoading ? () {} : _handleNext,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Return to Login
-                        GestureDetector(
-                          onTap: () => Navigator.maybePop(context),
-                          child: Center(
-                            child: Text(
-                              'Return to Login',
+                        ],
+                      ),
+                      
+                      // Bottom navigation helper
+                      Padding(
+                        padding: const EdgeInsets.only(top: 32.0),
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.maybePop(context),
+                              child: Text(
+                                'Return to Login',
+                                style: TextStyle(
+                                  color: AppTheme.gold,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'PRIVACY PROTECTED • HELP CENTER',
                               style: TextStyle(
-                                color: theme.textTheme.bodyMedium?.color,
-                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                                fontSize: 10,
+                                letterSpacing: 1.0,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 48),
-
-                        // Footer
-                        Column(
-                          children: [
-                            Text(
-                              'PRIVACY PROTECTED • HELP CENTER',
-                              style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '© FUELCONNECT. SYSTEM SECURE',
-                              style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 9, letterSpacing: 1.2),
-                            ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -225,4 +263,5 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ),
     );
   }
-}
+}
+
