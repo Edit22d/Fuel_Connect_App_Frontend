@@ -29,7 +29,7 @@ class CustomBottomNav extends StatelessWidget {
       padding: EdgeInsets.only(bottom: bottomPadding),
       height: 70 + bottomPadding,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
@@ -93,8 +93,8 @@ class _NavItemState extends State<_NavItem> {
           transform: Matrix4.identity()..scale(_isHovering ? 1.15 : 1.0),
           decoration: BoxDecoration(
             color: widget.isSelected 
-                ? Colors.white 
-                : (_isHovering ? Colors.white.withOpacity(0.2) : Colors.transparent),
+                ? Theme.of(context).colorScheme.surface 
+                : (_isHovering ? Theme.of(context).colorScheme.surface.withOpacity(0.2) : Colors.transparent),
             shape: BoxShape.circle,
             boxShadow: widget.isSelected 
                 ? [

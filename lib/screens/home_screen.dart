@@ -7,7 +7,6 @@ import '/screens/top_stations_screen.dart';
 import '/screens/profile_screen.dart';
 import '/screens/station_detail_screen1.dart';
 import '/screens/station_detail_screen2.dart';
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -27,13 +26,20 @@ class _HomeScreenState extends State<HomeScreen> {
     if (i == 4) nextScreen = const ProfileScreen();
 
     if (nextScreen != null) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => nextScreen!,
-          transitionDuration: Duration.zero
-        ),
-      );
+      if (i == 4) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => nextScreen!,
+            transitionDuration: Duration.zero
+          ),
+        );
+      }
     }
   }
 
@@ -180,13 +186,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                     children: [
                                       CustomThemeToggle(iconColor: Colors.white, bgColor: Colors.transparent),
                                       const SizedBox(width: 10),
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
-                                          shape: BoxShape.circle,
+                                      GestureDetector(
+                                        onTap: () => Navigator.pushNamed(context, '/notifications'),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.2),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.notifications_none, color: Colors.white, size: 20),
                                         ),
-                                        child: const Icon(Icons.notifications_none, color: Colors.white, size: 20),
                                       ),
                                     ],
                                   ),

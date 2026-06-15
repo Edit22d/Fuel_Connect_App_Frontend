@@ -32,8 +32,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _agreeToTerms = false;
   bool _isLoading = false;
 
+  // ignore: unused_field
   static final _nameRegex = RegExp(r"^[a-zA-Z]+(?: [a-zA-Z]+)+$");
+  // ignore: unused_field
   static final _phoneRegex = RegExp(r"^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$");
+  // ignore: unused_field
   static final _passRegex = RegExp(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$");
 
   @override
@@ -314,9 +317,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'I agree with terms of use',
-                          style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 13),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/terms');
+                          },
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                                fontSize: 13,
+                              ),
+                              children: [
+                                const TextSpan(text: 'I agree with '),
+                                TextSpan(
+                                  text: 'terms of use',
+                                  style: TextStyle(
+                                    color: AppTheme.gold,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         SizedBox(
                           width: 24,

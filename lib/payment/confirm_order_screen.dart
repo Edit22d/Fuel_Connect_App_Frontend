@@ -100,6 +100,7 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
   }
 
   Future<void> _selectDateTime(BuildContext context) async {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _scheduledDateTime,
@@ -108,11 +109,17 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppTheme.gold,
-              onPrimary: Colors.white,
-              onSurface: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
-            ),
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: AppTheme.gold,
+                    onPrimary: Colors.white,
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: AppTheme.gold,
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor: AppTheme.gold,
@@ -130,13 +137,20 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
         context: context,
         initialTime: TimeOfDay.fromDateTime(_scheduledDateTime),
         builder: (context, child) {
+          final bool isDark = Theme.of(context).brightness == Brightness.dark;
           return Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: AppTheme.gold,
-                onPrimary: Colors.white,
-                onSurface: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
-              ),
+              colorScheme: isDark
+                  ? const ColorScheme.dark(
+                      primary: AppTheme.gold,
+                      onPrimary: Colors.white,
+                      onSurface: Colors.white,
+                    )
+                  : const ColorScheme.light(
+                      primary: AppTheme.gold,
+                      onPrimary: Colors.white,
+                      onSurface: Colors.black,
+                    ),
               textButtonTheme: TextButtonThemeData(
                 style: TextButton.styleFrom(
                   foregroundColor: AppTheme.gold,
@@ -264,7 +278,7 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
     final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final minute = dt.minute.toString().padLeft(2, '0');
     final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-    return '${dt.year} $hour:$minute $ampm';
+    return '$hour:$minute $ampm';
   }
 
   @override
@@ -385,7 +399,20 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
                       // Process Today Card
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => setState(() => _deliveryMode = 'process'),
+                          onTap: () {
+                setState(() {
+                  _deliveryMode = 'process';
+                  // Reset scheduled date to now when switching to process mode
+                  _scheduledDateTime = DateTime.now();
+                });
+                final bool isDark = Theme.of(context).brightness == Brightness.dark;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
+                    content: const Text('Delivery set to Process Today'),
+                  ),
+                );
+              },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.all(14),

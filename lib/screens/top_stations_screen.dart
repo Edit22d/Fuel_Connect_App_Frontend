@@ -26,13 +26,20 @@ class _TopStationsScreenState extends State<TopStationsScreen> {
     if (i == 4) nextScreen = const ProfileScreen();
 
     if (nextScreen != null) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => nextScreen!,
-          transitionDuration: Duration.zero,
-        ),
-      );
+      if (i == 4) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => nextScreen!,
+            transitionDuration: Duration.zero,
+          ),
+        );
+      }
     }
   }
 

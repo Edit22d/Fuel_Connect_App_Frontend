@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../auth/theme.dart';
 import '../services/notification_service.dart';
 import 'home_screen.dart';
-import 'order_screen.dart';
+import '../payment/order_summary_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 
@@ -148,7 +148,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (r) => false);
                         break;
                       case 1:
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const OrderScreen()));
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const OrderSummaryScreen()));
                         break;
                       case 2:
                         break;
@@ -318,6 +318,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   void _showNotifDetail(AppNotification notif, Color surface, Color textPrimary, Color textSecondary) {
+    // ignore: unused_local_variable
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,

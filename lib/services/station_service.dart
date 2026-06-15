@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/station_model.dart';
-import '../models/fuel_type_model.dart';
+
 import 'auth_service.dart';
 
 class StationService {

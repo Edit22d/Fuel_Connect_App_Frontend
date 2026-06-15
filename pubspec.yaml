@@ -36,6 +36,7 @@ dependencies:
   google_fonts: ^6.0.0
   flutter_glass_morphism: ^1.0.2
   animations: ^2.0.5
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:

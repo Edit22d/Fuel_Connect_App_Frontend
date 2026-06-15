@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
@@ -13,13 +15,16 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  
+  // ignore: unused_field
   final _auth = AuthService();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _rememberMe = false;
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
+  // ignore: unused_field
   static final _phoneRegex = RegExp(r'^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$');
 
   @override
@@ -296,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : AppTheme.lightSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.dividerColor),
       ),
@@ -327,6 +332,7 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     final isDark = theme.brightness == Brightness.dark;
     return InkWell(
       onTap: onPressed,

@@ -7,11 +7,11 @@ import 'firebase_options.dart'; // Firebase configuration
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'screens/onboarding_screen.dart';
-import 'screens/splash_screen2.dart';
+
 import 'screens/home_screen.dart';
 import 'screens/station_screen.dart';
 import 'screens/profile_screen.dart';
-import 'screens/order_screen.dart';
+import 'payment/order_summary_screen.dart';
 import 'screens/support_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/notification_screen.dart';
@@ -20,7 +20,7 @@ import 'auth/login_screen.dart';
 import 'auth/signup_screen.dart';
 import 'password/forgot_password_screen.dart';
 import 'password/otp_screen.dart';
-import 'password/otp_verify_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,7 +76,7 @@ class FuelConnectApp extends StatelessWidget {
             '/home':            (context) => const HomeScreen(),
             '/station':         (context) => const StationScreen(),
             '/profile':         (context) => const ProfileScreen(),
-            '/orders':          (context) => const OrderScreen(),
+            '/orders':          (context) => const OrderSummaryScreen(),
             '/support':         (context) => const SupportScreen(),
             '/settings':        (context) => const SettingsScreen(),
             '/notifications':   (context) => const NotificationScreen(),

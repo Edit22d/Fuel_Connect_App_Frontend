@@ -4,8 +4,7 @@ import '/screens/home_screen.dart';
 import '/screens/profile_screen.dart';
 import '/screens/settings_screen.dart';
 import 'package:fuel_app/auth/theme.dart';
-import '../auth/login_screen.dart';
-import '/screens/fuel_type_screen.dart';
+
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -16,13 +15,13 @@ class SupportScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new, color: Theme.of(context).iconTheme.color ?? Colors.black, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Support Center',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
@@ -71,7 +70,7 @@ class SupportScreen extends StatelessWidget {
                         ),
                         child: const Icon(
                           Icons.headset_mic_rounded,
-                          color: Colors.white,
+                          color: Colors.black,
                           size: 44,
                         ),
                       ),
@@ -86,9 +85,9 @@ class SupportScreen extends StatelessWidget {
                             color: Color(0xFFFF6B35),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.notifications_active_rounded,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             size: 14,
                           ),
                         ),
@@ -103,11 +102,11 @@ class SupportScreen extends StatelessWidget {
                         TextSpan(
                           text: 'Contact our\n',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            height: 1.3,
-                          ),
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
                         ),
                         TextSpan(
                           text: '24/7 Support\n',
@@ -131,11 +130,11 @@ class SupportScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Our specialists are available around the\nclock to assist you with any inquiries.\nFree of charge for all domestic calls.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white60,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 14,
                       height: 1.6,
                     ),
@@ -166,10 +165,10 @@ class SupportScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Toll-Free: 1-800-SUPPORT-247',
                     style: TextStyle(
-                      color: Colors.white54,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                       fontSize: 12,
                       letterSpacing: 0.5,
                     ),
@@ -211,12 +210,12 @@ class SupportScreen extends StatelessWidget {
       ),
       // Bottom Navigation Bar - Home, Support, Profile, Settings
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFFC4963D),
-        unselectedItemColor: Colors.white54,
-        selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(fontSize: 11),
+          backgroundColor: Theme.of(context).bottomAppBarTheme.color ?? (Theme.of(context).brightness == Brightness.dark ? AppTheme.darkBg : AppTheme.lightBg),
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFFC4963D),
+          unselectedItemColor: Theme.of(context).unselectedWidgetColor,
+          selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -275,17 +274,17 @@ class SupportScreen extends StatelessWidget {
       child: Container(
         width: 140,
         height: 90,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -462,16 +461,16 @@ class _ChatSupportScreenState extends State<ChatSupportScreen> {
               child: const Icon(Icons.support_agent_rounded, color: Colors.black, size: 20),
             ),
             const SizedBox(width: 12),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Support Chat',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text(
                   'Online • Response in mins',
-                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, letterSpacing: 0.5),
                 ),
               ],
             ),

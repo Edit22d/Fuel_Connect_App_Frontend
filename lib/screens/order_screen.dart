@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'tracking_order_screen.dart';
-import '/screens/fuel_type_screen.dart';
+import 'fuel_type_screen.dart';
 import 'package:fuel_app/auth/theme.dart';
 import '../services/order_service.dart';
+import 'home_screen.dart';
+import 'profile_screen.dart';
+import 'support_screen.dart';
+import '../payment/payment_screen.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -70,7 +74,7 @@ class _OrderScreenState extends State<OrderScreen> {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color ?? Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -86,7 +90,7 @@ class _OrderScreenState extends State<OrderScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none, color: Colors.white),
-            onPressed: () {},
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
           ),
           ThemeToggleButton(),
         ],
@@ -136,9 +140,34 @@ class _OrderScreenState extends State<OrderScreen> {
       unselectedItemColor: Colors.white54,
       currentIndex: _selectedIndex,
       onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
+        if (index == _selectedIndex) return;
+        Widget? nextScreen;
+        switch (index) {
+          case 0:
+            nextScreen = const HomeScreen();
+            break;
+          case 1:
+            nextScreen = const PaymentScreen();
+            break;
+          case 2:
+            // Already on orders
+            break;
+          case 3:
+            nextScreen = const SupportScreen();
+            break;
+          case 4:
+            nextScreen = const ProfileScreen();
+            break;
+        }
+        if (nextScreen != null) {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => nextScreen!,
+              transitionDuration: Duration.zero,
+            ),
+          );
+        }
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),

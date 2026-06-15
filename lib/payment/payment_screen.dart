@@ -29,10 +29,11 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  int _selectedPaymentIndex = 0; // 0: Cash, 1: Wallet, 2: Credit Card, 3: Airtel, 4: MTN, 5: Momo
+  int _selectedPaymentIndex = 0; // 0: Cash, 2: Credit Card, 3: Airtel, 4: MTN, 5: Momo
   String _cardNumber = '';
   String _cardExpiry = '';
 
+  // ignore: unused_element
   String get _formattedTotal {
     return '\$${widget.totalAmount.toStringAsFixed(2)}';
   }
@@ -232,10 +233,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     switch (_selectedPaymentIndex) {
       case 0:
         return 'Cash';
-      case 1:
-        return 'Wallet';
       case 2:
-        return _cardNumber.isNotEmpty 
+        return _cardNumber.isNotEmpty
             ? 'Card (•••• ${_cardNumber.substring(_cardNumber.length - 4.clamp(0, _cardNumber.length))})'
             : 'Credit/Debit Card';
       case 3:
@@ -318,30 +317,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Wallet Section ─────────────────────────────────────
-                  _buildSectionHeader('Wallet', textSecondary),
-                  const SizedBox(height: 10),
-                  _buildPaymentCard(
-                    index: 1,
-                    icon: Icons.account_balance_wallet_outlined,
-                    title: 'Wallet',
-                    cardBg: cardBg,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    dividerColor: dividerColor,
-                    gold: gold,
-                  ),
-                  const SizedBox(height: 20),
-
                   // ── Credit & Debit Card Section ────────────────────────
                   _buildSectionHeader('Credit & Debit Card', textSecondary),
                   const SizedBox(height: 10),
                   _buildPaymentCard(
                     index: 2,
                     icon: Icons.credit_card_outlined,
-                    title: 'Wallet', // named Wallet in the screenshot
-                    subtitle: _cardNumber.isNotEmpty 
-                        ? 'Visa •••• ${_cardNumber.substring(_cardNumber.length - 4.clamp(0, _cardNumber.length))}' 
+                    title: 'Credit / Debit Card',
+                    subtitle: _cardNumber.isNotEmpty
+                        ? 'Visa •••• ${_cardNumber.substring(_cardNumber.length - 4.clamp(0, _cardNumber.length))}'
                         : 'Tap to enter details',
                     isCardType: true,
                     cardBg: cardBg,

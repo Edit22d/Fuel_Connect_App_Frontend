@@ -11,7 +11,7 @@ import '/screens/top_stations_screen.dart';
 import '/screens/station_detail_screen1.dart';
 import '/screens/station_detail_screen2.dart';
 import '/screens/station_detail_screen3.dart';
-import '/screens/station_detail_screen4.dart';
+
 
 class StationScreen extends StatefulWidget {
   const StationScreen({super.key});
@@ -88,13 +88,20 @@ class _StationScreenState extends State<StationScreen> {
     if (i == 4) nextScreen = const ProfileScreen();
 
     if (nextScreen != null) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => nextScreen!,
-          transitionDuration: Duration.zero,
-        ),
-      );
+      if (i == 4) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => nextScreen!,
+            transitionDuration: Duration.zero,
+          ),
+        );
+      }
     }
   }
 

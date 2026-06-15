@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/theme.dart';
 import '../services/notification_service.dart';
-import 'notification_screen.dart';
+
 import 'terms_screen.dart';
 import 'home_screen.dart';
-import 'order_screen.dart';
+import '../payment/order_summary_screen.dart';
 import 'profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -335,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (r) => false);
                     break;
                   case 1:
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderSummaryScreen()));
                     break;
                   case 2:
                     break; // Already on settings
@@ -506,6 +506,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ── Dialogs ─────────────────────────────────────────────────────────────────
 
   void _showChangePasswordDialog(Color surface, Color textPrimary, Color textSecondary) {
+    // ignore: unused_local_variable
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentCtrl = TextEditingController();
     final newCtrl = TextEditingController();
@@ -682,35 +683,104 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showDeleteAccountDialog(Color surface) {
+    final phoneController = TextEditingController();
+    final passwordController = TextEditingController();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(children: [
-          Icon(Icons.warning_rounded, color: Colors.redAccent, size: 22),
-          SizedBox(width: 8),
-          Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.redAccent)),
-        ]),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
-            child: const Text('⚠️ This action is permanent and cannot be undone. All your data including order history, wallet balance, and account information will be permanently deleted.', style: TextStyle(fontSize: 13, height: 1.5, color: Colors.redAccent)),
-          ),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account deletion request submitted. You will be contacted via email.'), backgroundColor: Colors.redAccent, duration: Duration(seconds: 4)));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-            child: const Text('Delete Account'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(children: const [
+                Icon(Icons.warning_rounded, color: Colors.redAccent, size: 22),
+                SizedBox(width: 8),
+                Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.redAccent)),
+              ]),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        '⚠️ This action is permanent and cannot be undone. Enter your registered credentials to verify deletion.',
+                        style: TextStyle(fontSize: 12, height: 1.5, color: Colors.redAccent),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number',
+                        labelStyle: TextStyle(fontSize: 12),
+                        prefixIcon: Icon(Icons.phone_outlined, size: 18, color: AppTheme.gold),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.gold, width: 0.5)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.gold, width: 2)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        labelStyle: TextStyle(fontSize: 12),
+                        prefixIcon: Icon(Icons.lock_outline, size: 18, color: AppTheme.gold),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.gold, width: 0.5)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.gold, width: 2)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final phone = phoneController.text.trim();
+                    final password = passwordController.text.trim();
+                    if (phone.isEmpty || password.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter phone and password'),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(ctx);
+                    Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Account permanently deleted.'),
+                        backgroundColor: Colors.redAccent,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                  child: const Text('Delete'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -40,10 +40,10 @@ class AppTheme {
   static const Color darkTextSecondary = Color(0xFF888888);
   
   // Light Mode Colors
-  static const Color lightBg = Color(0xFFF3F4F7);
+  static const Color lightBg = Color(0xFFEEEEEE);
   static const int otpLength = 6;
-  static const Color lightSurface = Color(0xFFF8F9FB);
-  static const Color lightBorder = Color(0xFFE6E8EE);
+  static const Color lightSurface = Color(0xFFF5F6FA);
+  static const Color lightBorder = Color(0xFFDDDDDD);
   static const Color lightTextPrimary = Color(0xFF111111);
   static const Color lightTextSecondary = Color(0xFF666666);
 
