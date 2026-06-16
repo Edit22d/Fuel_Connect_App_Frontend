@@ -1,90 +1,105 @@
-import 'package:latlong2/latlong.dart' hide Path;
-
-class FuelStation {
-  final String id;
+class StationModel {
+  final int? id;
   final String name;
+  final String location;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final double rating;
-  final int reviewCount;
-  final String distance;
-  final String imageUrl;
-  final LatLng position;
+  final int reviewsCount;
+  final String? image;
   final bool isOpen;
-  final String pricePerLitre;
-  final List<String> fuelTypes;
-  final String phone;
-  final String openingHours;
-
-  const FuelStation({
-    required this.id,
+  final bool is24_7;
+  final double pricePerGallon;
+  final String fuelTypes;
+  final List<FuelPrice>? prices;
+  
+  StationModel({
+    this.id,
     required this.name,
+    required this.location,
     required this.address,
-    required this.rating,
-    required this.reviewCount,
-    required this.distance,
-    required this.imageUrl,
-    required this.position,
-    required this.isOpen,
-    required this.pricePerLitre,
-    this.fuelTypes = const [],
-    this.phone = '',
-    this.openingHours = '',
+    this.latitude,
+    this.longitude,
+    this.rating = 4.0,
+    this.reviewsCount = 0,
+    this.image,
+    this.isOpen = true,
+    this.is24_7 = false,
+    this.pricePerGallon = 3.60,
+    this.fuelTypes = 'Petrol,Diesel,Gas',
+    this.prices,
   });
-
-  factory FuelStation.fromJson(Map<String, dynamic> json) {
-    // Parse latitude and longitude safely
-    double lat = 0.0;
-    double lng = 0.0;
-    
-    if (json['latitude'] != null) {
-      lat = double.tryParse(json['latitude'].toString()) ?? 0.0;
-    }
-    if (json['longitude'] != null) {
-      lng = double.tryParse(json['longitude'].toString()) ?? 0.0;
-    }
-
-    return FuelStation(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] ?? 'Unknown Station',
-      address: json['address'] ?? 'Unknown Address',
-      rating: double.tryParse(json['rating']?.toString() ?? '0.0') ?? 0.0,
-      reviewCount: json['review_count'] ?? json['reviewCount'] ?? 0,
-      distance: json['distance']?.toString() ?? '0 km',
-      imageUrl: json['image_url'] ?? json['imageUrl'] ?? 'assets/images/placeholder.png', // Fallback to a local asset or empty
-      position: LatLng(lat, lng),
-      isOpen: json['is_open'] ?? json['isOpen'] ?? false,
-      pricePerLitre: json['price_per_litre'] ?? json['pricePerLitre'] ?? 'UGX 0',
-      fuelTypes: json['fuel_types'] != null 
-          ? List<String>.from(json['fuel_types']) 
-          : (json['fuelTypes'] != null ? List<String>.from(json['fuelTypes']) : []),
-      phone: json['phone'] ?? '',
-      openingHours: json['opening_hours'] ?? json['openingHours'] ?? '',
+  
+  factory StationModel.fromJson(Map<String, dynamic> json) {
+    return StationModel(
+      id: json['id'],
+      name: json['name'] ?? '',
+      location: json['location'] ?? '',
+      address: json['address'] ?? '',
+      latitude: json['latitude'] != null ? double.parse(json['latitude'].toString()) : null,
+      longitude: json['longitude'] != null ? double.parse(json['longitude'].toString()) : null,
+      rating: json['rating'] != null ? double.parse(json['rating'].toString()) : 4.0,
+      reviewsCount: json['reviews_count'] ?? 0,
+      image: json['image'],
+      isOpen: json['is_open'] ?? true,
+      is24_7: json['is_24_7'] ?? false,
+      pricePerGallon: json['price_per_gallon'] != null ? double.parse(json['price_per_gallon'].toString()) : 3.60,
+      fuelTypes: json['fuel_types'] ?? 'Petrol,Diesel,Gas',
+      prices: json['prices'] != null
+          ? (json['prices'] as List).map((p) => FuelPrice.fromJson(p)).toList()
+          : null,
     );
   }
-
+  
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
+      'location': location,
       'address': address,
+      'latitude': latitude,
+      'longitude': longitude,
       'rating': rating,
-      'review_count': reviewCount,
-      'distance': distance,
-      'image_url': imageUrl,
-      'latitude': position.latitude,
-      'longitude': position.longitude,
+      'reviews_count': reviewsCount,
+      'image': image,
       'is_open': isOpen,
-      'price_per_litre': pricePerLitre,
+      'is_24_7': is24_7,
+      'price_per_gallon': pricePerGallon,
       'fuel_types': fuelTypes,
-      'phone': phone,
-      'opening_hours': openingHours,
+      'prices': prices?.map((p) => p.toJson()).toList(),
     };
   }
+}
 
-  bool matchesQuery(String query) {
-    final lowerQuery = query.toLowerCase();
-    return name.toLowerCase().contains(lowerQuery) ||
-        address.toLowerCase().contains(lowerQuery) ||
-        fuelTypes.any((f) => f.toLowerCase().contains(lowerQuery));
+class FuelPrice {
+  final int? id;
+  final String fuelType;
+  final double price;
+  final String? updatedAt;
+  
+  FuelPrice({
+    this.id,
+    required this.fuelType,
+    required this.price,
+    this.updatedAt,
+  });
+  
+  factory FuelPrice.fromJson(Map<String, dynamic> json) {
+    return FuelPrice(
+      id: json['id'],
+      fuelType: json['fuel_type'] ?? 'petrol',
+      price: json['price'] != null ? double.parse(json['price'].toString()) : 0,
+      updatedAt: json['updated_at'],
+    );
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'fuel_type': fuelType,
+      'price': price,
+      'updated_at': updatedAt,
+    };
   }
 }

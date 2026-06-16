@@ -11,15 +11,18 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Social Auth
+  google_sign_in: ^6.1.0
+  sign_in_with_apple: ^5.0.0
+
+  # WebView for reCAPTCHA (if needed)
+  webview_flutter: ^4.4.0
+
   # Core packages
   flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.2.3
   local_auth: ^2.2.0
   http: ^1.2.1
-
-  # Social Auth
-  sign_in_with_apple: ^5.0.0
-  google_sign_in: ^6.2.1
 
   # Maps & Utilities
   flutter_map: ^7.0.2

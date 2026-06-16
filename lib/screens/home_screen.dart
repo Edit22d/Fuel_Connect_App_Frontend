@@ -7,6 +7,8 @@ import '/screens/top_stations_screen.dart';
 import '/screens/profile_screen.dart';
 import '/screens/station_detail_screen1.dart';
 import '/screens/station_detail_screen2.dart';
+import '../services/auth_service.dart'; // Add this import
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -15,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final AuthService _auth = AuthService(); // Add AuthService instance
   int _currentIndex = 0; // Home
 
   void _onNavTap(int i) {
@@ -40,6 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
+    }
+  }
+
+  // Add logout method
+  Future<void> _handleLogout() async {
+    await _auth.logout();
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -108,6 +119,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
+      appBar: AppBar(
+        title: const Text(
+          'Fuel Connect',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        actions: [
+          // Logout Button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _handleLogout,
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           // Scrollable Content

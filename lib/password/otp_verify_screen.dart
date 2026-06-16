@@ -7,11 +7,13 @@ import '../auth/theme.dart';
 class OtpVerifyScreen extends StatefulWidget {
   final String email;
   final String otp;
+  final String? token;
 
   const OtpVerifyScreen({
     super.key,
     required this.email,
     required this.otp,
+    this.token,
   });
 
   @override
@@ -31,6 +33,18 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
   static final _passRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$');
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.token != null) {
+        print('🔑 Using token: ${widget.token}');
+      }
+      print('📧 Email: ${widget.email}');
+      print('🔢 OTP: ${widget.otp}');
+    });
+  }
+
+  @override
   void dispose() {
     _newPassController.dispose();
     _confirmPassController.dispose();
@@ -43,11 +57,16 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final String tokenToUse = widget.token ?? widget.otp;
+      
+      print('🔄 Resetting password with token: $tokenToUse');
+      print('📧 Email: ${widget.email}');
+      
       final result = await _auth.resetPassword(
-        email: widget.email,
-        token: widget.otp,
+        token: tokenToUse,
         newPassword: _newPassController.text.trim(),
-        confirmNewPassword: _confirmPassController.text.trim(),
+        confirmPassword: _confirmPassController.text.trim(),
+        phoneNumber: widget.email,
       );
 
       if (!mounted) return;
@@ -67,9 +86,17 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
           },
         );
       } else {
+        String errorMessage = result['message']?.toString() ?? 'Something went wrong. Please try again.';
+        
+        if (errorMessage.contains('6-digit') || errorMessage.contains('token')) {
+          errorMessage = 'Invalid verification code. Please enter the 6-digit code sent to your email.';
+        } else if (errorMessage.contains('User not found')) {
+          errorMessage = 'Account not found. Please check your email and try again.';
+        }
+        
         _showPopup(
           title: 'Reset Failed',
-          message: result['message']?.toString() ?? 'Something went wrong. Please try again.',
+          message: errorMessage,
           isSuccess: false,
         );
       }
@@ -78,7 +105,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       setState(() => _isLoading = false);
       _showPopup(
         title: 'Error',
-        message: 'Request failed. Please check your connection.',
+        message: 'Request failed: ${e.toString()}',
         isSuccess: false,
       );
     }
@@ -202,7 +229,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                           children: [
                             const SizedBox(height: 16),
                             
-                            // Subtitle: "Enter New Password"
                             Text(
                               'Enter New Password',
                               textAlign: TextAlign.center,
@@ -215,7 +241,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                             ),
                             const SizedBox(height: 12),
 
-                            // Description
                             Text(
                               'Your new password must be different\nfrom previously used password.',
                               textAlign: TextAlign.center,
@@ -228,7 +253,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Password rules hint
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -261,7 +285,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // New Password Field
                             _buildPasswordField(
                               controller: _newPassController,
                               label: 'Password',
@@ -279,7 +302,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                             ),
                             const SizedBox(height: 20),
 
-                            // Confirm Password Field
                             _buildPasswordField(
                               controller: _confirmPassController,
                               label: 'Confirm Password',
@@ -295,7 +317,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                             ),
                             const SizedBox(height: 32),
 
-                            // Reset Password Text Button aligned right
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -314,7 +335,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            // Continue Button
                             Container(
                               width: double.infinity,
                               height: 54,
@@ -361,7 +381,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                           ],
                         ),
                         
-                        // Bottom cancel button helper
                         Padding(
                           padding: const EdgeInsets.only(top: 32.0),
                           child: Column(

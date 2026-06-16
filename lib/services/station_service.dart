@@ -1,86 +1,146 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/station_model.dart';
-
 import 'auth_service.dart';
 
 class StationService {
-  // Use the API base URL without the /auth suffix
-  static String get baseUrl => AuthService.baseUrl.replaceAll('/auth', '');
-
-  // Endpoints for stations
-  static String get stationsEndpoint => "$baseUrl/stations/";
-
-  final AuthService _authService = AuthService();
-
-  Future<Map<String, String>> get _headers async {
-    final token = await _authService.getAccessToken();
-    return {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      if (token != null) "Authorization": "Bearer $token",
-    };
-  }
-
-  // Safe JSON decode helper
-  dynamic _safeJsonDecode(String body) {
+  final AuthService _auth = AuthService();
+  
+  Future<Map<String, dynamic>> getStations({
+    String? search,
+    String? status,
+    int limit = 100,
+    int offset = 0,
+  }) async {
     try {
-      return jsonDecode(body);
-    } catch (_) {
-      return {"message": body};
+      final token = await _auth.getAccessToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Not authenticated'};
+      }
+      
+      final queryParams = [];
+      if (search != null) queryParams.add('search=$search');
+      if (status != null) queryParams.add('status=$status');
+      queryParams.add('limit=$limit');
+      queryParams.add('offset=$offset');
+      
+      final url = 'http://127.0.0.1:8000/api/stations/manage/?${queryParams.join('&')}';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'data': data['data'],
+          'stations': (data['data']['stations'] as List)
+              .map((s) => StationModel.fromJson(s))
+              .toList(),
+        };
+      }
+      
+      return {'success': false, 'message': data['message'] ?? 'Failed to load stations'};
+    } catch (e) {
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
-
-  // Fetch all fuel stations
-  Future<List<FuelStation>> getStations() async {
+  
+  Future<Map<String, dynamic>> createStation(StationModel station) async {
     try {
-      final headers = await _headers;
-      final response = await http
-          .get(Uri.parse(stationsEndpoint), headers: headers)
-          .timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = _safeJsonDecode(response.body);
-        
-        // Handle different JSON structures (e.g., paginated 'results' vs plain list)
-        List<dynamic> items = [];
-        if (data is List) {
-          items = data;
-        } else if (data is Map && data.containsKey('results')) {
-          items = data['results'];
-        } else if (data is Map && data.containsKey('data')) {
-          items = data['data'];
-        }
-
-        return items.map((json) => FuelStation.fromJson(json)).toList();
-      } else {
-        throw Exception("Failed to load stations: ${response.statusCode}");
+      final token = await _auth.getAccessToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Not authenticated'};
       }
+      
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:8000/api/stations/manage/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(station.toJson()),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 201 && data['success'] == true) {
+        return {
+          'success': true,
+          'message': data['message'],
+          'data': StationModel.fromJson(data['data']),
+        };
+      }
+      
+      return {'success': false, 'message': data['message'] ?? 'Failed to create station'};
     } catch (e) {
-      // Return empty list or throw depending on how UI handles it
-      print("Error fetching stations: $e");
-      return [];
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
-
-
-
-  // Fetch a specific station by ID
-  Future<FuelStation?> getStationById(String id) async {
+  
+  Future<Map<String, dynamic>> updateStation(StationModel station) async {
     try {
-      final headers = await _headers;
-      final response = await http
-          .get(Uri.parse("$stationsEndpoint$id/"), headers: headers)
-          .timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = _safeJsonDecode(response.body);
-        return FuelStation.fromJson(data);
+      final token = await _auth.getAccessToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Not authenticated'};
       }
-      return null;
+      
+      final response = await http.put(
+        Uri.parse('http://127.0.0.1:8000/api/stations/manage/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(station.toJson()),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'message': data['message'],
+          'data': StationModel.fromJson(data['data']),
+        };
+      }
+      
+      return {'success': false, 'message': data['message'] ?? 'Failed to update station'};
     } catch (e) {
-      print("Error fetching station $id: $e");
-      return null;
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
+  
+  Future<Map<String, dynamic>> deleteStation(int stationId) async {
+    try {
+      final token = await _auth.getAccessToken();
+      if (token == null) {
+        return {'success': false, 'message': 'Not authenticated'};
+      }
+      
+      final response = await http.delete(
+        Uri.parse('http://127.0.0.1:8000/api/stations/manage/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'id': stationId}),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'message': data['message']};
+      }
+      
+      return {'success': false, 'message': data['message'] ?? 'Failed to delete station'};
+    } catch (e) {
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
 }

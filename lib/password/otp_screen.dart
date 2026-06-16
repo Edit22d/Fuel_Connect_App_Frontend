@@ -22,8 +22,6 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  // CONFIGURATION: Set the OTP length to match the screenshot (6 digits).
-  // If your backend expects a 6-digit OTP, change this constant to 6.
   static const int otpLength = 6;
 
   final List<TextEditingController> _controllers = List.generate(otpLength, (_) => TextEditingController());
@@ -31,19 +29,54 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _isLoading = false;
   
   Timer? _timer;
-  int _secondsRemaining = 300; // 5 minutes
+  int _secondsRemaining = 300;
   final AuthService _auth = AuthService();
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    // Auto-focus the first box after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_focusNodes.isNotEmpty && mounted) {
         _focusNodes[0].requestFocus();
       }
     });
+    
+    if (widget.token != null && widget.token!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showTokenInfo(widget.token!);
+      });
+    }
+  }
+
+  void _showTokenInfo(String token) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '📧 Your reset token:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              token,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.blue.shade700,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   void _startTimer() {
@@ -83,7 +116,7 @@ class _OtpScreenState extends State<OtpScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final result = await _auth.forgotPassword(email: widget.email);
+      final result = await _auth.forgotPassword(phoneNumber: widget.email);
       if (!mounted) return;
       setState(() => _isLoading = false);
 
@@ -91,16 +124,22 @@ class _OtpScreenState extends State<OtpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✓ Verification code resent successfully'),
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
         for (var c in _controllers) c.clear();
         _focusNodes[0].requestFocus();
         _startTimer();
+        
+        if (result['reset_token'] != null && result['reset_token'].isNotEmpty) {
+          _showTokenInfo(result['reset_token']);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Failed to resend OTP'),
+            backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -111,6 +150,7 @@ class _OtpScreenState extends State<OtpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('An error occurred: $e'),
+          backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -141,16 +181,37 @@ class _OtpScreenState extends State<OtpScreen> {
       return;
     }
 
-    // Pass the entered OTP to the next screen
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => OtpVerifyScreen(
           email: widget.email,
           otp: otpCode,
+          token: widget.token,
         ),
       ),
     );
+  }
+
+  void _pasteCode() async {
+    final clipboardData = await Clipboard.getData('text/plain');
+    final text = clipboardData?.text?.trim();
+    
+    if (text != null && text.length == otpLength && RegExp(r'^\d+$').hasMatch(text)) {
+      for (int i = 0; i < text.length && i < otpLength; i++) {
+        _controllers[i].text = text[i];
+      }
+      _verifyOtp();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please copy a valid 6-digit code'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -181,7 +242,6 @@ class _OtpScreenState extends State<OtpScreen> {
                         children: [
                           const SizedBox(height: 16),
                           
-                          // Subtitle: "Get Your Code"
                           Text(
                             'Get Your Code',
                             textAlign: TextAlign.center,
@@ -194,7 +254,6 @@ class _OtpScreenState extends State<OtpScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Description
                           Text(
                             'Please enter the $otpLength digit code sent to\nyour email address.',
                             textAlign: TextAlign.center,
@@ -242,6 +301,13 @@ class _OtpScreenState extends State<OtpScreen> {
                                       LengthLimitingTextInputFormatter(1),
                                       FilteringTextInputFormatter.digitsOnly,
                                     ],
+                                    enableInteractiveSelection: true,
+                                    toolbarOptions: const ToolbarOptions(
+                                      copy: true,
+                                      cut: true,
+                                      paste: true,
+                                      selectAll: true,
+                                    ),
                                     decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       counterText: '',
@@ -249,7 +315,6 @@ class _OtpScreenState extends State<OtpScreen> {
                                     ),
                                     onChanged: (value) {
                                       _onChanged(value, index);
-                                      // Trigger rebuild for border color changes
                                       setState(() {});
                                     },
                                   ),
@@ -257,7 +322,21 @@ class _OtpScreenState extends State<OtpScreen> {
                               );
                             }),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 16),
+
+                          // Paste Button
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: _pasteCode,
+                              icon: const Icon(Icons.content_paste, size: 16),
+                              label: const Text('Paste Code from Clipboard'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppTheme.gold,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
 
                           // Resend layout
                           Column(
@@ -289,7 +368,6 @@ class _OtpScreenState extends State<OtpScreen> {
                               ),
                               const SizedBox(height: 12),
                               
-                              // Timer status
                               if (_secondsRemaining > 0)
                                 Text(
                                   "Code expires in ${(_secondsRemaining ~/ 60).toString().padLeft(2, '0')}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}",
@@ -358,6 +436,68 @@ class _OtpScreenState extends State<OtpScreen> {
                                     ),
                             ),
                           ),
+                          
+                          // Token display with Copy button
+                          if (widget.token != null && widget.token!.isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(top: 16),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                              ),
+                              child: Column(
+                                children: [
+                                  const Text(
+                                    '💡 Development Token',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SelectableText(
+                                        widget.token!,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 2,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      IconButton(
+                                        icon: const Icon(Icons.copy, size: 18),
+                                        onPressed: () {
+                                          Clipboard.setData(ClipboardData(text: widget.token!));
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('✅ Token copied to clipboard!'),
+                                              backgroundColor: Colors.green,
+                                              duration: Duration(seconds: 2),
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Click the copy icon 📋 to copy the token',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.blue.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                       

@@ -1,9 +1,173 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'theme.dart';
 import '../widgets/theme_toggle_button.dart';
+
+// Simple Math CAPTCHA Widget
+class MathCaptcha extends StatefulWidget {
+  final Function(bool, String) onVerified;
+  
+  const MathCaptcha({super.key, required this.onVerified});
+  
+  @override
+  State<MathCaptcha> createState() => _MathCaptchaState();
+}
+
+class _MathCaptchaState extends State<MathCaptcha> {
+  int num1 = 0;
+  int num2 = 0;
+  int result = 0;
+  final TextEditingController _answerController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _generateNewQuestion();
+  }
+  
+  void _generateNewQuestion() {
+    setState(() {
+      num1 = Random().nextInt(20) + 1;
+      num2 = Random().nextInt(20) + 1;
+      result = num1 + num2;
+    });
+    _answerController.clear();
+  }
+  
+  void _verify() {
+    final answer = int.tryParse(_answerController.text.trim());
+    if (answer == result) {
+      String token = "math_captcha_${DateTime.now().millisecondsSinceEpoch}_$result";
+      widget.onVerified(true, token);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Incorrect answer. Please try again!'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      _generateNewQuestion();
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.gold.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Security Verification',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.gold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please solve this math problem to continue:',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.gold,
+                    width: 2,
+                  ),
+                ),
+                child: Text(
+                  '$num1 + $num2 = ?',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _answerController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Enter your answer',
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.white38 : Colors.black38,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? Colors.white24 : Colors.black26,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.gold, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _verify,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.gold,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Verify',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -32,11 +196,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _agreeToTerms = false;
   bool _isLoading = false;
 
-  // ignore: unused_field
+  // Validation regex patterns
   static final _nameRegex = RegExp(r"^[a-zA-Z]+(?: [a-zA-Z]+)+$");
-  // ignore: unused_field
   static final _phoneRegex = RegExp(r"^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$");
-  // ignore: unused_field
+  static final _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   static final _passRegex = RegExp(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$");
 
   @override
@@ -54,6 +217,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  // Validate full name
+  String? _validateFullName(String value) {
+    if (value.isEmpty) return 'Full name is required';
+    if (value.length < 3) return 'Name must be at least 3 characters';
+    if (!_nameRegex.hasMatch(value)) return 'Please enter valid full name';
+    return null;
+  }
+
+  // Validate email
+  String? _validateEmail(String value) {
+    if (value.isEmpty) return 'Email is required';
+    if (!_emailRegex.hasMatch(value)) return 'Please enter a valid email address';
+    return null;
+  }
+
+  // Validate phone number
+  String? _validatePhone(String value) {
+    if (value.isEmpty) return 'Phone number is required';
+    if (!_phoneRegex.hasMatch(value) && !value.startsWith('+')) {
+      return 'Enter phone number with country code (e.g., +256...)';
+    }
+    return null;
+  }
+
+  // Validate password
+  String? _validatePassword(String value) {
+    if (value.isEmpty) return 'Password is required';
+    if (value.length < 8) return 'Password must be at least 8 characters';
+    if (!_passRegex.hasMatch(value)) {
+      return 'Password must contain uppercase, lowercase, number and special character';
+    }
+    return null;
+  }
+
+  // Validate confirm password
+  String? _validateConfirmPassword(String value) {
+    if (value.isEmpty) return 'Please confirm your password';
+    if (value != _passwordController.text) return 'Passwords do not match';
+    return null;
+  }
+
+  // Validate location
+  String? _validateLocation(String value) {
+    if (value.isEmpty) return 'Location is required';
+    return null;
+  }
+
   Future<void> _handleSignUp() async {
     final fullName = _fullNameController.text.trim();
     final email = _emailController.text.trim();
@@ -62,70 +272,236 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final confirmPassword = _confirmPasswordController.text.trim();
     final location = _locationController.text.trim();
 
-    if (fullName.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty || confirmPassword.isEmpty || location.isEmpty) {
-      _showError('Please fill in all required fields');
+    // Validate all fields
+    String? error;
+    
+    error = _validateFullName(fullName);
+    if (error != null) {
+      _showError(error);
       return;
     }
-    if (password != confirmPassword) {
-      _showError('Passwords do not match');
+    
+    error = _validateEmail(email);
+    if (error != null) {
+      _showError(error);
       return;
     }
-    if (password.length < 8) {
-      _showError('Password must be at least 8 characters');
+    
+    error = _validatePhone(phone);
+    if (error != null) {
+      _showError(error);
       return;
     }
+    
+    error = _validatePassword(password);
+    if (error != null) {
+      _showError(error);
+      return;
+    }
+    
+    error = _validateConfirmPassword(confirmPassword);
+    if (error != null) {
+      _showError(error);
+      return;
+    }
+    
+    error = _validateLocation(location);
+    if (error != null) {
+      _showError(error);
+      return;
+    }
+    
     if (!_agreeToTerms) {
       _showError('You must agree to the Terms of Use');
       return;
     }
 
+    // Show Math CAPTCHA dialog before registration
+    _showCaptchaDialog();
+  }
+
+  void _showCaptchaDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Security Verification'),
+          content: MathCaptcha(
+            onVerified: (success, token) async {
+              Navigator.of(context).pop();
+              if (success) {
+                await _completeRegistration(token);
+              } else {
+                _showError('Verification failed. Please try again.');
+              }
+            },
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _completeRegistration(String captchaToken) async {
     setState(() => _isLoading = true);
     
     try {
       final result = await _auth.register(
-        fullName: fullName,
-        email: email,
-        phoneNumber: phone,
-        password: password,
-        confirmPassword: confirmPassword,
+        fullName: _fullNameController.text.trim(),
+        email: _emailController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        password: _passwordController.text.trim(),
+        confirmPassword: _confirmPasswordController.text.trim(),
         userType: _userType,
-        location: location,
+        location: _locationController.text.trim(),
         referralCode: _referralController.text.trim(),
         vehicleType: _userType == 'driver' ? _vehicleTypeController.text.trim() : null,
         vehicleNumber: _userType == 'driver' ? _vehicleNumberController.text.trim() : null,
         licenseNumber: _userType == 'driver' ? _licenseController.text.trim() : null,
-      ).timeout(const Duration(seconds: 15));
+        captchaToken: captchaToken,
+      ).timeout(const Duration(seconds: 20));
 
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
-        _showSuccess(result['message'] ?? 'Account created!');
+        _showSuccess(result['message'] ?? 'Account created successfully!');
+        _clearForm();
         Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) Navigator.pushReplacementNamed(context, '/login');
+          if (mounted) {
+            Navigator.pushReplacement(
+              context, 
+              MaterialPageRoute(builder: (_) => const LoginScreen())
+            );
+          }
         });
       } else {
-        _showError(result['message'] ?? 'Registration failed.');
+        String errorMessage = result['message'] ?? 'Registration failed.';
+        
+        if (errorMessage.contains('phone number') || errorMessage.contains('Phone number')) {
+          errorMessage = 'This phone number is already registered.\nPlease use a different number or login.';
+        } else if (errorMessage.contains('email') || errorMessage.contains('Email')) {
+          errorMessage = 'This email is already registered.\nPlease use a different email or login.';
+        } else if (result['error'] == 'captcha_failed') {
+          errorMessage = 'Verification failed. Please try again.';
+        }
+        
+        _showError(errorMessage);
       }
     } on TimeoutException {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError('Request timed out. Please try again.');
+      _showError('Request timed out. Please check your internet connection and try again.');
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError('Registration failed: ${e.toString()}');
+      _showError('Registration failed: Unable to connect to server.\nPlease check your internet connection.');
+      debugPrint('Registration error: $e');
     }
+  }
+
+  void _clearForm() {
+    _fullNameController.clear();
+    _emailController.clear();
+    _phoneController.clear();
+    _passwordController.clear();
+    _confirmPasswordController.clear();
+    _locationController.clear();
+    _referralController.clear();
+    _vehicleTypeController.clear();
+    _vehicleNumberController.clear();
+    _licenseController.clear();
+    setState(() {
+      _userType = "customer";
+      _agreeToTerms = false;
+    });
   }
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.center),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   void _showSuccess(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.center),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _auth.signInWithGoogle();
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      
+      if (result['success'] == true) {
+        _showSuccess(result['message'] ?? 'Google sign in successful!');
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context, 
+              MaterialPageRoute(builder: (_) => const LoginScreen())
+            );
+          }
+        });
+      } else {
+        _showError(result['message'] ?? 'Google sign in failed. Please try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Google sign in error: ${e.toString()}');
+    }
+  }
+
+  void _handleAppleSignIn() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _auth.signInWithApple();
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      
+      if (result['success'] == true) {
+        _showSuccess(result['message'] ?? 'Apple sign in successful!');
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context, 
+              MaterialPageRoute(builder: (_) => const LoginScreen())
+            );
+          }
+        });
+      } else {
+        _showError(result['message'] ?? 'Apple sign in failed. Please try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Apple sign in error: ${e.toString()}');
+    }
   }
 
   @override
@@ -232,7 +608,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 8),
                     _buildTextField(
                       controller: _emailController,
-                      hintText: 'jance@gmail.com',
+                      hintText: 'jane@gmail.com',
                       theme: theme,
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -249,7 +625,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Full Name & Location (to keep it concise, just required ones)
+                    // Full Name & Location
                     Row(
                       children: [
                         Expanded(
@@ -258,7 +634,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             children: [
                               _buildLabel('Full Name', theme),
                               const SizedBox(height: 8),
-                              _buildTextField(controller: _fullNameController, hintText: 'Jane Doe', theme: theme),
+                              _buildTextField(
+                                controller: _fullNameController, 
+                                hintText: 'Jane Doe', 
+                                theme: theme,
+                              ),
                             ],
                           ),
                         ),
@@ -269,7 +649,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             children: [
                               _buildLabel('Location', theme),
                               const SizedBox(height: 8),
-                              _buildTextField(controller: _locationController, hintText: 'City, Country', theme: theme),
+                              _buildTextField(
+                                controller: _locationController, 
+                                hintText: 'City, Country', 
+                                theme: theme,
+                              ),
                             ],
                           ),
                         ),
@@ -393,7 +777,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             label: 'Google Play',
                             icon: const _GoogleIcon(),
                             theme: theme,
-                            onPressed: () {},
+                            onPressed: _handleGoogleSignIn,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -402,7 +786,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             label: 'Apple Store',
                             icon: _AppleIcon(isDark: isDark),
                             theme: theme,
-                            onPressed: () {},
+                            onPressed: _handleAppleSignIn,
                           ),
                         ),
                       ],
@@ -420,7 +804,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 40), // Padding for scroll bottom
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -521,19 +905,23 @@ class _GoogleIcon extends StatelessWidget {
     return SizedBox(width: 18, height: 18, child: CustomPaint(painter: _GooglePainter()));
   }
 }
+
 class _GooglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2, cy = size.height / 2, r = size.width / 2;
     canvas.drawCircle(Offset(cx, cy), r, Paint()..color = Colors.white);
     const segments = [(0.0, 1.57, Color(0xFF4285F4)), (1.57, 3.14, Color(0xFF34A853)), (3.14, 4.71, Color(0xFFFBBC05)), (4.71, 6.28, Color(0xFFEA4335))];
-    for (final seg in segments) canvas.drawArc(Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7), seg.$1, seg.$2 - seg.$1, false, Paint()..color = seg.$3..style = PaintingStyle.stroke..strokeWidth = size.width * 0.2);
+    for (final seg in segments) {
+      canvas.drawArc(Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7), seg.$1, seg.$2 - seg.$1, false, Paint()..color = seg.$3..style = PaintingStyle.stroke..strokeWidth = size.width * 0.2);
+    }
     canvas.drawCircle(Offset(cx, cy), r * 0.45, Paint()..color = Colors.white);
     canvas.drawLine(Offset(cx, cy), Offset(cx + r * 0.65, cy), Paint()..color = const Color(0xFF4285F4)..strokeWidth = size.height * 0.18..strokeCap = StrokeCap.round);
   }
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
 class _AppleIcon extends StatelessWidget {
   final bool isDark;
   const _AppleIcon({required this.isDark});
@@ -542,6 +930,7 @@ class _AppleIcon extends StatelessWidget {
     return SizedBox(width: 18, height: 18, child: CustomPaint(painter: _ApplePainter(isDark: isDark)));
   }
 }
+
 class _ApplePainter extends CustomPainter {
   final bool isDark;
   _ApplePainter({required this.isDark});

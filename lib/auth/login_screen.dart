@@ -2,10 +2,174 @@
 
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'theme.dart';
 import '../widgets/theme_toggle_button.dart';
+
+// Simple Math CAPTCHA Widget
+class MathCaptcha extends StatefulWidget {
+  final Function(bool, String) onVerified;
+  
+  const MathCaptcha({super.key, required this.onVerified});
+  
+  @override
+  State<MathCaptcha> createState() => _MathCaptchaState();
+}
+
+class _MathCaptchaState extends State<MathCaptcha> {
+  int num1 = 0;
+  int num2 = 0;
+  int result = 0;
+  final TextEditingController _answerController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _generateNewQuestion();
+  }
+  
+  void _generateNewQuestion() {
+    setState(() {
+      num1 = Random().nextInt(20) + 1;
+      num2 = Random().nextInt(20) + 1;
+      result = num1 + num2;
+    });
+    _answerController.clear();
+  }
+  
+  void _verify() {
+    final answer = int.tryParse(_answerController.text.trim());
+    if (answer == result) {
+      String token = "math_captcha_${DateTime.now().millisecondsSinceEpoch}_$result";
+      widget.onVerified(true, token);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Incorrect answer. Please try again!'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      _generateNewQuestion();
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.gold.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Security Verification',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.gold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please solve this math problem to continue:',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.gold,
+                    width: 2,
+                  ),
+                ),
+                child: Text(
+                  '$num1 + $num2 = ?',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _answerController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Enter your answer',
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.white38 : Colors.black38,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? Colors.white24 : Colors.black26,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.gold, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _verify,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.gold,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Verify',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,16 +180,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   
-  // ignore: unused_field
   final _auth = AuthService();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _rememberMe = false;
-  final bool _isLoading = false;
-
-  // ignore: unused_field
-  static final _phoneRegex = RegExp(r'^\+\d{1,4}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3,4}$');
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -39,16 +199,207 @@ class _LoginScreenState extends State<LoginScreen> {
   void _goToForgotPassword() => Navigator.pushNamed(context, '/forgot-password');
 
   Future<void> _handleLogin() async {
-    // Integration temporarily disconnected for layout testing.
-    _goToHome();
+    final phoneNumber = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+    
+    if (phoneNumber.isEmpty) {
+      _showError('Please enter your phone number');
+      return;
+    }
+    
+    if (password.isEmpty) {
+      _showError('Please enter your password');
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _auth.login(
+        phoneNumber: phoneNumber,
+        password: password,
+      );
+      
+      if (!mounted) return;
+      
+      if (result['requires_captcha'] == true) {
+        setState(() => _isLoading = false);
+        _showCaptchaDialog(phoneNumber, password);
+        return;
+      }
+      
+      setState(() => _isLoading = false);
+      
+      if (result['success'] == true) {
+        _showSuccess('Login successful!');
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _goToHome();
+        });
+      } else {
+        String errorMessage = result['message'] ?? 'Login failed';
+        
+        if (result['remaining_attempts'] != null && result['remaining_attempts'] > 0) {
+          errorMessage = '${result['message']}\n${result['remaining_attempts']} attempts remaining.';
+        }
+        
+        if (result['lockout_seconds'] != null && result['lockout_seconds'] > 0) {
+          final minutes = (result['lockout_seconds'] / 60).floor();
+          errorMessage = 'Too many failed attempts.\nPlease try again in $minutes minutes.';
+        }
+        
+        if (result['error_type'] == 'account_not_found') {
+          errorMessage = 'No account found with this phone number.\nPlease sign up first.';
+        }
+        
+        _showError(errorMessage);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Connection error: Unable to reach server.\nPlease check your internet connection.');
+      debugPrint('Login error: $e');
+    }
   }
 
-  Future<void> _handleGoogleSignIn() async => _showError('Google Sign-In coming soon!');
-  Future<void> _handleAppleSignIn() async => _showError('Apple Sign-In coming soon!');
+  void _showCaptchaDialog(String phoneNumber, String password) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Security Verification'),
+          content: MathCaptcha(
+            onVerified: (success, token) async {
+              Navigator.of(context).pop();
+              if (success) {
+                await _retryLoginWithCaptcha(phoneNumber, password, token);
+              } else {
+                _showError('Verification failed. Please try again.');
+              }
+            },
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        );
+      },
+    );
+  }
 
-  void _showError(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(msg), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 4)),
-  );
+  Future<void> _retryLoginWithCaptcha(
+    String phoneNumber,
+    String password,
+    String captchaToken,
+  ) async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _auth.login(
+        phoneNumber: phoneNumber,
+        password: password,
+        captchaToken: captchaToken,
+      );
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      
+      if (result['success'] == true) {
+        _showSuccess('Login successful!');
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _goToHome();
+        });
+      } else {
+        String errorMessage = result['message'] ?? 'Login failed';
+        
+        if (result['remaining_attempts'] != null && result['remaining_attempts'] > 0) {
+          errorMessage = '${result['message']}\n${result['remaining_attempts']} attempts remaining.';
+        }
+        
+        if (result['lockout_seconds'] != null && result['lockout_seconds'] > 0) {
+          final minutes = (result['lockout_seconds'] / 60).floor();
+          errorMessage = 'Too many failed attempts.\nPlease try again in $minutes minutes.';
+        }
+        
+        _showError(errorMessage);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Login failed: ${e.toString()}');
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _auth.signInWithGoogle();
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      
+      if (result['success'] == true) {
+        _showSuccess(result['message'] ?? 'Google sign in successful!');
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _goToHome();
+        });
+      } else {
+        _showError(result['message'] ?? 'Google sign in failed. Please try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Google sign in error: ${e.toString()}');
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final result = await _auth.signInWithApple();
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      
+      if (result['success'] == true) {
+        _showSuccess(result['message'] ?? 'Apple sign in successful!');
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _goToHome();
+        });
+      } else {
+        _showError(result['message'] ?? 'Apple sign in failed. Please try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Apple sign in error: ${e.toString()}');
+    }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, textAlign: TextAlign.center),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _showSuccess(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, textAlign: TextAlign.center),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +432,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Image.asset(
                         'assets/images/fuel.png',
                         fit: BoxFit.contain,
-                        width: size.width * 12, // Increased logo size
+                        width: size.width * 12,
                       ),
                     ),
                   ),
@@ -89,9 +440,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Log in to your account',
                     style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87, // Solid color for visibility
-                      fontSize: 18, // Increased font size
-                      fontWeight: FontWeight.w600, // Thicker weight
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
                     ),
                   ),

@@ -13,6 +13,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
+  bool _emailSent = false;
 
   @override
   void dispose() {
@@ -28,46 +29,89 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter your email address'),
+          backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _emailSent = false;
+    });
     
     try {
-      final result = await _auth.forgotPassword(email: email);
+      final result = await _auth.forgotPassword(phoneNumber: email);
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      
+      setState(() {
+        _isLoading = false;
+        _emailSent = true;
+      });
 
       if (result['success'] == true) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OtpScreen(
-              email: email,
-              fromForgotPassword: true, 
-            ),
-          ),
-        );
-      } else {
+        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? 'Failed to send OTP'),
+            content: Text(result['message'] ?? '6-digit verification code sent to your email!'),
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        
+        // Get the reset token if available (for development testing)
+        final resetToken = result['reset_token'];
+        
+        // Navigate to OTP screen with a slight delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OtpScreen(
+                  email: email,
+                  fromForgotPassword: true,
+                  token: resetToken,
+                ),
+              ),
+            );
+          }
+        });
+      } else {
+        String errorMessage = result['message'] ?? 'Failed to send verification code';
+        
+        if (errorMessage.contains('No account found') || 
+            errorMessage.contains('phone number') ||
+            errorMessage.toLowerCase().contains('not found')) {
+          errorMessage = 'No account found with this email address.\nPlease check and try again.';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _emailSent = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('An error occurred: $e'),
+          content: Text('Connection error: Unable to reach server.\nPlease check your internet connection.'),
+          backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
         ),
       );
+      debugPrint('Forgot password error: $e');
     }
   }
 
@@ -99,7 +143,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         children: [
                           const SizedBox(height: 16),
                           
-                          // Subtitle: "Mail Address Here"
+                          // Subtitle
                           Text(
                             'Mail Address Here',
                             textAlign: TextAlign.center,
@@ -133,6 +177,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               fontSize: 16,
                             ),
                             keyboardType: TextInputType.emailAddress,
+                            enabled: !_isLoading,
                             decoration: InputDecoration(
                               labelText: 'Email',
                               labelStyle: TextStyle(
@@ -220,6 +265,61 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     ),
                             ),
                           ),
+                          
+                          // Success indicator when email is sent
+                          if (_emailSent && !_isLoading)
+                            Container(
+                              margin: const EdgeInsets.only(top: 16),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '✓ 6-digit verification code sent successfully! Check your email.',
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // Info text about token
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'A 6-digit verification code will be sent to your email. Check your inbox and spam folder.',
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white70 : Colors.black54,
+                                      fontSize: 12,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                       
@@ -264,4 +364,3 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
-

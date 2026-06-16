@@ -15,6 +15,36 @@ class SplashScreen2 extends StatefulWidget {
 class _SplashScreen2State extends State<SplashScreen2> {
   final _auth = AuthService();
   bool _isLoading = false;
+  bool _isCheckingLogin = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAutoLogin();
+  }
+
+  Future<void> _checkAutoLogin() async {
+    // Wait a moment for splash screen to show
+    await Future.delayed(const Duration(seconds: 1));
+    
+    if (!mounted) return;
+    
+    final isLoggedIn = await _auth.isLoggedIn();
+    
+    if (!mounted) return;
+    
+    setState(() {
+      _isCheckingLogin = false;
+    });
+    
+    if (isLoggedIn) {
+      // User is already logged in - auto navigate to home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    }
+  }
 
   Future<void> _handleGetStarted() async {
     if (!mounted) return;
@@ -25,12 +55,17 @@ class _SplashScreen2State extends State<SplashScreen2> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => loggedIn ? const HomeScreen() : const LoginScreen(),
-      ),
-    );
+    if (loggedIn) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -38,6 +73,43 @@ class _SplashScreen2State extends State<SplashScreen2> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
+
+    // Show loading while checking login status
+    if (_isCheckingLogin) {
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/fuel.png',
+                width: 100,
+                height: 100,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.local_gas_station,
+                  size: 80,
+                  color: AppTheme.gold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(
+                color: AppTheme.gold,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Fuel Connect',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -50,7 +122,7 @@ class _SplashScreen2State extends State<SplashScreen2> {
             right: 0,
             height: size.height * 0.55,
             child: Image.asset(
-              'assets/images/shell_station.png', // Using shell_station as the best fit
+              'assets/images/shell_station.png',
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[300],
