@@ -26,7 +26,7 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
   String _pickupAddress = '11574 Santa Monica Blvd, Los Angeles, CA 90025';
   late String _dropAddress;
   String _deliveryMode = 'process'; // 'process' or 'schedule'
-  DateTime _scheduledDateTime = DateTime(2025, 4, 12, 15, 30); // Default placeholder from screenshot
+  DateTime _scheduledDateTime = DateTime.now(); // Fixed: Use current date as default
 
   @override
   void initState() {
@@ -34,6 +34,8 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
     _dropAddress = widget.deliveryLocation.isNotEmpty 
         ? widget.deliveryLocation 
         : '9805 S Main St, Houston, TX 77025';
+    // Set scheduled date to now by default
+    _scheduledDateTime = DateTime.now();
   }
 
   void _showEditAddressDialog(BuildContext context, {required bool isPickup}) {
@@ -99,13 +101,18 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
     );
   }
 
+  // Fixed date picker with correct date validation
   Future<void> _selectDateTime(BuildContext context) async {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final DateTime now = DateTime.now();
+    final DateTime firstDate = now; // Set first date to today
+    final DateTime lastDate = now.add(const Duration(days: 30)); // 30 days from now
+    
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: _scheduledDateTime,
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: now, // Use today as initial date
+      firstDate: firstDate,
+      lastDate: lastDate,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -400,19 +407,19 @@ class _ConfirmOrderScreenState extends State<ConfirmOrderScreen> {
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
-                setState(() {
-                  _deliveryMode = 'process';
-                  // Reset scheduled date to now when switching to process mode
-                  _scheduledDateTime = DateTime.now();
-                });
-                final bool isDark = Theme.of(context).brightness == Brightness.dark;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
-                    content: const Text('Delivery set to Process Today'),
-                  ),
-                );
-              },
+                            setState(() {
+                              _deliveryMode = 'process';
+                              // Reset scheduled date to now when switching to process mode
+                              _scheduledDateTime = DateTime.now();
+                            });
+                            final bool isDark = Theme.of(context).brightness == Brightness.dark;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
+                                content: const Text('Delivery set to Process Today'),
+                              ),
+                            );
+                          },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.all(14),
@@ -773,7 +780,7 @@ class LocationTimeline extends StatelessWidget {
                     painter: DottedLinePainter(color: dividerColor),
                   ),
                 ),
-                // Drop Dot
+                // Drop Dot - Changed to gold
                 Container(
                   width: 14,
                   height: 14,

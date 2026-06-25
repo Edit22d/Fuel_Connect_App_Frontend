@@ -15,7 +15,6 @@ class SplashScreen2 extends StatefulWidget {
 class _SplashScreen2State extends State<SplashScreen2> {
   final _auth = AuthService();
   bool _isLoading = false;
-  bool _isCheckingLogin = true;
 
   @override
   void initState() {
@@ -24,18 +23,9 @@ class _SplashScreen2State extends State<SplashScreen2> {
   }
 
   Future<void> _checkAutoLogin() async {
-    // Wait a moment for splash screen to show
-    await Future.delayed(const Duration(seconds: 1));
-    
-    if (!mounted) return;
-    
     final isLoggedIn = await _auth.isLoggedIn();
     
     if (!mounted) return;
-    
-    setState(() {
-      _isCheckingLogin = false;
-    });
     
     if (isLoggedIn) {
       // User is already logged in - auto navigate to home
@@ -73,43 +63,6 @@ class _SplashScreen2State extends State<SplashScreen2> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-
-    // Show loading while checking login status
-    if (_isCheckingLogin) {
-      return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/fuel.png',
-                width: 100,
-                height: 100,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.local_gas_station,
-                  size: 80,
-                  color: AppTheme.gold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(
-                color: AppTheme.gold,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Fuel Connect',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,

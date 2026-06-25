@@ -1,5 +1,6 @@
+// lib/models/station_model.dart
 class StationModel {
-  final int? id;
+  final String? id;
   final String name;
   final String location;
   final String address;
@@ -12,8 +13,11 @@ class StationModel {
   final bool is24_7;
   final double pricePerGallon;
   final String fuelTypes;
-  final List<FuelPrice>? prices;
-  
+  final String? phone;
+  final String? email;
+  final String? createdAt;
+  final String? updatedAt;
+
   StationModel({
     this.id,
     required this.name,
@@ -28,12 +32,15 @@ class StationModel {
     this.is24_7 = false,
     this.pricePerGallon = 3.60,
     this.fuelTypes = 'Petrol,Diesel,Gas',
-    this.prices,
+    this.phone,
+    this.email,
+    this.createdAt,
+    this.updatedAt,
   });
-  
+
   factory StationModel.fromJson(Map<String, dynamic> json) {
     return StationModel(
-      id: json['id'],
+      id: json['id']?.toString(),
       name: json['name'] ?? '',
       location: json['location'] ?? '',
       address: json['address'] ?? '',
@@ -44,14 +51,17 @@ class StationModel {
       image: json['image'],
       isOpen: json['is_open'] ?? true,
       is24_7: json['is_24_7'] ?? false,
-      pricePerGallon: json['price_per_gallon'] != null ? double.parse(json['price_per_gallon'].toString()) : 3.60,
+      pricePerGallon: json['price_per_gallon'] != null 
+          ? double.parse(json['price_per_gallon'].toString()) 
+          : 3.60,
       fuelTypes: json['fuel_types'] ?? 'Petrol,Diesel,Gas',
-      prices: json['prices'] != null
-          ? (json['prices'] as List).map((p) => FuelPrice.fromJson(p)).toList()
-          : null,
+      phone: json['phone'],
+      email: json['email'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -67,39 +77,44 @@ class StationModel {
       'is_24_7': is24_7,
       'price_per_gallon': pricePerGallon,
       'fuel_types': fuelTypes,
-      'prices': prices?.map((p) => p.toJson()).toList(),
+      'phone': phone,
+      'email': email,
     };
   }
-}
 
-class FuelPrice {
-  final int? id;
-  final String fuelType;
-  final double price;
-  final String? updatedAt;
-  
-  FuelPrice({
-    this.id,
-    required this.fuelType,
-    required this.price,
-    this.updatedAt,
-  });
-  
-  factory FuelPrice.fromJson(Map<String, dynamic> json) {
-    return FuelPrice(
-      id: json['id'],
-      fuelType: json['fuel_type'] ?? 'petrol',
-      price: json['price'] != null ? double.parse(json['price'].toString()) : 0,
-      updatedAt: json['updated_at'],
+  StationModel copyWith({
+    String? id,
+    String? name,
+    String? location,
+    String? address,
+    double? latitude,
+    double? longitude,
+    double? rating,
+    int? reviewsCount,
+    String? image,
+    bool? isOpen,
+    bool? is24_7,
+    double? pricePerGallon,
+    String? fuelTypes,
+    String? phone,
+    String? email,
+  }) {
+    return StationModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      location: location ?? this.location,
+      address: address ?? this.address,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      rating: rating ?? this.rating,
+      reviewsCount: reviewsCount ?? this.reviewsCount,
+      image: image ?? this.image,
+      isOpen: isOpen ?? this.isOpen,
+      is24_7: is24_7 ?? this.is24_7,
+      pricePerGallon: pricePerGallon ?? this.pricePerGallon,
+      fuelTypes: fuelTypes ?? this.fuelTypes,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
     );
-  }
-  
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'fuel_type': fuelType,
-      'price': price,
-      'updated_at': updatedAt,
-    };
   }
 }

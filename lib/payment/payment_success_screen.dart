@@ -148,13 +148,13 @@ class PaymentSuccessScreen extends StatelessWidget {
             ),
             const Spacer(),
 
-            // Verified check badge with soft green halos
+            // Verified check badge with soft gold halos
             Center(
               child: Container(
                 width: 170,
                 height: 170,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.06),
+                  color: AppTheme.gold.withOpacity(0.06),
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -162,13 +162,13 @@ class PaymentSuccessScreen extends StatelessWidget {
                   width: 130,
                   height: 130,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withOpacity(0.12),
+                    color: AppTheme.gold.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     Icons.verified,
-                    color: Color(0xFF38D430), // vibrant green matching screenshot
+                    color: AppTheme.gold,
                     size: 96,
                   ),
                 ),
@@ -234,14 +234,14 @@ class PaymentSuccessScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  // Track Your Order capsule button
+                  // Track Your Order capsule button - Changed to gold theme
                   Expanded(
                     child: SizedBox(
                       height: 52,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEAF9EB), // light green bg
-                          foregroundColor: const Color(0xFF2E7D32), // dark green text
+                          backgroundColor: AppTheme.gold.withOpacity(0.15),
+                          foregroundColor: AppTheme.gold,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(26),
@@ -264,11 +264,12 @@ class PaymentSuccessScreen extends StatelessWidget {
                             ),
                           );
                         },
-                        child: const Text(
+                        child: Text(
                           'Track Your Order',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
+                            color: AppTheme.gold,
                           ),
                         ),
                       ),

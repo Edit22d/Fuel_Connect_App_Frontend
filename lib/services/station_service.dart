@@ -1,146 +1,225 @@
+// lib/services/station_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/station_model.dart';
-import 'auth_service.dart';
+import '../config/api_config.dart';
 
 class StationService {
-  final AuthService _auth = AuthService();
-  
+  final String baseUrl = ApiConfig.baseUrl;
+
   Future<Map<String, dynamic>> getStations({
     String? search,
     String? status,
-    int limit = 100,
+    int limit = 20,
     int offset = 0,
   }) async {
     try {
-      final token = await _auth.getAccessToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-      
-      final queryParams = [];
-      if (search != null) queryParams.add('search=$search');
-      if (status != null) queryParams.add('status=$status');
-      queryParams.add('limit=$limit');
-      queryParams.add('offset=$offset');
-      
-      final url = 'http://127.0.0.1:8000/api/stations/manage/?${queryParams.join('&')}';
+      final queryParams = <String, String>{};
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (status != null && status != 'all') queryParams['status'] = status;
+      queryParams['limit'] = limit.toString();
+      queryParams['offset'] = offset.toString();
+
+      final uri = Uri.parse('${ApiConfig.stationsEndpoint}').replace(queryParameters: queryParams);
       
       final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+        uri,
+        headers: await _getHeaders(),
       );
-      
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 200 && data['success'] == true) {
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          final stationsList = data['data']['stations'] as List;
+          final stations = stationsList
+              .map((station) => StationModel.fromJson(station))
+              .toList();
+          return {
+            'success': true,
+            'stations': stations,
+            'total': data['data']['total'] ?? 0,
+          };
+        }
         return {
-          'success': true,
-          'data': data['data'],
-          'stations': (data['data']['stations'] as List)
-              .map((s) => StationModel.fromJson(s))
-              .toList(),
+          'success': false,
+          'message': data['message'] ?? 'Failed to load stations',
         };
       }
-      
-      return {'success': false, 'message': data['message'] ?? 'Failed to load stations'};
+      return {
+        'success': false,
+        'message': 'Server error: ${response.statusCode}',
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Error: ${e.toString()}'};
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
     }
   }
-  
+
+  Future<Map<String, dynamic>> getTopStations() async {
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.topStationsEndpoint),
+        headers: await _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          final stationsList = data['data'] as List;
+          final stations = stationsList
+              .map((station) => StationModel.fromJson(station))
+              .toList();
+          return {
+            'success': true,
+            'stations': stations,
+          };
+        }
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to load top stations',
+        };
+      }
+      return {
+        'success': false,
+        'message': 'Server error: ${response.statusCode}',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> getStationDetail(int stationId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.stationsEndpoint}$stationId/'),
+        headers: await _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          final station = StationModel.fromJson(data['data']);
+          return {
+            'success': true,
+            'station': station,
+          };
+        }
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to load station details',
+        };
+      }
+      return {
+        'success': false,
+        'message': 'Server error: ${response.statusCode}',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
+    }
+  }
+
   Future<Map<String, dynamic>> createStation(StationModel station) async {
     try {
-      final token = await _auth.getAccessToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-      
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/stations/manage/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(station.toJson()),
+        Uri.parse(ApiConfig.stationsManageEndpoint),
+        headers: await _getHeaders(),
+        body: json.encode(station.toJson()),
       );
-      
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 201 && data['success'] == true) {
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = json.decode(response.body);
         return {
           'success': true,
-          'message': data['message'],
-          'data': StationModel.fromJson(data['data']),
+          'message': data['message'] ?? 'Station created successfully',
+          'station': data['data'] != null
+              ? StationModel.fromJson(data['data'])
+              : null,
         };
       }
-      
-      return {'success': false, 'message': data['message'] ?? 'Failed to create station'};
+      final error = json.decode(response.body);
+      return {
+        'success': false,
+        'message': error['message'] ?? 'Failed to create station',
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Error: ${e.toString()}'};
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
     }
   }
-  
+
   Future<Map<String, dynamic>> updateStation(StationModel station) async {
     try {
-      final token = await _auth.getAccessToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-      
       final response = await http.put(
-        Uri.parse('http://127.0.0.1:8000/api/stations/manage/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(station.toJson()),
+        Uri.parse(ApiConfig.stationsManageEndpoint),
+        headers: await _getHeaders(),
+        body: json.encode(station.toJson()),
       );
-      
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 200 && data['success'] == true) {
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         return {
           'success': true,
-          'message': data['message'],
-          'data': StationModel.fromJson(data['data']),
+          'message': data['message'] ?? 'Station updated successfully',
+          'station': data['data'] != null
+              ? StationModel.fromJson(data['data'])
+              : null,
         };
       }
-      
-      return {'success': false, 'message': data['message'] ?? 'Failed to update station'};
+      final error = json.decode(response.body);
+      return {
+        'success': false,
+        'message': error['message'] ?? 'Failed to update station',
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Error: ${e.toString()}'};
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
     }
   }
-  
-  Future<Map<String, dynamic>> deleteStation(int stationId) async {
+
+  Future<Map<String, dynamic>> deleteStation(String stationId) async {
     try {
-      final token = await _auth.getAccessToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-      
       final response = await http.delete(
-        Uri.parse('http://127.0.0.1:8000/api/stations/manage/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'id': stationId}),
+        Uri.parse(ApiConfig.stationsManageEndpoint),
+        headers: await _getHeaders(),
+        body: json.encode({'id': stationId}),
       );
-      
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true, 'message': data['message']};
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Station deleted successfully',
+        };
       }
-      
-      return {'success': false, 'message': data['message'] ?? 'Failed to delete station'};
+      final error = json.decode(response.body);
+      return {
+        'success': false,
+        'message': error['message'] ?? 'Failed to delete station',
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Error: ${e.toString()}'};
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
     }
+  }
+
+  Future<Map<String, String>> _getHeaders() async {
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
   }
 }

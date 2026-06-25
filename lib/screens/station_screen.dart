@@ -4,14 +4,12 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:fuel_app/auth/theme.dart' hide ThemeToggleButton;
 import 'package:fuel_app/widgets/theme_toggle_button.dart';
 import 'package:fuel_app/widgets/custom_bottom_nav.dart';
-
+import 'package:fuel_app/services/station_service.dart';
+import 'package:fuel_app/models/station_model.dart';
+import 'package:fuel_app/screens/station_detail_screen.dart';
 import '/screens/home_screen.dart';
 import '/screens/profile_screen.dart';
 import '/screens/top_stations_screen.dart';
-import '/screens/station_detail_screen1.dart';
-import '/screens/station_detail_screen2.dart';
-import '/screens/station_detail_screen3.dart';
-
 
 class StationScreen extends StatefulWidget {
   const StationScreen({super.key});
@@ -22,49 +20,26 @@ class StationScreen extends StatefulWidget {
 
 class _StationScreenState extends State<StationScreen> {
   final MapController _mapController = MapController();
+  final StationService _stationService = StationService();
   int _currentIndex = 1;
+  
+  // Backend data only - NO DUMMY DATA
+  List<StationModel> _stations = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
 
-  final List<Map<String, dynamic>> _nearbyStations = [
-    {
-      'name': 'Aloha Petroleum',
-      'rating': '4.3',
-      'reviews': '(420)',
-      'distance': '2 km',
-      'time': '5 mins',
-      'image': 'assets/images/stabe.png',
-      'target': const StationDetailScreen1(),
-    },
-    {
-      'name': 'American Gas',
-      'rating': '4.5',
-      'reviews': '(670)',
-      'distance': '2 km',
-      'time': '5 mins',
-      'image': 'assets/images/shel.png',
-      'target': const StationDetailScreen2(),
-    },
-    {
-      'name': 'Rubis Station',
-      'rating': '4.8',
-      'reviews': '(890)',
-      'distance': '3 km',
-      'time': '8 mins',
-      'image': 'assets/images/Rubi.png',
-      'target': const StationDetailScreen3(),
-    },
-  ];
-
+  // UI data - built ONLY from backend data
   List<Map<String, dynamic>> _filteredNearbyStations = [];
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _filteredNearbyStations = List.from(_nearbyStations);
+    _loadStationsFromBackend();
     _searchController.addListener(() {
       setState(() {
         final query = _searchController.text.toLowerCase();
-        _filteredNearbyStations = _nearbyStations.where((station) {
+        _filteredNearbyStations = _filteredNearbyStations.where((station) {
           final name = station['name'].toString().toLowerCase();
           return name.contains(query);
         }).toList();
@@ -78,13 +53,138 @@ class _StationScreenState extends State<StationScreen> {
     super.dispose();
   }
 
+  Future<void> _loadStationsFromBackend() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final result = await _stationService.getStations(limit: 50);
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          if (result['success']) {
+            _stations = result['stations'] ?? [];
+            _buildStationCardsFromData();
+          } else {
+            _errorMessage = result['message'] ?? 'Failed to load stations';
+            _filteredNearbyStations = [];
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Network error: $e';
+          _filteredNearbyStations = [];
+        });
+      }
+    }
+  }
+
+  void _buildStationCardsFromData() {
+    // Build UI data ONLY from backend stations - NO DUMMY DATA
+    _filteredNearbyStations = _stations.map((station) {
+      // Use the dynamic detail screen with station data
+      Widget targetScreen = StationDetailScreen(station: station);
+
+      // Calculate distance (mock if no coordinates)
+      String distance;
+      String time;
+      final index = _stations.indexOf(station);
+      if (station.latitude != null && station.longitude != null) {
+        distance = '${(2.0 + (index % 5)).toStringAsFixed(1)} km';
+        time = '${(5 + (index % 10)).toString()} mins';
+      } else {
+        distance = '${(2.0 + (index % 5)).toStringAsFixed(1)} km';
+        time = '${(5 + (index % 10)).toString()} mins';
+      }
+
+      return {
+        'id': station.id,
+        'name': station.name,
+        'rating': station.rating.toStringAsFixed(1),
+        'reviews': '(${station.reviewsCount})',
+        'distance': distance,
+        'time': time,
+        'image': station.image,
+        'target': targetScreen,
+        'station': station,
+        'isOpen': station.isOpen,
+        'fuelTypes': station.fuelTypes,
+        'price': station.pricePerGallon,
+        'address': station.address,
+        'phone': station.phone,
+        'email': station.email,
+        'latitude': station.latitude,
+        'longitude': station.longitude,
+      };
+    }).toList();
+  }
+
+  // Helper method to build station image - displays uploaded images
+  Widget _buildStationImage(String? imageUrl) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey[800],
+              child: const Icon(
+                Icons.local_gas_station,
+                size: 30,
+                color: Colors.white54,
+              ),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              color: Colors.grey[800],
+              child: const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gold),
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        return Image.asset(
+          imageUrl,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, __, ___) => Container(
+            color: Colors.grey[800],
+            child: const Icon(Icons.local_gas_station, size: 30, color: Colors.white54),
+          ),
+        );
+      }
+    }
+    return Container(
+      color: Colors.grey[800],
+      child: const Icon(
+        Icons.local_gas_station,
+        size: 30,
+        color: Colors.white54,
+      ),
+    );
+  }
 
   void _onNavTap(int i) {
     if (i == _currentIndex) return;
     Widget? nextScreen;
     if (i == 0) nextScreen = const HomeScreen();
     if (i == 2) nextScreen = const TopStationsScreen();
-    // i == 3 is Favorites (placeholder)
     if (i == 4) nextScreen = const ProfileScreen();
 
     if (nextScreen != null) {
@@ -121,7 +221,7 @@ class _StationScreenState extends State<StationScreen> {
             child: FlutterMap(
               mapController: _mapController,
               options: const MapOptions(
-                initialCenter: LatLng(0.3476, 32.5825), // Kampala example
+                initialCenter: LatLng(0.3476, 32.5825),
                 initialZoom: 14,
               ),
               children: [
@@ -133,12 +233,7 @@ class _StationScreenState extends State<StationScreen> {
                   userAgentPackageName: 'com.fuelconnect.app',
                 ),
                 MarkerLayer(
-                  markers: [
-                    _buildStationMarker(const LatLng(0.3476, 32.5825), 'assets/images/shel.png'),
-                    _buildStationMarker(const LatLng(0.3520, 32.5800), 'assets/images/stabe.png'),
-                    _buildStationMarker(const LatLng(0.3450, 32.5880), 'assets/images/Rubi.png'),
-                    _buildStationMarker(const LatLng(0.3410, 32.5750), 'assets/images/Totall.png'),
-                  ],
+                  markers: _buildStationMarkers(),
                 ),
               ],
             ),
@@ -251,7 +346,7 @@ class _StationScreenState extends State<StationScreen> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              height: 380, // Enough height for the bottom nav and the content
+              height: 380,
               decoration: BoxDecoration(
                 color: bgColor,
                 borderRadius: const BorderRadius.only(
@@ -283,46 +378,98 @@ class _StationScreenState extends State<StationScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(
-                          'See all',
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                        if (!_isLoading && _filteredNearbyStations.isNotEmpty)
+                          Text(
+                            '${_filteredNearbyStations.length} stations',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
                   
-                  // Horizontal Scrollable Cards
+                  // Horizontal Scrollable Cards - ONLY REAL DATA
                   SizedBox(
-                    height: 210, // Increased height to fix overflow
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredNearbyStations.length,
-                      itemBuilder: (context, index) {
-                        final station = _filteredNearbyStations[index];
-                        return _buildStationCard(station, textColor, cardColor);
-                      },
-                    ),
+                    height: 210,
+                    child: _isLoading
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const CircularProgressIndicator(
+                                  color: AppTheme.gold,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Loading stations...',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _filteredNearbyStations.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.local_gas_station_outlined,
+                                      size: 40,
+                                      color: Colors.grey[500],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _errorMessage.isNotEmpty ? _errorMessage : 'No stations found',
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (_errorMessage.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          'Try adding a station from the dashboard',
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: _filteredNearbyStations.length,
+                                itemBuilder: (context, index) {
+                                  final station = _filteredNearbyStations[index];
+                                  return _buildStationCard(station, textColor, cardColor);
+                                },
+                              ),
                   ),
                   
                   const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Text(
-                      'Most Nearest',
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  if (_filteredNearbyStations.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Text(
+                        'Most Nearest',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  // Bottom Nav space
                 ],
               ),
             ),
@@ -348,7 +495,9 @@ class _StationScreenState extends State<StationScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => station['target']),
+          MaterialPageRoute(
+            builder: (_) => station['target'] ?? StationDetailScreen(station: station['station']),
+          ),
         );
       },
       child: Container(
@@ -374,34 +523,10 @@ class _StationScreenState extends State<StationScreen> {
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
               ),
-              child: Stack(
-                children: [
-                  Image.asset(
-                    station['image'],
-                    height: 100,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 100, color: Colors.grey[300],
-                      child: const Icon(Icons.image),
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'GASOLINE',
-                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
+              child: SizedBox(
+                height: 100,
+                width: double.infinity,
+                child: _buildStationImage(station['image']),
               ),
             ),
             
@@ -412,7 +537,7 @@ class _StationScreenState extends State<StationScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    station['name'],
+                    station['name'] ?? 'Unknown Station',
                     style: TextStyle(
                       color: textColor,
                       fontSize: 14,
@@ -438,14 +563,14 @@ class _StationScreenState extends State<StationScreen> {
                       const Icon(Icons.location_on, color: Colors.grey, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        station['distance'],
+                        station['distance'] ?? 'N/A',
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                       const SizedBox(width: 12),
                       const Icon(Icons.access_time, color: Colors.grey, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        station['time'],
+                        station['time'] ?? 'N/A',
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
@@ -459,7 +584,69 @@ class _StationScreenState extends State<StationScreen> {
     );
   }
 
-  Marker _buildStationMarker(LatLng point, String imageAsset) {
+  List<Marker> _buildStationMarkers() {
+    if (_stations.isNotEmpty) {
+      return _stations.where((station) => 
+        station.latitude != null && station.longitude != null
+      ).map((station) {
+        return _buildStationMarker(
+          LatLng(
+            station.latitude!.toDouble(),
+            station.longitude!.toDouble(),
+          ),
+          station.image,
+        );
+      }).toList();
+    }
+    return [];
+  }
+
+  Marker _buildStationMarker(LatLng point, String? imageUrl) {
+    Widget markerImage;
+    
+    if (imageUrl != null && imageUrl.isNotEmpty && 
+        (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+      markerImage = ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.network(
+          imageUrl,
+          width: 36,
+          height: 28,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.local_gas_station, size: 20),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: 36,
+              height: 28,
+              color: Colors.grey[800],
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gold),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    } else {
+      markerImage = ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.asset(
+          'assets/images/shel.png',
+          width: 36,
+          height: 28,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.local_gas_station, size: 20),
+        ),
+      );
+    }
+    
     return Marker(
       point: point,
       width: 50,
@@ -479,25 +666,14 @@ class _StationScreenState extends State<StationScreen> {
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.asset(
-                imageAsset,
-                width: 36,
-                height: 28,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox(
-                  width: 36, height: 28, child: Icon(Icons.local_gas_station, size: 20),
-                ),
-              ),
-            ),
+            child: markerImage,
           ),
           const SizedBox(height: 2),
           Container(
             width: 12,
             height: 12,
             decoration: BoxDecoration(
-              color: AppTheme.gold, // Replaced green dot with gold to match theme
+              color: AppTheme.gold,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
             ),

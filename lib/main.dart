@@ -35,7 +35,7 @@ void main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Run app - SplashScreen2 will handle auto-login check
+  // Run app - OnboardingScreen will display first
   runApp(const FuelConnectApp());
 }
 
@@ -60,7 +60,7 @@ class FuelConnectApp extends StatelessWidget {
           themeMode: mode,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          initialRoute: '/',
+          initialRoute: '/onboarding', // Changed from '/' to '/onboarding'
           routes: {
             '/': (context) => const SplashScreen2(),
             '/onboarding': (context) => const OnboardingScreen(),

@@ -12,7 +12,7 @@ class StationManagementScreen extends StatefulWidget {
 }
 
 class _StationManagementScreenState extends State<StationManagementScreen> {
-  final StationService _stationService = StationService();
+  late final StationService _stationService;
   List<StationModel> _stations = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -22,6 +22,7 @@ class _StationManagementScreenState extends State<StationManagementScreen> {
   @override
   void initState() {
     super.initState();
+    _stationService = StationService();
     _loadStations();
   }
 
@@ -558,7 +559,6 @@ class _StationManagementScreenState extends State<StationManagementScreen> {
 
   void _showEditStationDialog(StationModel station) {
     // Similar to add dialog but pre-filled with station data
-    // Implementation similar to _showAddStationDialog
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Edit feature coming soon!')),
     );
